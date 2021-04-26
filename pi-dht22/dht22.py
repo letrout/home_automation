@@ -1,5 +1,6 @@
 # A script to poll DHT22 for temp/humidity
-# TODO: convert to adafruit-circuitpython-dht
+# FIXME: convert to adafruit-circuitpython-dht
+# TODO: publish to MQTT
 
 import Adafruit_DHT
 from datetime import datetime
@@ -8,9 +9,9 @@ import sys
 import time
 
 DHT_SENSOR = Adafruit_DHT.DHT22
-DHT_PIN = 4
 PROBE_NAME = "PI4"
-DEF_INT = 2
+DEFAULT_INT = 2
+DEFAULT_PIN = 4
 
 def poll_dht22(sensor, pin):
     hum = None
@@ -34,8 +35,8 @@ def c_to_f(temp_c):
     return temp_c * (9 / 5) + 32
 
 def main(argv):
-    interval = DEF_INT
-    pin = DHT_PIN
+    interval = DEFAULT_INT
+    pin = DEFAULT_PIN
     try:
         opts, args = getopt.getopt(argv,"hi:p:",["interval=","pin="])
     except getopt.GetoptError:
