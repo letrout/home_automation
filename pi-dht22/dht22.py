@@ -12,16 +12,18 @@ DHT_PIN = 4
 PROBE_NAME = "PI4"
 DEF_INT = 2
 
+def poll_dht22(sensor, pin):
+    hum = None
+    temp = None
+    try:
+        hum, temp = Adafruit_DHT.read_retry(DHT_SENSOR, pin)
+    except RuntimeError as error:
+        print(error.args[0])
+    return (hum, temp)
+
 def print_loop(interval, pin):
     while True:
-        try:
-            hum, temp = Adafruit_DHT.read_retry(DHT_SENSOR, pin)
-        except RuntimeError as error:
-            print(error.args[0])
-            continue
-        except Exception as error:
-            raise error
-
+        hum, temp = poll_dht22(DHT_SENSOR, pin)
         if hum is not None and temp is not None:
             print(f'{datetime.now()} - T={c_to_f(temp):0.1f}F H={hum:0.1f}%')
         else:
