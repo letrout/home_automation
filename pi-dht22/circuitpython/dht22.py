@@ -27,9 +27,7 @@ def poll_dht22(dht_device):
 
 def print_loop(interval, dht_device):
     while True:
-        #print(f'getting data pin {pin}')
         hum, temp = poll_dht22(dht_device)
-        print('got data')
         if hum is not None and temp is not None:
             print(f'{datetime.now()} - T={c_to_f(temp):0.1f}F H={hum:0.1f}%')
         else:
