@@ -2,3 +2,9 @@ Pi/DHT22 script using the adafruit_dht CircuitPython module
 
 also requires libgpiod, eg:
 	sudo apt install libgpiod2
+
+Note that pigpiod can use a significant amount of CPU. This can be reduced by
+	- Using the -m option to disable alert sampling
+	(hm, trying this and it may not work)
+	- Using '-s 10' to lower the sample rate to 10us (from 5us default)
+See http://abyz.me.uk/rpi/pigpio/pigpiod.html
