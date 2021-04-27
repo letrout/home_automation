@@ -1,1 +1,4 @@
 Pi/DHT22 script using the adafruit_dht CircuitPython module
+
+also requires libgpiod, eg:
+	sudo apt install libgpiod2
