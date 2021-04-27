@@ -4,8 +4,8 @@ See http://abyz.me.uk/rpi/pigpio/
 The adafruit_dht CircuitPython module has not worked for me on RPi 1B
 (although it works on my RPi 4B), but pigpio does work.
 
-also requires libgpiod, eg:
-	sudo apt install libgpiod2
+also requires pigpio, eg:
+	sudo apt install pigpio
 
 Note that pigpiod can use a significant amount of CPU. This can be reduced by
 	- Using the -m option to disable alert sampling
