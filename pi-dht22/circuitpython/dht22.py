@@ -54,8 +54,7 @@ def main(argv):
             interval = int(arg)
         elif opt in ("-p", "--pin"):
             pin = int(arg)
-
-    dht_device = adafruit_dht.DHT22(board.D4)
+    dht_device = adafruit_dht.DHT22(eval(f'board.D{pin}'))
     print_loop(interval, dht_device)
 
 if __name__ == "__main__":
