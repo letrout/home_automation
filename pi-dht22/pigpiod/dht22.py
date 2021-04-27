@@ -32,7 +32,6 @@ def print_loop(interval, pin):
             print(f'{datetime.now()} - T={c_to_f(temp):0.1f}F H={hum:0.1f}%')
         else:
             print("Failed to retrieve data from humidity sensor")
-        #break
         time.sleep(interval)
 
 def c_to_f(temp_c):
