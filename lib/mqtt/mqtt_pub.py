@@ -6,6 +6,13 @@ import paho.mqtt.client as paho
 # Get MQTT details from our config file
 from . import mqtt_conf
 
+# Connection callback
+def on_connect(client, userdata, flags, rc):
+    if rc == 0:
+        print("connected OK Returned code=", rc)
+    else:
+        print("Bad connection Returned code=", rc)
+
 # publish callabck function
 def on_publish(client, userdata, result):
     print(f'{datetime.now()} - data published')
@@ -16,16 +23,25 @@ def on_disconnect(client, userdata, rc):
    print(f'{datetime.now()} - client disconnected')
    pass
 
-def mqtt_client():
+def client():
     client1 = paho.Client("control1")
+    client1.username_pw_set(
+        username=mqtt_conf.MQTT_USER, password=mqtt_conf.MQTT_PW)
+    client1.on_connect = on_connect
     client1.on_publish = on_publish
     client1.on_disconnect = on_disconnect
+    client1.connect(
+        mqtt_conf.MQTT_BROKER,
+        port=mqtt_conf.MQTT_PORT,
+        keepalive=60,
+        bind_address='')
+
     return client1
 
-def mqtt_pulish(mqtt_client, dest, val):
-    mqtt_client.connect(mqtt_conf.MQTT_BROKER, mqtt_conf.MQTT_PORT)
-    ret = mqtt_client.publish(dest, val)
+def publish(pin, dest, val, client1):
+    topic = mqtt_conf.PINS[pin]['topic'] + '/' + dest
+    ret = client1.publish(topic, val)
     return ret
 
-def mqtt_disconnect(mqtt_client):
+def disconnect(mqtt_client):
     mqtt_client.disconnect()
