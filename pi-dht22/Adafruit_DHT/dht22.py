@@ -5,8 +5,12 @@
 import Adafruit_DHT
 from datetime import datetime
 import getopt
+from os.path import dirname, join, abspath
 import sys
 import time
+
+sys.path.insert(0, abspath(join(dirname(__file__), '../..')))
+from lib.mqtt import mqtt_pub
 
 DHT_SENSOR = Adafruit_DHT.DHT22
 PROBE_NAME = "PI4"
