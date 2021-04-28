@@ -4,20 +4,21 @@ from datetime import datetime
 import paho.mqtt.client as paho
 
 # MQTT details
-MQTT_BROKER="127.0.0.1"
-MQTT_PORT=1883
+MQTT_BROKER = "127.0.0.1"
+MQTT_PORT = 1883
 
 # publish callabck function
-def on_publish(client,userdata,result):
-    print("data published \n")
+def on_publish(client, userdata, result):
+    print(f'{datetime.now()} - data published')
     pass
 
 # disconnect callback
 def on_disconnect(client, userdata, rc):
-   print("client disconnected ok")
+   print(f'{datetime.now()} - client disconnected')
+   pass
 
 def mqtt_client():
-    client1= paho.Client("control1") 
+    client1 = paho.Client("control1")
     client1.on_publish = on_publish
     client1.on_disconnect = on_disconnect
     return client1
