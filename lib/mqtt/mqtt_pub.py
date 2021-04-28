@@ -3,9 +3,8 @@
 from datetime import datetime
 import paho.mqtt.client as paho
 
-# MQTT details
-MQTT_BROKER = "127.0.0.1"
-MQTT_PORT = 1883
+# Get MQTT details from our config file
+from . import mqtt_conf
 
 # publish callabck function
 def on_publish(client, userdata, result):
@@ -24,7 +23,7 @@ def mqtt_client():
     return client1
 
 def mqtt_pulish(mqtt_client, dest, val):
-    mqtt_client.connect(MQTT_BROKER,MQTT_PORT)
+    mqtt_client.connect(mqtt_conf.MQTT_BROKER, mqtt_conf.MQTT_PORT)
     ret = mqtt_client.publish(dest, val)
     return ret
 
