@@ -73,6 +73,8 @@ def main(argv):
             ret = mqtt_pub.publish(
                 pin, 'temp_F', c_to_f(temp), m_client)
         if hum is not None:
+            # Without the delay, sometimes fail to see humidity post to broker
+            time.sleep(10)
             ret = mqtt_pub.publish(pin, 'rel_humidity', hum, m_client)
         mqtt_pub.disconnect(m_client)
     else:
