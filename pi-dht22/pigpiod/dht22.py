@@ -4,9 +4,13 @@
 import DHT
 from datetime import datetime
 import getopt
+from os.path import dirname, join, abspath
 import pigpio
 import sys
 import time
+
+sys.path.insert(0, abspath(join(dirname(__file__), '../..')))
+from lib.mqtt import mqtt_pub
 
 #DHT_SENSOR = Adafruit_DHT.DHT22
 PROBE_NAME = "PI4"
@@ -41,19 +45,38 @@ def main(argv):
     #GPIO.setmode(GPIO.BCM)
     interval = DEFAULT_INT
     pin = DEFAULT_PIN
+    use_mqtt = False
     try:
-        opts, args = getopt.getopt(argv,"hi:p:",["interval=","pin="])
+        opts, args = getopt.getopt(argv,"hi:p:m",["interval=","pin="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('dht22.py -s <seconds between readings> -p <GPIO pin>')
+            print('dht22.py -i|--interval <seconds between readings>')
+            print('-p|--pin <GPIO pin>')
+            print('-m|--mqtt publish (once) to MQTT broker')
             sys.exit()
         elif opt in ("-i", "--interval"):
             interval = int(arg)
         elif opt in ("-p", "--pin"):
             pin = int(arg)
-    print_loop(interval, pin)
+        elif opt in ("-m", "--mqtt"):
+            use_mqtt = True
+
+    if use_mqtt:
+        hum, temp = poll_dht22(pin)
+        m_client = mqtt_pub.client()
+        if temp is not None:
+            ret = mqtt_pub.publish(
+                pin, 'temp_F', c_to_f(temp), m_client)
+        if hum is not None:
+            # Without the delay, sometimes fail to see humidity post to broker
+            time.sleep(10)
+            ret = mqtt_pub.publish(pin, 'rel_humidity', hum, m_client)
+        mqtt_pub.disconnect(m_client)
+    else:
+        print_loop(interval, pin)
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
