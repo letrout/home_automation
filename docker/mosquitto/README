@@ -1,0 +1,7 @@
+Start the container:
+	sudo docker run -d -p 1883:1883 -p 9001:9001 -v /docker/mosquitto:/mosquitto --name=mosquitto eclipse-mosquitto
+
+
+Test the server
+	mosquitto_sub -v -t 'test/topic' -u <user> -P <password>
+	mosquitto_pub -t 'test/topic' -m 'helloWorld' -u <password> -P <user>
