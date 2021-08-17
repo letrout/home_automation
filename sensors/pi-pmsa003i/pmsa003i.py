@@ -33,6 +33,13 @@ def poll_pmsa003i():
         return None
     return aqdata
 
+def print_keys():
+    aqdata = poll_pmsa003i()
+    if aqdata is not None:
+        print(sorted(aqdata.keys()))
+    else:
+        print("Unable to read from sensor")
+
 def print_loop(interval):
     while True:
         aqdata = poll_pmsa003i()
@@ -70,14 +77,17 @@ def main(argv):
     interval = DEFAULT_INT
     use_mqtt = False
     try:
-        opts, args = getopt.getopt(argv,"hi:m",["interval="])
+        opts, args = getopt.getopt(argv,"hi:md",["interval="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
             print('pmsa003i.py -i|--interval <seconds between readings>')
             print('-m|--mqtt publish (once) to MQTT broker')
-            sys.exit()
+            sys.exit(0)
+        elif opt in ("-d", "--debug"):
+            print_keys()
+            sys.exit(0)
         elif opt in ("-i", "--interval"):
             interval = int(arg)
         elif opt in ("-m", "--mqtt"):
