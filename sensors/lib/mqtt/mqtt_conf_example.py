@@ -1,5 +1,6 @@
 # MQTT configuration settings
 # Modify according to this hosts's specific environment
+# and rename to 'mqtt_conf.py'
 # Assumptions:
 #   Each host will use a single MQTT broker for all events
 #   Each host can have multiple sensors (indexed by 'pin'),
