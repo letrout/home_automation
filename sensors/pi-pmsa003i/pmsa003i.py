@@ -14,6 +14,7 @@ sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 from lib.mqtt import mqtt_pub
 
 DEFAULT_INT = 2
+DEFAULT_PIN = 4
 
 def poll_pmsa003i():
     reset_pin = None
@@ -94,15 +95,20 @@ def main(argv):
             use_mqtt = True
 
     if use_mqtt:
-        hum, temp = poll_dht22(pin)
+        aqdata = poll_pmsa003i()
+        if aqdata is None:
+            sys.exit(1)
         m_client = mqtt_pub.client()
-        if temp is not None:
-            ret = mqtt_pub.publish(
-                pin, 'temp_F', c_to_f(temp), m_client)
-        if hum is not None:
-            # Without the delay, sometimes fail to see humidity post to broker
-            time.sleep(10)
-            ret = mqtt_pub.publish(pin, 'rel_humidity', hum, m_client)
+        try:
+            ret = mqtt_pub.publish(DEFAULT_PIN, 'PM1.0_std', aqdata['pm10 standard'], m_client)
+            time.sleep(2)
+            ret = mqtt_pub.publish(DEFAULT_PIN, 'PM2.5_std', aqdata['pm25 standard'], m_client)
+            time.sleep(2)
+            ret = mqtt_pub.publish(DEFAULT_PIN, 'PM10.0_std', aqdata['pm100 standard'], m_client)
+            #time.sleep(10)
+            #ret = mqtt_pub.publish(pin, 'rel_humidity', hum, m_client)
+        except KeyError:
+            print("key error")
         mqtt_pub.disconnect(m_client)
     else:
         print_loop(interval)
