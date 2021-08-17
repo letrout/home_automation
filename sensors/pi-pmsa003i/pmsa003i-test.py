@@ -49,7 +49,7 @@ pm25 = PM25_I2C(i2c, reset_pin)
 print("Found PM2.5 sensor, reading data...")
 
 while True:
-    time.sleep(1)
+    time.sleep(10)
 
     try:
         aqdata = pm25.read()
