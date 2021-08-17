@@ -46,22 +46,24 @@ def print_aqdata(aqdata):
     print("Concentration Units (standard)")
     print("---------------------------------------")
     print(
-        "PM 1.0: %d\tPM2.5: %d\tPM10: %d"
-        % (aqdata["pm10 standard"], aqdata["pm25 standard"], aqdata["pm100 standard"])
-    )
+        f"PM 1.0: {aqdata['pm10 standard']}" +
+        f"\tPM2.5: {aqdata['pm25 standard']}" + 
+        f"\tPM10: {aqdata['pm100 standard']}"
+        )
     print("Concentration Units (environmental)")
     print("---------------------------------------")
     print(
-        "PM 1.0: %d\tPM2.5: %d\tPM10: %d"
-        % (aqdata["pm10 env"], aqdata["pm25 env"], aqdata["pm100 env"])
-    )
+        f"PM 1.0: {aqdata['pm10 env']}" +
+        f"\tPM2.5: {aqdata['pm25 env']}" + 
+        f"\tPM10: {aqdata['pm100 env']}"
+        )
     print("---------------------------------------")
-    print("Particles > 0.3um / 0.1L air:", aqdata["particles 03um"])
-    print("Particles > 0.5um / 0.1L air:", aqdata["particles 05um"])
-    print("Particles > 1.0um / 0.1L air:", aqdata["particles 10um"])
-    print("Particles > 2.5um / 0.1L air:", aqdata["particles 25um"])
-    print("Particles > 5.0um / 0.1L air:", aqdata["particles 50um"])
-    print("Particles > 10 um / 0.1L air:", aqdata["particles 100um"])
+    print(f"Particles > 0.3um / 0.1L air: {aqdata['particles 03um']}")
+    print(f"Particles > 0.5um / 0.1L air: {aqdata['particles 05um']}")
+    print(f"Particles > 1.0um / 0.1L air: {aqdata['particles 10um']}")
+    print(f"Particles > 2.5um / 0.1L air: {aqdata['particles 25um']}")
+    print(f"Particles > 5.0um / 0.1L air: {aqdata['particles 50um']}")
+    print(f"Particles > 10 um / 0.1L air: {aqdata['particles 100um']}")
     print("---------------------------------------")
 
 def main(argv):
