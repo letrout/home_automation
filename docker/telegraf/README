@@ -6,17 +6,28 @@ Run influxdb2
 	<start influxdb2 container>
 	get the influxdb API token
 
-Edit the telegraf config
+Edit the telegraf config for influxdb
 [[outputs.influxdb_v2]]
   urls = ["http://influxdb:8086"]
   token = "$DOCKER_INFLUXDB_INIT_ADMIN_TOKEN"
   organization = "$DOCKER_INFLUXDB_INIT_ORG"
   bucket = "$DOCKER_INFLUXDB_INIT_BUCKET"
+
+Add sources to the telegraf config
+[TBD]
 	
 Run telegraf container
 docker run -d --name telegraf \
 	--net=container:influxdb2 \
 	-v /docker/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
+	-v /var/run/docker.sock:/var/run/docker.sock:ro \
+	-v /:/hostfs:ro \
+	-e HOST_ETC=/hostfs/etc \
+	-e HOST_PROC=/hostfs/proc \
+	-e HOST_SYS=/hostfs/sys \
+	-e HOST_VAR=/hostfs/var \
+	-e HOST_RUN=/hostfs/run \
+	-e HOST_MOUNT_PREFIX=/hostfs \
 	-e DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=$INFLUX_TOKEN \
 	-e DOCKER_INFLUXDB_INIT_ORG=$INFLUX_ORG \
 	-e DOCKER_INFLUXDB_INIT_BUCKET=$INFLUX_BUCKET \
