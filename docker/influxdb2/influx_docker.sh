@@ -1,5 +1,6 @@
 #!/bin/bash
-docker run -d -p 8086:8086 \
+docker run -d --name influxdb2 -p 8086:8086 \
+      --net=influxdb2 \
       -v /docker/influxdb2/data:/var/lib/influxdb2 \
       -v /docker/influxdb2/config:/etc/influxdb2 \
       -e DOCKER_INFLUXDB_INIT_MODE=setup \
