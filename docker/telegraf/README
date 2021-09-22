@@ -32,3 +32,6 @@ docker run -d --name telegraf \
 	-e DOCKER_INFLUXDB_INIT_ORG=$INFLUX_ORG \
 	-e DOCKER_INFLUXDB_INIT_BUCKET=$INFLUX_BUCKET \
 	telegraf
+
+Test the telegraf container
+	sudo docker exec telegraf telegraf --test
