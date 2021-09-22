@@ -1,5 +1,7 @@
 #!/bin/bash
-docker run -d --name influxdb2 -p 8086:8086 \
+docker network create influxdb2
+docker run -d -p 8086:8086 \
+      --name=influxdb2 \
       --net=influxdb2 \
       -v /docker/influxdb2/data:/var/lib/influxdb2 \
       -v /docker/influxdb2/config:/etc/influxdb2 \

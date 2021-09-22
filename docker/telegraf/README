@@ -1,0 +1,7 @@
+Generate a config file
+	$ docker run --rm telegraf telegraf config > /docker/telegraf/telegraf.conf
+
+Run telegraf container
+	$ docker network create influxdb
+	<start influxdb2 container>
+	$ docker run -d --name telegraf --net=container:influxdb2 -v /docker/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro telegraf
