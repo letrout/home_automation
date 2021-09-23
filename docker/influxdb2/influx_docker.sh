@@ -1,6 +1,7 @@
 #!/bin/bash
 docker network create influxdb2
 docker run -d -p 8086:8086 \
+      --restart unless-stopped \
       --name=influxdb2 \
       --net=influxdb2 \
       -v /docker/influxdb2/data:/var/lib/influxdb2 \

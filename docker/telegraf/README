@@ -18,6 +18,7 @@ Add sources to the telegraf config
 	
 Run telegraf container
 docker run -d --name telegraf \
+	--restart unless-stopped \
 	--net=container:influxdb2 \
 	-v /docker/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
 	-v /var/run/docker.sock:/var/run/docker.sock:ro \
