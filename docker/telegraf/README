@@ -9,12 +9,15 @@ Run influxdb2
 Edit the telegraf config for influxdb
 [[outputs.influxdb_v2]]
   urls = ["http://influxdb:8086"]
-  token = "$DOCKER_INFLUXDB_INIT_ADMIN_TOKEN"
+  token = "<token>
   organization = "$DOCKER_INFLUXDB_INIT_ORG"
   bucket = "$DOCKER_INFLUXDB_INIT_BUCKET"
 
 Add sources to the telegraf config
 [TBD]
+
+Add influxdb token(s) to telegraf.conf
+	Search for "REPLACE_ME" in the config, replace with influxdb token(s)
 	
 Run telegraf container
 docker run -d --name telegraf \
@@ -29,11 +32,8 @@ docker run -d --name telegraf \
 	-e HOST_VAR=/hostfs/var \
 	-e HOST_RUN=/hostfs/run \
 	-e HOST_MOUNT_PREFIX=/hostfs \
-	-e DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=$INFLUX_TOKEN \
 	-e DOCKER_INFLUXDB_INIT_ORG=$INFLUX_ORG \
 	-e DOCKER_INFLUXDB_INIT_BUCKET=$INFLUX_BUCKET \
-	-e DOCKER_INFLUXDB_INFRA_TOKEN=$INFRA_TOKEN \
-	-e DOCKER_INFLUXDB_WEATHER_TOKEN=$WEATHER_TOKEN \
 	telegraf
 
 Test the telegraf container
