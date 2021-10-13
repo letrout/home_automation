@@ -28,5 +28,20 @@ def influx_lp(measurement, fields, tags=None, time_ns=None):
         or (tags and not isinstance(tags, dict))
     ):
         return None
-    lp = f"{str(measurement)}"
+    lp = f"{str(measurement)} "
+    tagset  = []
+    if tags:
+        for key in tags:
+            tagset.append(f"{key}={tags[key]}")
+    if len(tagset) > 0:
+        lp += ",".join(tagset)
+        lp += " "
+    fieldset = []
+    if fields:
+        for key in fields:
+            fieldset.append(f"{key}={fields[key]}")
+    if len(fieldset) > 0:
+        lp += ",".join(fieldset)
+        lp += " "
+    lp += f"{time_ns}"
     return lp
