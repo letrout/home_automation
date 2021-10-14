@@ -34,8 +34,10 @@ def influx_lp(measurement, fields, tags=None, time_ns=None):
         return None
     ts = lp_set(tags)
     fs = lp_set(fields)
-    lp = f"{str(measurement)} {ts} {fs} {time_ns}"
-    return lp
+    if ts is None:
+        return f"{str(measurement)} {fs} {time_ns}"
+    else:
+        return f"{str(measurement)} {ts} {fs} {time_ns}"
 
 
 def lp_set(fields):
