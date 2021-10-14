@@ -39,7 +39,10 @@ def lp_set(fields):
     fieldset = []
     lp_fieldset = ""
     for key in fields:
-        fieldset.append(f"{key}={fields[key]}")
+        val = fields[key]
+        if isinstance(val, str):
+            val = f"\"{val}\""
+        fieldset.append(f"{key}={val}")
     if len(fieldset) > 0:
         lp_fieldset += ",".join(fieldset)
     return lp_fieldset
