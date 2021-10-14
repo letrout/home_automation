@@ -4,6 +4,8 @@ Helper code for fomratting messages destined for InfluxDB2
 
 import time
 
+BOOLS = ["t", "true", "f", "false"]
+
 
 def influx_lp(measurement, fields, tags=None, time_ns=None):
     """
@@ -41,7 +43,8 @@ def lp_set(fields):
     for key in fields:
         val = fields[key]
         if isinstance(val, str):
-            val = f"\"{val}\""
+            if not val.lower() in BOOLS:
+                val = f"\"{val}\""
         fieldset.append(f"{key}={val}")
     if len(fieldset) > 0:
         lp_fieldset += ",".join(fieldset)
