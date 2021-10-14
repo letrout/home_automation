@@ -27,6 +27,7 @@ def influx_lp(measurement, fields, tags=None, time_ns=None):
         (not measurement)
         or (not isinstance(measurement, str))
         or (not isinstance(fields, dict))
+        or (len(fields.keys()) == 0)
         or (not isinstance(time_ns, int))
         or (tags and not isinstance(tags, dict))
     ):
