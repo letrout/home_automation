@@ -45,7 +45,7 @@ def lp_set(fields):
     for key in fields:
         val = fields[key]
         if isinstance(val, str):
-            if not val.lower() in BOOLS:
+            if not val in BOOLS:
                 val = f"\"{val}\""
         fieldset.append(f"{key}={val}")
     if len(fieldset) > 0:

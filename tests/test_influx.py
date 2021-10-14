@@ -53,6 +53,16 @@ def test_lp_false():
     assert test == 'temp tag1=2,tag2=False field1=1,field2="a string" 1634158455045502066'
 
 
+def test_lp_falsestring():
+    test = influx.influx_lp(
+        "temp",
+        {"field1": 1, "field2": "a string"},
+        {"tag1": 2, "tag2": "FAlse"},
+        1634158455045502066
+        )
+    assert test == 'temp tag1=2,tag2="FAlse" field1=1,field2="a string" 1634158455045502066'
+
+
 def test_lp_bad_ts():
     test = influx.influx_lp(
         "temp",
