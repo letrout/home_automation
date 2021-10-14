@@ -40,7 +40,7 @@ def test_lp_true():
         {"tag1": 2, "tag2": "true"},
         1634158455045502066
         )
-    assert test == """temp tag1=2,tag2=true field1=1,field2="a string" 1634158455045502066"""
+    assert test == 'temp tag1=2,tag2=true field1=1,field2="a string" 1634158455045502066'
 
 
 def test_lp_false():
@@ -50,7 +50,7 @@ def test_lp_false():
         {"tag1": 2, "tag2": "False"},
         1634158455045502066
         )
-    assert test == """temp tag1=2,tag2=False field1=1,field2="a string" 1634158455045502066"""
+    assert test == 'temp tag1=2,tag2=False field1=1,field2="a string" 1634158455045502066'
 
 
 def test_lp_bad_ts():

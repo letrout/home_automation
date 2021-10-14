@@ -4,7 +4,8 @@ Helper code for fomratting messages destined for InfluxDB2
 
 import time
 
-BOOLS = ["t", "true", "f", "false"]
+# These are treated as boolean by influx LP
+BOOLS = ["t", "T", "true", "True", "TRUE", "f", "F", "false", "False", "FALSE"]
 
 
 def influx_lp(measurement, fields, tags=None, time_ns=None):
@@ -34,6 +35,7 @@ def influx_lp(measurement, fields, tags=None, time_ns=None):
     fs = lp_set(fields)
     lp = f"{str(measurement)} {ts} {fs} {time_ns}"
     return lp
+
 
 def lp_set(fields):
     if not isinstance(fields, dict) or len(fields.keys()) == 0:
