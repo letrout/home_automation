@@ -41,6 +41,14 @@ def influx_lp(measurement, fields, tags=None, time_ns=None):
 
 
 def lp_set(fields):
+    """
+    create a line protocol fieldset string from a dict
+        Parameters
+            fields (dict): dictionary of field->value
+        Returns
+            lp_fieldset (str): string of "field1=value1,field2=value2..."
+            None on error or empty fields
+    """
     if not isinstance(fields, dict) or len(fields.keys()) == 0:
         return None
     fieldset = []
