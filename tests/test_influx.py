@@ -33,7 +33,7 @@ def test_lp_emptytag():
     assert test == "temp field1=1,field2=5.5 1634158455045502066"
 
 
-def test_lp_emptryfiled():
+def test_lp_emptryfield():
     test = influx.influx_lp(
         "temp",
         {},
