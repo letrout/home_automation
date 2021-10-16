@@ -47,7 +47,7 @@ def lp_set(fields):
             fields (dict): dictionary of field->value
         Returns
             lp_fieldset (str): string of "field1=value1,field2=value2..."
-            None on error or empty fields
+            None on error or empty
     """
     if not isinstance(fields, dict) or len(fields.keys()) == 0:
         return None
