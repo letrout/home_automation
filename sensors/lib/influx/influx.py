@@ -48,6 +48,8 @@ def lp_set(fields):
         Returns
             lp_fieldset (str): string of "field1=value1,field2=value2..."
             None on error or empty
+    FIXME: how do we handle spaces in strings? Embedding quotes in field keys
+    or values results in weird behavior in inflixdb queries
     """
     if not isinstance(fields, dict) or len(fields.keys()) == 0:
         return None
@@ -56,8 +58,9 @@ def lp_set(fields):
     for key in fields:
         val = fields[key]
         if isinstance(val, str):
+            # FIXME: handle spaces in strings
             if not val in BOOLS:
-                val = f"\"{val}\""
+                val = f"{val}"
         fieldset.append(f"{key}={val}")
     if len(fieldset) > 0:
         lp_fieldset += ",".join(fieldset)
