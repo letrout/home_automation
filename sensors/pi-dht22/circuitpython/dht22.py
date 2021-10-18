@@ -1,5 +1,4 @@
 # A script to poll DHT22 for temp/humidity
-# TODO: publish to MQTT
 
 import adafruit_dht
 import board
@@ -68,14 +67,22 @@ def main(argv):
     dht_device = adafruit_dht.DHT22(eval(f'board.D{pin}'))
     if use_mqtt:
         hum, temp = poll_dht22(dht_device)
+        time_ns = time.time_ns()
         m_client = mqtt_pub.client()
+        fields = {}
         if temp is not None:
-            ret = mqtt_pub.publish(
-                pin, 'temp_F', c_to_f(temp), m_client)
+            temp_f = c_to_f(temp)
+            ret = mqtt_pub.publish(pin, 'temp_F', temp_f, m_client)
+            fields['temp_f'] = temp_f
         if hum is not None:
+            fields['humidity'] = hum
             # Without the delay, sometimes fail to see humidity post to broker
             time.sleep(10)
             ret = mqtt_pub.publish(pin, 'rel_humidity', hum, m_client)
+            mqtt_pub.disconnect(m_client)
+        # publish to influxdb topic
+        m_client = mqtt_pub.client()
+        ret_inf = mqtt_pub.publish_influx(pin, m_client, fields, None, time_ns)
         mqtt_pub.disconnect(m_client)
     else:
         print_loop(interval, dht_device)

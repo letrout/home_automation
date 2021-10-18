@@ -10,11 +10,18 @@ MQTT_BROKER = '<MQTT broker IP>'
 MQTT_PORT = <MQTT broker port>
 MQTT_USER = '<username>'
 MQTT_PW = '<password>'
+INFLUX_PREFIX = 'influx/'   # prepend influx-destined topics with this
 PINS = {
-    <pin#>: {
+    <pin1>: {
+        'location': '<location>',
+        'room': '<room>',
+        'room_loc': '<room_loc>',
         'topic': '<sub1>/<sub2>'
     }
-    <pin#>: {
+    <pin2>: {
+        'location': '<location>',
+        'room': '<room>',
+        'room_loc': '<room_loc>',
         'topic': '<sub1>/<sub3>'
     }
 }
