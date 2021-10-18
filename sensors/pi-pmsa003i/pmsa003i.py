@@ -96,6 +96,7 @@ def main(argv):
 
     if use_mqtt:
         aqdata = poll_pmsa003i()
+        time_ns = time.time_ns()
         if aqdata is None:
             sys.exit(1)
         m_client = mqtt_pub.client()
@@ -105,10 +106,16 @@ def main(argv):
             ret = mqtt_pub.publish(DEFAULT_PIN, 'PM2.5_std', aqdata['pm25 standard'], m_client)
             time.sleep(2)
             ret = mqtt_pub.publish(DEFAULT_PIN, 'PM10.0_std', aqdata['pm100 standard'], m_client)
-            #time.sleep(10)
-            #ret = mqtt_pub.publish(pin, 'rel_humidity', hum, m_client)
         except KeyError:
             print("key error")
+        mqtt_pub.disconnect(m_client)
+        # Publish to influxdb-subscribed topic
+        fields = {}
+        # replace the spaces in aqdata fields so we don't have to deal with that
+        for field in aqdata.keys():
+            fields[field.replace(" ", "_")] = aqdata[field]
+        m_client = mqtt_pub.client()
+        ret_inf = mqtt_pub.publish_influx(DEFAULT_PIN, m_client, fields, None, time_ns)
         mqtt_pub.disconnect(m_client)
     else:
         print_loop(interval)
