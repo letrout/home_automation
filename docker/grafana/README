@@ -1,0 +1,5 @@
+Run grafana container with influxdb2 connectivity
+docker run -d --name grafana \
+	--restart unless-stopped \
+	-p 3000:3000 \
+	grafana/grafana
