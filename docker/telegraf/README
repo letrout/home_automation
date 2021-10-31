@@ -38,3 +38,25 @@ docker run -d --name telegraf \
 
 Test the telegraf container
 	sudo docker exec telegraf telegraf --test
+
+Telegraf on Pi
+  Get the Debian version
+	cat /etc/os-release
+	PRETTY_NAME="Raspbian GNU/Linux 10 (buster)"
+  Add the repo key
+	curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+	OK
+  Add the repo
+	echo "deb https://repos.influxdata.com/debian buster stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+	deb https://repos.influxdata.com/debian buster stable
+  Install telegraf
+	sudo apt-get update
+	sudo apt-get install telegraf
+  Start telegraf
+	update /etc/telegraf/telegraf.conf, /etc/telegraf/telegrad.d/*
+	sudo systemctl reload telegraf.service
+  Add the telegraf user to video group, so it can run vcgencmd (to get GPU temp)
+	sudo usermod -a -G video telegraf
+  Test the command
+	sudo -u telegraf vcgencmd measure_temp
+
