@@ -8,3 +8,7 @@ sudo docker run -d --name telegraf_cloud \
         -e INFLUX_BUCKET=$INFLUX_BUCKET \
         -e INFLUX_AIRQUAL_URL=$INFLUX_AIRQUAL_URL \
         telegraf
+
+# TODO: build a docker image with the starlark script?
+sudo docker cp aq.star telegraf:/usr/local/bin
+sudo docker exec telegraf chmod +x /usr/local/bin/aq.star
