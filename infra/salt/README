@@ -1,0 +1,49 @@
+Install salt master
+  sudo mkdir -p /docker/salt/etc/master.d
+  sudo mkdir -p /docker/salt/srv
+  sudo mkdir -p /docker/salt/log
+  sudo chown -R :450 /docker/salt/*
+  sudo chmod -R 775 /docker/salt/*
+
+  SALTSECRET=<secret> && \
+  sudo docker run \
+	--name salt \
+	--hostname salt \
+	-p 4505-4506:4505-4506 -p 8000:8000 \
+	-e SALT_SHARED_SECRET=$SALTSECRET \
+	-v /docker/salt/etc:/etc/salt \
+	-v /docker/salt/srv:/srv \
+	-v /docker/salt/log:/var/log/salt \
+	-d saltstack/salt:3003.3
+
+Note the saltstack docker image does not have gpg or git, need to install manually
+	sudo docker exec salt apk add --no-cache openssh-client gnupg git
+
+Install minion
+  curl -L https://bootstrap.saltstack.com -o install_salt.sh
+  sudo sh install_salt.sh -P \
+	-A <salt master hostname> \
+	-i <minion name> \
+	git v3003.3
+(omit the -i <name> to default to the minion hostname)
+Get minion key fingerprint
+  sudo salt-call --local key.finger
+
+Add minion key to master
+On master
+  sudo docker exec salt salt-key -f <minion name>
+verify this matches minion fingerprint, if so accept with
+  sudo docker exec salt salt-key -a <minion name>
+check that the minion key now appears as "accepted"
+   sudo docker exec salt salt-key
+
+Add master public key to minion
+  sudo docker exec salt salt-key -F master
+copy master.pub
+On minion, edit /etc/salt/minion
+  master_finger: '<master public key sig>'
+  sudo systemctl restart salt-minion.service
+
+agentless minion bulk install
+on master, edit /etc/salt/roster
+  <TBD>
