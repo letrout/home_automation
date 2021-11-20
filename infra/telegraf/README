@@ -25,6 +25,7 @@ docker run -d --name telegraf \
 	--net=container:influxdb2 \
 	-v /docker/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
 	-v /var/run/docker.sock:/var/run/docker.sock:ro \
+	-v /docker/influxdb2/data/engine:/influxdb2/db:ro \
 	-v /:/hostfs:ro \
 	-e HOST_ETC=/hostfs/etc \
 	-e HOST_PROC=/hostfs/proc \

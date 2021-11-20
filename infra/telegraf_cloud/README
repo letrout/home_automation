@@ -2,6 +2,7 @@ export $(cat env.sh | xargs) &&
 sudo docker run -d --name telegraf_cloud \
         --restart unless-stopped \
         -v /docker/telegraf_cloud/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
+	-v /docker/influxdb2/data/engine:/influxdb2/db:ro \
         -e INFLUX_HOST=$INFLUX_HOST \
         -e INFLUX_TOKEN=$INFLUX_TOKEN \
         -e INFLUX_ORG=$INFLUX_ORG \
@@ -10,5 +11,5 @@ sudo docker run -d --name telegraf_cloud \
         telegraf
 
 # TODO: build a docker image with the starlark script?
-sudo docker cp aq.star telegraf:/usr/local/bin
-sudo docker exec telegraf chmod +x /usr/local/bin/aq.star
+sudo docker cp aq.star telegraf_cloud:/usr/local/bin
+sudo docker exec telegraf_cloud chmod +x /usr/local/bin/aq.star
