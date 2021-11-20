@@ -1,4 +1,4 @@
-export $(cat docker/telegraf_cloud/env.sh | xargs) &&
+export $(cat env.sh | xargs) &&
 sudo docker run -d --name telegraf_cloud \
         --restart unless-stopped \
         -v /docker/telegraf_cloud/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
