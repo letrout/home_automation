@@ -36,6 +36,10 @@ docker run -d --name telegraf \
 	-e DOCKER_INFLUXDB_INIT_BUCKET=$INFLUX_BUCKET \
 	telegraf
 
+# TODO: build a docker image with the starlark script?
+sudo docker cp aq.star telegraf:/usr/local/bin
+sudo docker exec telegraf chmod +x /usr/local/bin/aq.star
+
 Test the telegraf container
 	sudo docker exec telegraf telegraf --test
 
