@@ -6,7 +6,8 @@ toBucket = "infra_" + string(v: task.every)
 	all_data = from(bucket: fromBucket)
 		|> range(start: -task.every)
 		|> filter(fn: (r) =>
-			(r._measurement =~ /^internal_.+$/))
+			(r._measurement =~ /^cpu|disk*|docker|kernel|mem|net|pf|proc*|swap|system|temp$/)
+				and exists r._value and (r._value >= 0 or r._value < 0))
 	all_data
 		|> aggregateWindow(every: task.every, fn: mean)
 		|> set(key: "aggregate", value: "mean")
