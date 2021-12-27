@@ -1,3 +1,8 @@
+/**
+ * Based on the Adafruit Funhouse shipping demo
+ * https://github.com/adafruit/Adafruit_Learning_System_Guides/tree/main/FunHouse_Arduino_Demos/shipping_demo
+ */
+
 #include <Adafruit_DotStar.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
