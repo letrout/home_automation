@@ -22,35 +22,35 @@ mqtt_topic = "test/topic"
 
 # Define callback methods which are called when events occur
 # pylint: disable=unused-argument, redefined-outer-name
-def connect(mqtt_client, userdata, flags, rc):
+def on_connect(mqtt_client, userdata, flags, rc):
     # This function will be called when the mqtt_client is connected
     # successfully to the broker.
     print("Connected to MQTT Broker!")
     print("Flags: {0}\n RC: {1}".format(flags, rc))
 
 
-def disconnect(mqtt_client, userdata, rc):
+def on_disconnect(mqtt_client, userdata, rc):
     # This method is called when the mqtt_client disconnects
     # from the broker.
     print("Disconnected from MQTT Broker!")
 
 
-def subscribe(mqtt_client, userdata, topic, granted_qos):
+def on_subscribe(mqtt_client, userdata, topic, granted_qos):
     # This method is called when the mqtt_client subscribes to a new feed.
     print("Subscribed to {0} with QOS level {1}".format(topic, granted_qos))
 
 
-def unsubscribe(mqtt_client, userdata, topic, pid):
+def on_unsubscribe(mqtt_client, userdata, topic, pid):
     # This method is called when the mqtt_client unsubscribes from a feed.
     print("Unsubscribed from {0} with PID {1}".format(topic, pid))
 
 
-def publish(mqtt_client, userdata, topic, pid):
+def on_publish(mqtt_client, userdata, topic, pid):
     # This method is called when the mqtt_client publishes data to a feed.
     print("Published to {0} with PID {1}".format(topic, pid))
 
 
-def message(client, topic, message):
+def on_message(client, topic, message):
     # Method callled when a client's subscribed feed has a new value.
     print("New message on topic {0}: {1}".format(topic, message))
 
@@ -72,12 +72,12 @@ def get_client():
         ssl_context=ssl.create_default_context()
         )
     # Connect callback handlers to mqtt_client
-    mqtt_client.on_connect = connect
-    mqtt_client.on_disconnect = disconnect
-    mqtt_client.on_subscribe = subscribe
-    mqtt_client.on_unsubscribe = unsubscribe
-    mqtt_client.on_publish = publish
-    mqtt_client.on_message = message
+    mqtt_client.on_connect = on_connect
+    mqtt_client.on_disconnect = on_disconnect
+    mqtt_client.on_subscribe = on_subscribe
+    mqtt_client.on_unsubscribe = on_unsubscribe
+    mqtt_client.on_publish = on_publish
+    mqtt_client.on_message = on_message
     return mqtt_client
 
 def mqtt_connect(client=None):
