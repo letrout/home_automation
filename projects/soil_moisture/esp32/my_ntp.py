@@ -1,10 +1,24 @@
+"""
+Simple NTP client for CircuitPython
+
+from https://www.mattcrampton.com/blog/query_an_ntp_server_from_python/
+"""
+
 import rtc
 import socketpool
 import struct, time
 
 import my_wifi
  
-def getNTPTime(pool, host = "pool.ntp.org"):
+def getNTPTime(pool, host="pool.ntp.org"):
+    """
+    Get the current time from NTP server
+    params:
+        pool: socketpool
+        host: NTP server hostname/IP
+    return:
+        t: seconds since 1970
+    """
     port = 123
     buf = 48
     address = (host,port)
@@ -24,6 +38,18 @@ def getNTPTime(pool, host = "pool.ntp.org"):
     t -= TIME1970
     #return time.ctime(t).replace("  "," ")
     return t
+
+def set_rtc_to_ntp(pool, host="pool.ntp.org"):
+    """
+     Set the RTC to time from NTP server
+    params:
+        pool: socketpool
+        host: NTP server hostname/IP
+    return:
+        nothing
+    """
+    t = getNTPTime(pool, host)
+    rtc.RTC().datetime = time.localtime(t)
  
 if __name__ == "__main__":
     my_wifi.connect()
