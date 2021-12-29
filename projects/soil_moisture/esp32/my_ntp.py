@@ -20,6 +20,13 @@ def get_ntp_sec(pool, host="pool.ntp.org"):
     return:
         t: seconds since 1970
     """
+
+    if my_wifi.wifi.radio.ipv4_address is None:
+        my_wifi.connect()
+        if my_wifi.wifi.radio.ipv4_address is None:
+            print("ERROR: NTP client failed to connect to WiFi")
+            return None
+
     port = 123
     buf = 48
     address = (host, port)
@@ -30,10 +37,13 @@ def get_ntp_sec(pool, host="pool.ntp.org"):
     time_1970 = 2208988800 # 1970-01-01 00:00:00
 
     # connect to server
-    client = pool.socket(pool.AF_INET, pool.SOCK_DGRAM)
-    client.sendto(msg.encode('utf-8'), address)
-    #msg, address = client.recv_into( recv_msg, buf )
-    client.recv_into(recv_msg, buf)
+    try:
+        client = pool.socket(pool.AF_INET, pool.SOCK_DGRAM)
+        client.sendto(msg.encode('utf-8'), address)
+        #msg, address = client.recv_into( recv_msg, buf )
+        client.recv_into(recv_msg, buf)
+    except:
+        return None
 
     ntp_sec = struct.unpack("!12I", recv_msg)[10]
     ntp_sec -= time_1970
@@ -48,7 +58,11 @@ def set_rtc_to_ntp(pool, host="pool.ntp.org"):
         pool: socketpool
         host: NTP server hostname/IP
     return:
-        nothing
+        0: success
+        1: failure
     """
     ntp_sec = get_ntp_sec(pool, host)
-    rtc.RTC().datetime = time.localtime(ntp_sec)
+    if ntp_sec is not None:
+        rtc.RTC().datetime = time.localtime(ntp_sec)
+        return 0
+    return 1
