@@ -80,19 +80,33 @@ def get_client():
     mqtt_client.on_message = on_message
     return mqtt_client
 
+
+def mqtt_is_connected(client):
+    connected = False
+    try:
+        connected = client.is_connected()
+    except (MQTT.MMQTTException, AttributeError):
+        return False
+    return connected
+
+
 def mqtt_connect(client=None):
     if client is None:
         client = get_client()
     if client is not None:
         print("Attempting to connect to %s" % client.broker)
-        client.connect()
+        try:
+            client.connect()
+        except MQTT.MMQTTException as e:
+            print("ERROR - MQTT: %s" % e)
+            return None
     return client
 
 
 def mqtt_subscribe(topic, client=None):
     if client is None:
         client = get_client()
-    if client is not None:
+    if mqtt_is_connected(client):
         print("Subscribing to %s" % topic)
         client.subscribe(mqtt_topic)
     return client
@@ -101,7 +115,7 @@ def mqtt_subscribe(topic, client=None):
 def mqtt_publish(topic, msg, client=None):
     if client is None:
         client = get_client()
-    if client is not None:
+    if mqtt_is_connected(client):
         print("Publishing to %s" % topic)
         client.publish(topic, msg)
     return client
@@ -110,13 +124,13 @@ def mqtt_publish(topic, msg, client=None):
 def mqtt_unsubscribe(topic, client=None):
     if client is None:
         client = get_client()
-    if client is not None:
+    if mqtt_is_connected(client):
         print("Unsubscribing from %s" % topic)
         client.unsubscribe(topic)
     return client
 
 
 def mqtt_disconnect(client):
-    if client is not None:
+    if mqtt_is_connected(client):
         print("Disconnecting from %s" % client.broker)
         client.disconnect()
