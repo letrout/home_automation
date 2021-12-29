@@ -39,15 +39,20 @@ def get_ntp_sec(pool, host="pool.ntp.org"):
     # connect to server
     try:
         client = pool.socket(pool.AF_INET, pool.SOCK_DGRAM)
+        client.settimeout(10)
         client.sendto(msg.encode('utf-8'), address)
         #msg, address = client.recv_into( recv_msg, buf )
         client.recv_into(recv_msg, buf)
     except:
+        print("ERROR: unable to contact NTP server")
         return None
 
-    ntp_sec = struct.unpack("!12I", recv_msg)[10]
-    ntp_sec -= time_1970
-    #return time.ctime(t).replace("  "," ")
+    try:
+        ntp_sec = struct.unpack("!12I", recv_msg)[10]
+        ntp_sec -= time_1970
+        #return time.ctime(t).replace("  "," ")
+    except:
+        return None
     return ntp_sec
 
 
