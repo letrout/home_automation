@@ -73,7 +73,6 @@ def get_client():
             print("ERROR: mqtt client failed to connect to WiFi")
             return None
 
-
     mqtt_client = MQTT.MQTT(
         broker=secrets["mqtt_broker"],
         port=secrets["mqtt_port"],
