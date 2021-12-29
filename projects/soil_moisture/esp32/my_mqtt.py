@@ -98,12 +98,12 @@ def mqtt_subscribe(topic, client=None):
     return client
 
 
-def mqtt_publish(topic, client=None):
+def mqtt_publish(topic, msg, client=None):
     if client is None:
         client = get_client()
     if client is not None:
         print("Publishing to %s" % topic)
-        client.publish(topic, "Hello Broker!")
+        client.publish(topic, msg)
     return client
 
 
