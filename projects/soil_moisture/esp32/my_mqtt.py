@@ -55,7 +55,7 @@ def message(client, topic, message):
     print("New message on topic {0}: {1}".format(topic, message))
 
 
-def client():
+def get_client():
     if my_wifi.wifi.radio.ipv4_address is None:
         my_wifi.connect()
         if my_wifi.wifi.radio.ipv4_address is None:
@@ -82,7 +82,7 @@ def client():
 
 def mqtt_connect(client=None):
     if client is None:
-        client = client()
+        client = get_client()
     if client is not None:
         print("Attempting to connect to %s" % client.broker)
         client.connect()
@@ -91,7 +91,7 @@ def mqtt_connect(client=None):
 
 def mqtt_subscribe(topic, client=None):
     if client is None:
-        client = client()
+        client = get_client()
     if client is not None:
         print("Subscribing to %s" % topic)
         client.subscribe(mqtt_topic)
@@ -100,7 +100,7 @@ def mqtt_subscribe(topic, client=None):
 
 def mqtt_publish(topic, client=None):
     if client is None:
-        client = client()
+        client = get_client()
     if client is not None:
         print("Publishing to %s" % topic)
         client.publish(topic, "Hello Broker!")
@@ -109,7 +109,7 @@ def mqtt_publish(topic, client=None):
 
 def mqtt_unsubscribe(topic, client=None):
     if client is None:
-        client = client()
+        client = get_client()
     if client is not None:
         print("Unsubscribing from %s" % topic)
         client.unsubscribe(topic)
