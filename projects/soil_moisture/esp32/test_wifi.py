@@ -1,8 +1,10 @@
-#
-# Rename to code.py to test WiFi
-# based on https://learn.adafruit.com/adafruit-metro-esp32-s2/circuitpython-internet-test
-#
-import ipaddress
+"""
+Code te test MQTT lib
+rename to code.py for running on uC
+
+based on https://learn.adafruit.com/adafruit-metro-esp32-s2/circuitpython-internet-test
+"""
+
 import ssl
 import socketpool
 import adafruit_requests
@@ -44,4 +46,3 @@ print("CircuitPython GitHub Stars", response.json()["stargazers_count"])
 print("-" * 40)
 
 print("done")
-

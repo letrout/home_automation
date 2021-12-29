@@ -1,3 +1,8 @@
+"""
+Code te test MQTT lib
+rename to code.py for running on uC
+"""
+
 import my_mqtt
 
 mqtt_client = my_mqtt.get_client()
