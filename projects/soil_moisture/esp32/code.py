@@ -11,8 +11,6 @@ ADC_PIN = "A1"
 BITS_DRY = 52586    # ADC value when probe in air
 BITS_WET = 29113    # ADC value when probe submersed in water
 
-analog_in = AnalogIn(eval(f'board.{ADC_PIN}'))
-
 
 def get_voltage(pin):
     """
@@ -35,10 +33,16 @@ def wet_pct(bits):
     return 100.0 - dry_pct(bits)
 
 
-while True:
-    # print((get_voltage(analog_in),))
-    # analog_in = AnalogIn(eval(f'board.{ADC_PIN}'))
-    bits = analog_in.value
-    dry = dry_pct(bits)
-    print(f"{ADC_PIN}: {bits} bits, dry: {dry:.1f}%")
-    time.sleep(5)
+def main():
+    analog_in = AnalogIn(eval(f'board.{ADC_PIN}'))
+    while True:
+        # print((get_voltage(analog_in),))
+        # analog_in = AnalogIn(eval(f'board.{ADC_PIN}'))
+        bits = analog_in.value
+        dry = dry_pct(bits)
+        print(f"{ADC_PIN}: {bits} bits, dry: {dry:.1f}%")
+        time.sleep(5)
+
+
+if __name__ == "__main__":
+    main()
