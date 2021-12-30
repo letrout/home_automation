@@ -23,6 +23,10 @@ def dry_pct(bits):
     return interp(bits, [BITS_WET, BITS_DRY], [0,100])[0]
 
 
+def wet_pct(bits):
+    return 100.0 - dry_pct(bits)
+
+
 while True:
     #print((get_voltage(analog_in),))
     #analog_in = AnalogIn(eval(f'board.{ADC_PIN}'))
