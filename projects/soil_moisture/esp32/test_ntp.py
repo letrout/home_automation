@@ -20,6 +20,10 @@ def main():
         print("after ntp:\t%s" % time.localtime())
     else:
         print("ERROR setting RTC to NTP")
+    time.sleep(1)
+    print("time_ns from RTC: %d" % my_ntp.time_ns())
+    time.sleep(1)
+    print("time_ns from NTP client: %d" % my_ntp.time_ns(pool, "pool.ntp.org"))
 
 
 if __name__ == "__main__":
