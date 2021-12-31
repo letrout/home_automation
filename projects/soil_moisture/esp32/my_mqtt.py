@@ -12,7 +12,7 @@ import socketpool
 import my_wifi
 # Get MQTT details and more from a secrets.py file
 try:
-    from secrets import secrets
+    from secrets import influx, probes, secrets
 except ImportError:
     print("MQTT secrets are kept in secrets.py, please add them there!")
     raise
@@ -110,8 +110,8 @@ def mqtt_connect(client=None):
     if client is None:
         client = get_client()
     if client is not None:
-        print("Attempting to connect to %s" % client.broker)
         try:
+            print("Attempting to connect to %s" % client.broker)
             client.connect()
         except MQTT.MMQTTException as exc:
             print("ERROR - MQTT: %s" % exc)
@@ -125,9 +125,10 @@ def mqtt_subscribe(topic, client=None):
     """
     if client is None:
         client = get_client()
-    if mqtt_is_connected(client):
-        print("Subscribing to %s" % topic)
-        client.subscribe(topic)
+    if not mqtt_is_connected(client):
+        mqtt_connect(client)
+    print("Subscribing to %s" % topic)
+    client.subscribe(topic)
     return client
 
 
@@ -137,9 +138,10 @@ def mqtt_publish(topic, msg, client=None):
     """
     if client is None:
         client = get_client()
-    if mqtt_is_connected(client):
-        print("Publishing to %s" % topic)
-        client.publish(topic, msg)
+    if not mqtt_is_connected(client):
+        mqtt_connect(client)
+    print("Publishing to %s" % topic)
+    client.publish(topic, msg)
     return client
 
 
@@ -149,9 +151,10 @@ def mqtt_unsubscribe(topic, client=None):
     """
     if client is None:
         client = get_client()
-    if mqtt_is_connected(client):
-        print("Unsubscribing from %s" % topic)
-        client.unsubscribe(topic)
+    if not mqtt_is_connected(client):
+        mqtt_connect(client)
+    print("Unsubscribing from %s" % topic)
+    client.unsubscribe(topic)
     return client
 
 
