@@ -1,14 +1,20 @@
 import time
 import board
+import socketpool
 from analogio import AnalogIn
 from ulab.numpy import interp
 
 import my_influx
 import my_mqtt
+import my_ntp
+import my_wifi
 from secrets import influx, probes, secrets
 
 ADC_BITS = 16
 V_REF = 3.3
+NTP_SERVER = None  # If !None, set RTC from NTP and pass timestamp in MQTT msgs
+QUERY_INT = 5  # Seconds between queries of the probes
+MQTT_PUB = False  # Set to True to publish to MQTT
 
 
 def get_voltage(pin):
@@ -38,7 +44,7 @@ def wet_pct(pin):
     return 100.0 - dry_pct(pin)
 
 
-def publish_influx(pin, val, client=None, time_ns=None):
+def publish_influx(pin, val, client=None, time_ns=None, get_time=False):
     """
     Publish to MQTT, with a message formatted in Influxdb2 line protocol
     """
@@ -47,7 +53,7 @@ def publish_influx(pin, val, client=None, time_ns=None):
     fields = {}
     fields["wet_pct"] = val
     measurement = influx["_measurement"]
-    lp = my_influx.influx_lp(measurement, fields, tags, time_ns)
+    lp = my_influx.influx_lp(measurement, fields, tags, time_ns, get_time)
     topic = secrets["mqtt_topic"]
     return my_mqtt.mqtt_publish(topic, lp, client)
 
@@ -60,11 +66,18 @@ def main():
     while True:
         # print((get_voltage(analog_in),))
         # analog_in = AnalogIn(eval(f'board.{ADC_PIN}'))
+        # Optionally, set RTC to NTP and use local RTC for MQTT timestamp
+        time_ns = None
+        if NTP_SERVER:
+            pool = socketpool.SocketPool(my_wifi.wifi.radio)
+            time_ns = my_ntp.time_ns(pool, NTP_SERVER)
+        # Get probe value and publish to MQTT
         for pin in probes:
             bits = probes[pin]["analog_in"].value
             wet = wet_pct(pin)
             print(f"{pin}: {bits} bits, wet: {wet:.1f}%")
-            publish_influx(pin, wet, mqtt_client)
+            if MQTT_PUB:
+                publish_influx(pin, wet, mqtt_client, time_ns)
         time.sleep(5)
 
 
