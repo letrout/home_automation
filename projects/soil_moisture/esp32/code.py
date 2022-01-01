@@ -78,7 +78,7 @@ def main():
             print(f"{pin}: {bits} bits, wet: {wet:.1f}%")
             if MQTT_PUB:
                 publish_influx(pin, wet, mqtt_client, time_ns)
-        time.sleep(5)
+        time.sleep(QUERY_INT)
 
 
 if __name__ == "__main__":
