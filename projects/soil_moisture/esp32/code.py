@@ -62,7 +62,6 @@ def main():
     # Connect to probes
     for pin in probes:
         probes[pin]["analog_in"] = AnalogIn(eval(f'board.{pin}'))
-    mqtt_client = my_mqtt.get_client()
     while True:
         # print((get_voltage(analog_in),))
         # analog_in = AnalogIn(eval(f'board.{ADC_PIN}'))
@@ -71,6 +70,9 @@ def main():
         if NTP_SERVER:
             pool = socketpool.SocketPool(my_wifi.wifi.radio)
             time_ns = my_ntp.time_ns(pool, NTP_SERVER)
+        if MQTT_PUB:
+            mqtt_client = my_mqtt.get_client()
+            my_mqtt.mqtt_connect(mqtt_client)
         # Get probe value and publish to MQTT
         for pin in probes:
             bits = probes[pin]["analog_in"].value
@@ -78,6 +80,8 @@ def main():
             print(f"{pin}: {bits} bits, wet: {wet:.1f}%")
             if MQTT_PUB:
                 publish_influx(pin, wet, mqtt_client, time_ns)
+        if MQTT_PUB:
+            my_mqtt.mqtt_disconnect(mqtt_client)
         time.sleep(QUERY_INT)
 
 
