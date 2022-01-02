@@ -15,6 +15,7 @@ V_REF = 3.3
 NTP_SERVER = None  # If !None, set RTC from NTP and pass timestamp in MQTT msgs
 QUERY_INT = 5  # Seconds between queries of the probes
 MQTT_PUB = False  # Set to True to publish to MQTT
+SAMPLES = 1  # The number of probe readings to take and average for each measurement
 
 
 def get_voltage(pin):
@@ -24,11 +25,20 @@ def get_voltage(pin):
     return (probes[pin]["analog_in"].value * V_REF) / ((1 << ADC_BITS) - 1)
 
 
-def dry_pct(pin):
+def dry_pct(pin, samples=1):
     """
-    The percentage of "wet" into the probe's range
+    The percentage of "dry" into the probe's range
+    params:
+        pin - the pin number (key of dict in secrets)
+        samples - the number of samples to take and average
+    returns:
+        dry_pct: the percentage of dry of the probe range
     """
-    bits = probes[pin]["analog_in"].value
+    bits = 0
+    for i in range(0,samples):
+        reading = probes[pin]["analog_in"].value
+        bits += reading
+    bits /= samples
     dry_pct = interp(
         bits,
         [probes[pin]["bits_wet"], probes[pin]["bits_dry"]],
@@ -37,11 +47,16 @@ def dry_pct(pin):
     return dry_pct
 
 
-def wet_pct(pin):
+def wet_pct(pin, samples=1):
     """
     The percentage of "wet" into the probe's range
+    params:
+        pin - the pin number (key of dict in secrets)
+        samples - the number of samples to take and average
+    returns:
+        dry_pct: the percentage of wet of the probe range
     """
-    return 100.0 - dry_pct(pin)
+    return 100.0 - dry_pct(pin, samples)
 
 
 def publish_influx(pin, val, client=None, time_ns=None, get_time=False):
@@ -79,7 +94,7 @@ def main():
         # Get probe value and publish to MQTT
         for pin in probes:
             bits = probes[pin]["analog_in"].value
-            wet = wet_pct(pin)
+            wet = wet_pct(pin, SAMPLES)
             print(f"{pin}: {bits} bits, wet: {wet:.1f}%")
             if MQTT_PUB:
                 publish_influx(pin, wet, mqtt_client, time_ns)
