@@ -36,8 +36,7 @@ def dry_pct(pin, samples=1):
     """
     bits = 0
     for i in range(0,samples):
-        reading = probes[pin]["analog_in"].value
-        bits += reading
+        bits += probes[pin]["analog_in"].value
     bits /= samples
     dry_pct = interp(
         bits,
