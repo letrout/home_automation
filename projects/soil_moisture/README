@@ -1,0 +1,12 @@
+Monitor soil moisture
+
+Update secrets.py as approrpiate for local configuration specifics.
+
+In code.py, user should set
+	NTP_SERVER
+		Set to None to not pass a timestamp in measurements, set to a NTP server
+		IP/hostname to set RTC to NTP and use local clock time in messages
+	QUERY_INT
+		Set to number of seconds between queries of the probes
+	MQTT_PUB
+		Set to True to publish to MQTT broker
