@@ -91,14 +91,19 @@ def main():
             my_mqtt.mqtt_connect(mqtt_client)
             mqtt_client.loop()
         # Get probe value and publish to MQTT
-        for pin in probes:
-            bits = probes[pin]["analog_in"].value
-            wet = wet_pct(pin, SAMPLES)
-            print(f"{pin}: {bits} bits, wet: {wet:.1f}%")
+        try:
+            for pin in probes:
+                bits = probes[pin]["analog_in"].value
+                wet = wet_pct(pin, SAMPLES)
+                print(f"{pin}: {bits} bits, wet: {wet:.1f}%")
+                if MQTT_PUB:
+                    publish_influx(pin, wet, mqtt_client, time_ns)
             if MQTT_PUB:
-                publish_influx(pin, wet, mqtt_client, time_ns)
-        if MQTT_PUB:
-            my_mqtt.mqtt_disconnect(mqtt_client)
+                my_mqtt.mqtt_disconnect(mqtt_client)
+        except ValueError:
+            # Sometimes error on readin pin, eg
+            # ValueError: ADC2 is being used by WiFi
+            pass
         time.sleep(QUERY_INT)
 
 
