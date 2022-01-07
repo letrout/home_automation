@@ -18,11 +18,35 @@ MQTT_PUB = False  # Set to True to publish to MQTT
 SAMPLES = 1  # The number of probe readings to take and average for each measurement
 
 
+def read_pin(pin):
+    """
+    Read analog pin value
+    params:
+        pin - the pin number (key of dict in secrets)
+    returns:
+        bits - probe bits on success, None on failure
+    """
+    bits = None
+    try:
+        bits = probes[pin]["analog_in"].value
+    except (ValueError, KeyError):
+        pass
+    return bits
+
+
 def get_voltage(pin):
     """
     Get voltage value from an ADV pin
+    params:
+        pin - the pin number (key of dict in secrets)
+    returns:
+        volts - volts value on success, None on failure
     """
-    return (probes[pin]["analog_in"].value * V_REF) / ((1 << ADC_BITS) - 1)
+    bits = read_pin(pin)
+    if bits is not None:
+        return (probes[pin]["analog_in"].value * V_REF) / ((1 << ADC_BITS) - 1)
+    else:
+        return None
 
 
 def dry_pct(pin, samples=1):
@@ -32,17 +56,24 @@ def dry_pct(pin, samples=1):
         pin - the pin number (key of dict in secrets)
         samples - the number of samples to take and average
     returns:
-        dry_pct: the percentage of dry of the probe range
+        dry_pct: the percentage of dry of the probe range, None on failure
     """
     bits = 0
+    count = 0
     for i in range(0,samples):
-        bits += probes[pin]["analog_in"].value
-    bits /= samples
-    dry_pct = interp(
-        bits,
-        [probes[pin]["bits_wet"], probes[pin]["bits_dry"]],
-        [0, 100]
-        )[0]
+        reading = probes[pin]["analog_in"].value
+        if reading is not None:
+            bits += reading
+            count += 1
+    if count > 0:
+        bits /= count
+        dry_pct = interp(
+            bits,
+            [probes[pin]["bits_wet"], probes[pin]["bits_dry"]],
+            [0, 100]
+            )[0]
+    else:
+        dry_pct = None
     return dry_pct
 
 
@@ -53,9 +84,13 @@ def wet_pct(pin, samples=1):
         pin - the pin number (key of dict in secrets)
         samples - the number of samples to take and average
     returns:
-        dry_pct: the percentage of wet of the probe range
+        wet_pct: the percentage of wet of the probe range, None on failure
     """
-    return 100.0 - dry_pct(pin, samples)
+    dry = dry_pct(pin, samples)
+    if dry is not None:
+        return 100.0 - dry_pct(pin, samples)
+    else:
+        return None
 
 
 def publish_influx(pin, val, client=None, time_ns=None, get_time=False):
@@ -92,10 +127,10 @@ def main():
             mqtt_client.loop()
         # Get probe value and publish to MQTT
         for pin in probes:
-            bits = probes[pin]["analog_in"].value
+            bits = read_pin(pin)
             wet = wet_pct(pin, SAMPLES)
             print(f"{pin}: {bits} bits, wet: {wet:.1f}%")
-            if MQTT_PUB:
+            if MQTT_PUB and (wet is not None):
                 publish_influx(pin, wet, mqtt_client, time_ns)
         if MQTT_PUB:
             my_mqtt.mqtt_disconnect(mqtt_client)
