@@ -61,7 +61,7 @@ def dry_pct(pin, samples=1):
     bits = 0
     count = 0
     for i in range(0,samples):
-        reading = probes[pin]["analog_in"].value
+        reading = read_pin(pin)
         if reading is not None:
             bits += reading
             count += 1
