@@ -137,7 +137,7 @@ def publish_light_state():
 funhouse.network.init_mqtt(
     secrets["mqtt_broker"],
     secrets["mqtt_port"],
-    secrets["mqtt_username"],
+    secrets["mqtt_user"],
     secrets["mqtt_password"],
 )
 funhouse.network.on_mqtt_connect = connected
