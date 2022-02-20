@@ -22,59 +22,10 @@ except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
-funhouse = FunHouse(default_bg=0x0F0F00)
-funhouse.peripherals.dotstars.fill(INITIAL_LIGHT_COLOR)
-
-# Don't display the splash yet to avoid
-# redrawing labels after each one is added
-funhouse.display.show(None)
-
-# Add the labels
-funhouse.add_text(
-    text="Temperature:",
-    text_position=(20, 30),
-    text_color=0xFF8888,
-    text_font="fonts/Arial-Bold-24.pcf",
-)
-temp_label = funhouse.add_text(
-    text_position=(120, 60),
-    text_anchor_point=(0.5, 0.5),
-    text_color=0xFFFF00,
-    text_font="fonts/Arial-Bold-24.pcf",
-)
-funhouse.add_text(
-    text="Humidity:",
-    text_position=(20, 100),
-    text_color=0x8888FF,
-    text_font="fonts/Arial-Bold-24.pcf",
-)
-hum_label = funhouse.add_text(
-    text_position=(120, 130),
-    text_anchor_point=(0.5, 0.5),
-    text_color=0xFFFF00,
-    text_font="fonts/Arial-Bold-24.pcf",
-)
-funhouse.add_text(
-    text="Pressure:",
-    text_position=(20, 170),
-    text_color=0xFF88FF,
-    text_font="fonts/Arial-Bold-24.pcf",
-)
-pres_label = funhouse.add_text(
-    text_position=(120, 200),
-    text_anchor_point=(0.5, 0.5),
-    text_color=0xFFFF00,
-    text_font="fonts/Arial-Bold-24.pcf",
-)
-
-# Now display the splash to draw all labels at once
-funhouse.display.show(funhouse.splash)
-
 status = Circle(229, 10, 10, fill=0xFF0000, outline=0x880000)
-funhouse.splash.append(status)
 
-def update_enviro():
-    global environment
+
+def update_enviro(funhouse, environment, temp_label, hum_label, pres_label):
 
     temp = funhouse.peripherals.temperature
     unit = "C"
@@ -93,6 +44,7 @@ def update_enviro():
 
 
 def connected(client, userdata, result, payload):
+    global status
     status.fill = 0x00FF00
     status.outline = 0x008800
     print("Connected to MQTT! Subscribing...")
@@ -100,11 +52,13 @@ def connected(client, userdata, result, payload):
 
 
 def disconnected(client):
+    global status
     status.fill = 0xFF0000
     status.outline = 0x880000
+    pass
 
 
-def message(client, topic, payload):
+def message(client, topic, payload, funhouse):
     print("Topic {0} received new value: {1}".format(topic, payload))
     if topic == LIGHT_COMMAND_TOPIC:
         settings = json.loads(payload)
@@ -120,7 +74,7 @@ def message(client, topic, payload):
         publish_light_state()
 
 
-def publish_light_state():
+def publish_light_state(funhouse):
     funhouse.peripherals.led = True
     output = {
         "brightness": round(funhouse.peripherals.dotstars.brightness * 255),
@@ -133,72 +87,137 @@ def publish_light_state():
     funhouse.peripherals.led = False
 
 
-# Initialize a new MQTT Client object
-funhouse.network.init_mqtt(
-    secrets["mqtt_broker"],
-    secrets["mqtt_port"],
-    secrets["mqtt_user"],
-    secrets["mqtt_password"],
-)
-funhouse.network.on_mqtt_connect = connected
-funhouse.network.on_mqtt_disconnect = disconnected
-funhouse.network.on_mqtt_message = message
+def loop(
+        funhouse, environment, last_peripheral_state, last_environment_timestamp,
+        last_publish_timestamp, temp_label, hum_label, pres_label):
+    while True:
+        if not environment or (
+            time.monotonic() - last_environment_timestamp > ENVIRONMENT_CHECK_DELAY
+        ):
+            update_enviro(funhouse, environment, temp_label, hum_label, pres_label)
+            last_environment_timestamp = time.monotonic()
+        output = environment
 
-print("Attempting to connect to {}".format(secrets["mqtt_broker"]))
-funhouse.network.mqtt_connect()
+        peripheral_state_changed = False
+        for peripheral in last_peripheral_state:
+            current_item_state = getattr(funhouse.peripherals, peripheral)
+            output[peripheral] = "on" if current_item_state else "off"
+            if last_peripheral_state[peripheral] != current_item_state:
+                peripheral_state_changed = True
+                last_peripheral_state[peripheral] = current_item_state
 
-last_publish_timestamp = None
-
-last_peripheral_state = {
-    "button_up": funhouse.peripherals.button_up,
-    "button_down": funhouse.peripherals.button_down,
-    "button_sel": funhouse.peripherals.button_sel,
-    "captouch6": funhouse.peripherals.captouch6,
-    "captouch7": funhouse.peripherals.captouch7,
-    "captouch8": funhouse.peripherals.captouch8,
-}
-
-if ENABLE_PIR:
-    last_peripheral_state["pir_sensor"] = funhouse.peripherals.pir_sensor
-
-environment = {}
-update_enviro()
-last_environment_timestamp = time.monotonic()
-
-# Provide Initial light state
-publish_light_state()
-
-while True:
-    if not environment or (
-        time.monotonic() - last_environment_timestamp > ENVIRONMENT_CHECK_DELAY
-    ):
-        update_enviro()
-        last_environment_timestamp = time.monotonic()
-    output = environment
-
-    peripheral_state_changed = False
-    for peripheral in last_peripheral_state:
-        current_item_state = getattr(funhouse.peripherals, peripheral)
-        output[peripheral] = "on" if current_item_state else "off"
-        if last_peripheral_state[peripheral] != current_item_state:
+        if funhouse.peripherals.slider is not None:
+            output["slider"] = funhouse.peripherals.slider
             peripheral_state_changed = True
-            last_peripheral_state[peripheral] = current_item_state
 
-    if funhouse.peripherals.slider is not None:
-        output["slider"] = funhouse.peripherals.slider
-        peripheral_state_changed = True
+        # Every PUBLISH_DELAY, write temp/hum/press/light or if a peripheral changed
+        if (
+            last_publish_timestamp is None
+            or peripheral_state_changed
+            or (time.monotonic() - last_publish_timestamp) > PUBLISH_DELAY
+        ):
+            funhouse.peripherals.led = True
+            print("Publishing to {}".format(MQTT_TOPIC))
+            funhouse.network.mqtt_publish(MQTT_TOPIC, json.dumps(output))
+            funhouse.peripherals.led = False
+            last_publish_timestamp = time.monotonic()
 
-    # Every PUBLISH_DELAY, write temp/hum/press/light or if a peripheral changed
-    if (
-        last_publish_timestamp is None
-        or peripheral_state_changed
-        or (time.monotonic() - last_publish_timestamp) > PUBLISH_DELAY
-    ):
-        funhouse.peripherals.led = True
-        print("Publishing to {}".format(MQTT_TOPIC))
-        funhouse.network.mqtt_publish(MQTT_TOPIC, json.dumps(output))
-        funhouse.peripherals.led = False
-        last_publish_timestamp = time.monotonic()
+        # Check any topics we are subscribed to
+        funhouse.network.mqtt_loop(0.5)
 
-    # Check any topics we are subscribed to
-    funhouse.network.mqtt_loop(0.5)
+
+def main():
+    global status
+
+    funhouse = FunHouse(default_bg=0x0F0F00)
+    funhouse.peripherals.dotstars.fill(INITIAL_LIGHT_COLOR)
+
+    # Don't display the splash yet to avoid
+    # redrawing labels after each one is added
+    funhouse.display.show(None)
+
+    # Add the labels
+    funhouse.add_text(
+        text="Temperature:",
+        text_position=(20, 30),
+        text_color=0xFF8888,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+    temp_label = funhouse.add_text(
+        text_position=(120, 60),
+        text_anchor_point=(0.5, 0.5),
+        text_color=0xFFFF00,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+    funhouse.add_text(
+        text="Humidity:",
+        text_position=(20, 100),
+        text_color=0x8888FF,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+    hum_label = funhouse.add_text(
+        text_position=(120, 130),
+        text_anchor_point=(0.5, 0.5),
+        text_color=0xFFFF00,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+    funhouse.add_text(
+        text="Pressure:",
+        text_position=(20, 170),
+        text_color=0xFF88FF,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+    pres_label = funhouse.add_text(
+        text_position=(120, 200),
+        text_anchor_point=(0.5, 0.5),
+        text_color=0xFFFF00,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+
+    # Now display the splash to draw all labels at once
+    funhouse.display.show(funhouse.splash)
+
+    funhouse.splash.append(status)
+
+    # Initialize a new MQTT Client object
+    funhouse.network.init_mqtt(
+        secrets["mqtt_broker"],
+        secrets["mqtt_port"],
+        secrets["mqtt_user"],
+        secrets["mqtt_password"],
+    )
+    funhouse.network.on_mqtt_connect = connected
+    funhouse.network.on_mqtt_disconnect = disconnected
+    funhouse.network.on_mqtt_message = message
+
+    print("Attempting to connect to {}".format(secrets["mqtt_broker"]))
+    funhouse.network.mqtt_connect()
+
+    last_publish_timestamp = None
+
+    last_peripheral_state = {
+        "button_up": funhouse.peripherals.button_up,
+        "button_down": funhouse.peripherals.button_down,
+        "button_sel": funhouse.peripherals.button_sel,
+        "captouch6": funhouse.peripherals.captouch6,
+        "captouch7": funhouse.peripherals.captouch7,
+        "captouch8": funhouse.peripherals.captouch8,
+    }
+
+    if ENABLE_PIR:
+        last_peripheral_state["pir_sensor"] = funhouse.peripherals.pir_sensor
+
+    environment = {}
+    update_enviro(funhouse, environment, temp_label, hum_label, pres_label)
+    last_environment_timestamp = time.monotonic()
+
+    # Provide Initial light state
+    publish_light_state(funhouse)
+
+    loop(
+        funhouse, environment, last_peripheral_state, last_environment_timestamp,
+        last_publish_timestamp, temp_label, hum_label, pres_label)
+
+
+if __name__ == "__main__":
+    main()
