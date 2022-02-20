@@ -4,8 +4,7 @@
 # SPDX-License-Identifier: MIT
 import time
 import json
-from adafruit_display_shapes.circle import Circle
-from adafruit_funhouse import FunHouse
+from fh import MyFunHouse
 
 PUBLISH_DELAY = 60
 ENVIRONMENT_CHECK_DELAY = 5
@@ -22,39 +21,37 @@ except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
-status = Circle(229, 10, 10, fill=0xFF0000, outline=0x880000)
 
+def update_enviro(fh, environment):
 
-def update_enviro(funhouse, environment, temp_label, hum_label, pres_label):
-
-    temp = funhouse.peripherals.temperature
+    temp = fh.funhouse.peripherals.temperature
     unit = "C"
     if USE_FAHRENHEIT:
         temp = temp * (9 / 5) + 32
         unit = "F"
 
     environment["temperature"] = temp
-    environment["pressure"] = funhouse.peripherals.pressure
-    environment["humidity"] = funhouse.peripherals.relative_humidity
-    environment["light"] = funhouse.peripherals.light
+    environment["pressure"] = fh.funhouse.peripherals.pressure
+    environment["humidity"] = fh.funhouse.peripherals.relative_humidity
+    environment["light"] = fh.funhouse.peripherals.light
 
-    funhouse.set_text("{:.1f}{}".format(environment["temperature"], unit), temp_label)
-    funhouse.set_text("{:.1f}%".format(environment["humidity"]), hum_label)
-    funhouse.set_text("{}hPa".format(environment["pressure"]), pres_label)
+    fh.funhouse.set_text("{:.1f}{}".format(environment["temperature"], unit), fh.display.temp_label)
+    fh.funhouse.set_text("{:.1f}%".format(environment["humidity"]), fh.display.hum_label)
+    fh.funhouse.set_text("{}hPa".format(environment["pressure"]), fh.display.pres_label)
 
 
 def connected(client, userdata, result, payload):
-    global status
-    status.fill = 0x00FF00
-    status.outline = 0x008800
+    # FIXME: how to access fh status
+    #status.fill = 0x00FF00
+    #status.outline = 0x008800
     print("Connected to MQTT! Subscribing...")
     client.subscribe(LIGHT_COMMAND_TOPIC)
 
 
 def disconnected(client):
-    global status
-    status.fill = 0xFF0000
-    status.outline = 0x880000
+    # FIXME: how to access fh status
+    #status.fill = 0xFF0000
+    #status.outline = 0x880000
     pass
 
 
@@ -74,40 +71,40 @@ def message(client, topic, payload, funhouse):
         publish_light_state()
 
 
-def publish_light_state(funhouse):
-    funhouse.peripherals.led = True
+def publish_light_state(fh):
+    fh.funhouse.peripherals.led = True
     output = {
-        "brightness": round(funhouse.peripherals.dotstars.brightness * 255),
-        "state": "on" if funhouse.peripherals.dotstars.brightness > 0 else "off",
-        "color": funhouse.peripherals.dotstars[0],
+        "brightness": round(fh.funhouse.peripherals.dotstars.brightness * 255),
+        "state": "on" if fh.funhouse.peripherals.dotstars.brightness > 0 else "off",
+        "color": fh.funhouse.peripherals.dotstars[0],
     }
     # Publish the Dotstar State
     print("Publishing to {}".format(LIGHT_STATE_TOPIC))
-    funhouse.network.mqtt_publish(LIGHT_STATE_TOPIC, json.dumps(output))
-    funhouse.peripherals.led = False
+    fh.funhouse.network.mqtt_publish(LIGHT_STATE_TOPIC, json.dumps(output))
+    fh.funhouse.peripherals.led = False
 
 
 def loop(
-        funhouse, environment, last_peripheral_state, last_environment_timestamp,
-        last_publish_timestamp, temp_label, hum_label, pres_label):
+        fh, environment, last_peripheral_state, last_environment_timestamp,
+        last_publish_timestamp):
     while True:
         if not environment or (
             time.monotonic() - last_environment_timestamp > ENVIRONMENT_CHECK_DELAY
         ):
-            update_enviro(funhouse, environment, temp_label, hum_label, pres_label)
+            update_enviro(fh, environment)
             last_environment_timestamp = time.monotonic()
         output = environment
 
         peripheral_state_changed = False
         for peripheral in last_peripheral_state:
-            current_item_state = getattr(funhouse.peripherals, peripheral)
+            current_item_state = getattr(fh.funhouse.peripherals, peripheral)
             output[peripheral] = "on" if current_item_state else "off"
             if last_peripheral_state[peripheral] != current_item_state:
                 peripheral_state_changed = True
                 last_peripheral_state[peripheral] = current_item_state
 
-        if funhouse.peripherals.slider is not None:
-            output["slider"] = funhouse.peripherals.slider
+        if fh.funhouse.peripherals.slider is not None:
+            output["slider"] = fh.funhouse.peripherals.slider
             peripheral_state_changed = True
 
         # Every PUBLISH_DELAY, write temp/hum/press/light or if a peripheral changed
@@ -116,107 +113,59 @@ def loop(
             or peripheral_state_changed
             or (time.monotonic() - last_publish_timestamp) > PUBLISH_DELAY
         ):
-            funhouse.peripherals.led = True
+            fh.funhouse.peripherals.led = True
             print("Publishing to {}".format(MQTT_TOPIC))
-            funhouse.network.mqtt_publish(MQTT_TOPIC, json.dumps(output))
-            funhouse.peripherals.led = False
+            fh.funhouse.network.mqtt_publish(MQTT_TOPIC, json.dumps(output))
+            fh.funhouse.peripherals.led = False
             last_publish_timestamp = time.monotonic()
 
         # Check any topics we are subscribed to
-        funhouse.network.mqtt_loop(0.5)
+        fh.funhouse.network.mqtt_loop(0.5)
 
 
 def main():
     global status
 
-    funhouse = FunHouse(default_bg=0x0F0F00)
-    funhouse.peripherals.dotstars.fill(INITIAL_LIGHT_COLOR)
-
-    # Don't display the splash yet to avoid
-    # redrawing labels after each one is added
-    funhouse.display.show(None)
-
-    # Add the labels
-    funhouse.add_text(
-        text="Temperature:",
-        text_position=(20, 30),
-        text_color=0xFF8888,
-        text_font="fonts/Arial-Bold-24.pcf",
-    )
-    temp_label = funhouse.add_text(
-        text_position=(120, 60),
-        text_anchor_point=(0.5, 0.5),
-        text_color=0xFFFF00,
-        text_font="fonts/Arial-Bold-24.pcf",
-    )
-    funhouse.add_text(
-        text="Humidity:",
-        text_position=(20, 100),
-        text_color=0x8888FF,
-        text_font="fonts/Arial-Bold-24.pcf",
-    )
-    hum_label = funhouse.add_text(
-        text_position=(120, 130),
-        text_anchor_point=(0.5, 0.5),
-        text_color=0xFFFF00,
-        text_font="fonts/Arial-Bold-24.pcf",
-    )
-    funhouse.add_text(
-        text="Pressure:",
-        text_position=(20, 170),
-        text_color=0xFF88FF,
-        text_font="fonts/Arial-Bold-24.pcf",
-    )
-    pres_label = funhouse.add_text(
-        text_position=(120, 200),
-        text_anchor_point=(0.5, 0.5),
-        text_color=0xFFFF00,
-        text_font="fonts/Arial-Bold-24.pcf",
-    )
-
-    # Now display the splash to draw all labels at once
-    funhouse.display.show(funhouse.splash)
-
-    funhouse.splash.append(status)
+    fh = MyFunHouse()
 
     # Initialize a new MQTT Client object
-    funhouse.network.init_mqtt(
+    fh.funhouse.network.init_mqtt(
         secrets["mqtt_broker"],
         secrets["mqtt_port"],
         secrets["mqtt_user"],
         secrets["mqtt_password"],
     )
-    funhouse.network.on_mqtt_connect = connected
-    funhouse.network.on_mqtt_disconnect = disconnected
-    funhouse.network.on_mqtt_message = message
+    fh.funhouse.network.on_mqtt_connect = connected
+    fh.funhouse.network.on_mqtt_disconnect = disconnected
+    fh.funhouse.network.on_mqtt_message = message
 
     print("Attempting to connect to {}".format(secrets["mqtt_broker"]))
-    funhouse.network.mqtt_connect()
+    fh.funhouse.network.mqtt_connect()
 
     last_publish_timestamp = None
 
     last_peripheral_state = {
-        "button_up": funhouse.peripherals.button_up,
-        "button_down": funhouse.peripherals.button_down,
-        "button_sel": funhouse.peripherals.button_sel,
-        "captouch6": funhouse.peripherals.captouch6,
-        "captouch7": funhouse.peripherals.captouch7,
-        "captouch8": funhouse.peripherals.captouch8,
+        "button_up": fh.funhouse.peripherals.button_up,
+        "button_down": fh.funhouse.peripherals.button_down,
+        "button_sel": fh.funhouse.peripherals.button_sel,
+        "captouch6": fh.funhouse.peripherals.captouch6,
+        "captouch7": fh.funhouse.peripherals.captouch7,
+        "captouch8": fh.funhouse.peripherals.captouch8,
     }
 
     if ENABLE_PIR:
-        last_peripheral_state["pir_sensor"] = funhouse.peripherals.pir_sensor
+        last_peripheral_state["pir_sensor"] = fh.funhouse.peripherals.pir_sensor
 
     environment = {}
-    update_enviro(funhouse, environment, temp_label, hum_label, pres_label)
+    update_enviro(fh, environment)
     last_environment_timestamp = time.monotonic()
 
     # Provide Initial light state
-    publish_light_state(funhouse)
+    publish_light_state(fh)
 
     loop(
-        funhouse, environment, last_peripheral_state, last_environment_timestamp,
-        last_publish_timestamp, temp_label, hum_label, pres_label)
+        fh, environment, last_peripheral_state, last_environment_timestamp,
+        last_publish_timestamp)
 
 
 if __name__ == "__main__":
