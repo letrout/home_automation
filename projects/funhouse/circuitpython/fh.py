@@ -24,11 +24,38 @@ class MyFunHouse(object):
     wrapper class for Adafruit FunHouse
     """
     def __init__(self, funhouse=None):
+        self.__labels = {}
         if funhouse is None:
             self.funhouse = FunHouse(default_bg=BG_COLOR)
         else:
             self.funhouse = funhouse
-        self.display = FunHouseDisplay(self.funhouse)
+        self.funhouse.peripherals.dotstars.fill(INITIAL_LIGHT_COLOR)
+        self.status = Circle(229, 10, 10, fill=0xFF0000, outline=0x880000)
+        self.funhouse.display.show(None)
+
+    def label(self, label_name):
+        try:
+            return self.__labels[label_name]
+        except KeyError:
+            return None
+
+    def set_label(
+            self, label_name,
+            text_position,
+            text_anchor_point,
+            text_color,
+            text_font
+            ):
+        self.__labels[label_name] = self.funhouse.add_text(
+            text_position=text_position,
+            text_anchor_point=text_anchor_point,
+            text_color=text_color,
+            text_font=text_font,
+        )
+
+    def redraw_display(self):
+        self.funhouse.display.show(self.funhouse.splash)
+        # self.funhouse.splash.append(self.status)
 
 
 class FunHouseDisplay(object):
@@ -88,7 +115,6 @@ class FunHouseDisplay(object):
         self.__funhouse.display.show(self.__funhouse.splash)
         self.__funhouse.splash.append(self.status)
 
-
     @property
     def temp_label(self):
         return self.__temp_label
@@ -100,3 +126,17 @@ class FunHouseDisplay(object):
     @property
     def pres_label(self):
         return self.__pres_label
+
+
+class FunHouseTextLabel(object):
+    def __init__(self, fh, pos, anchor, color, font):
+        self.fh = fh
+        self.label = self.fh.add_text(
+            text_position=pos,
+            text_anchor_point=anchor,
+            text_color=color,
+            text_font=font,
+        )
+
+    def set_text(self, txt_string):
+        self.fh.set_text(txt_string, self.label)

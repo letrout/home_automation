@@ -14,6 +14,9 @@ LIGHT_STATE_TOPIC = "funhouse/light/state"
 LIGHT_COMMAND_TOPIC = "funhouse/light/set"
 INITIAL_LIGHT_COLOR = 0x008000
 USE_FAHRENHEIT = True
+TEMP_LABEL = "temp"
+HUMIDITY_LABEL = "hum"
+PRESSURE_LABEL = "pres"
 
 try:
     from secrets import secrets
@@ -35,23 +38,30 @@ def update_enviro(fh, environment):
     environment["humidity"] = fh.funhouse.peripherals.relative_humidity
     environment["light"] = fh.funhouse.peripherals.light
 
-    fh.funhouse.set_text("{:.1f}{}".format(environment["temperature"], unit), fh.display.temp_label)
-    fh.funhouse.set_text("{:.1f}%".format(environment["humidity"]), fh.display.hum_label)
-    fh.funhouse.set_text("{}hPa".format(environment["pressure"]), fh.display.pres_label)
+    fh.funhouse.set_text(
+        "{:.1f}{}".format(environment["temperature"], unit),
+        fh.label(TEMP_LABEL))
+    fh.funhouse.set_text(
+        "{:.1f}%".format(environment["humidity"]),
+        fh.label(HUMIDITY_LABEL))
+    fh.funhouse.set_text(
+        "{}hPa".format(environment["pressure"]),
+        fh.label(PRESSURE_LABEL))
+    fh.redraw_display()
 
 
 def connected(client, userdata, result, payload):
     # FIXME: how to access fh status
-    #status.fill = 0x00FF00
-    #status.outline = 0x008800
+    # status.fill = 0x00FF00
+    # status.outline = 0x008800
     print("Connected to MQTT! Subscribing...")
     client.subscribe(LIGHT_COMMAND_TOPIC)
 
 
 def disconnected(client):
     # FIXME: how to access fh status
-    #status.fill = 0xFF0000
-    #status.outline = 0x880000
+    # status.fill = 0xFF0000
+    # status.outline = 0x880000
     pass
 
 
@@ -127,6 +137,47 @@ def main():
     global status
 
     fh = MyFunHouse()
+
+    # Add the labels
+    fh.funhouse.add_text(
+            text="Temperature:",
+            text_position=(20, 30),
+            text_color=0xFF8888,
+            text_font="fonts/Arial-Bold-24.pcf",
+        )
+    fh.set_label(
+        TEMP_LABEL,
+        text_position=(120, 60),
+        text_anchor_point=(0.5, 0.5),
+        text_color=0xFFFF00,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+    fh.funhouse.add_text(
+        text="Humidity:",
+        text_position=(20, 100),
+        text_color=0x8888FF,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+    fh.set_label(
+        HUMIDITY_LABEL,
+        text_position=(120, 130),
+        text_anchor_point=(0.5, 0.5),
+        text_color=0xFFFF00,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+    fh.funhouse.add_text(
+        text="Pressure:",
+        text_position=(20, 170),
+        text_color=0xFF88FF,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
+    fh.set_label(
+        PRESSURE_LABEL,
+        text_position=(120, 200),
+        text_anchor_point=(0.5, 0.5),
+        text_color=0xFFFF00,
+        text_font="fonts/Arial-Bold-24.pcf",
+    )
 
     # Initialize a new MQTT Client object
     fh.funhouse.network.init_mqtt(
