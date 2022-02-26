@@ -13,6 +13,7 @@ __email__ = "joel.luth@gmail.com"
 __status__ = "Prototype"
 
 import json
+import time
 
 from adafruit_display_shapes.circle import Circle
 from adafruit_funhouse import FunHouse
@@ -43,13 +44,16 @@ class MyFunHouse(object):
     wrapper class for Adafruit FunHouse
     """
     def __init__(
-            self, funhouse=None, temp=None, hum=None, press=None,
+            self, funhouse=None, temp=None, hum=None, press=None, enable_pir=False,
             topic_state=None, topic_ls=None, topic_lc=None):
         self.__labels = {}
         self.__environment = {}
         self.__temp = None
         self.__humidity = None
         self.__pressure = None
+        self.__enable_pir = enable_pir
+        self.__last_publish_timestamp = None
+        self.__last_environment_timestamp = None
         self.__topic_state = topic_state
         self.__topic_light_state = topic_ls
         self.__topic_light_command = topic_lc
@@ -63,6 +67,7 @@ class MyFunHouse(object):
             self.__humidity = hum
         if press in SENSORS["pressure"]:
             self.__pressure = press
+        self.update_peripheral_state()
         self.funhouse.peripherals.dotstars.fill(INITIAL_LIGHT_COLOR)
         self.status = Circle(229, 10, 10, fill=0xFF0000, outline=0x880000)
         self.funhouse.display.show(None)
@@ -82,6 +87,18 @@ class MyFunHouse(object):
     @property
     def environment(self):
         return self.__environment
+
+    @property
+    def last_peripheral_state(self):
+        return self.__last_peripheral_state
+
+    @property
+    def last_environment_timestamp(self):
+        return self.__last_environment_timestamp
+
+    @property
+    def last_publish_timestamp(self):
+        return self.__last_publish_timestamp
 
     @property
     def read_temp_c(self):
@@ -139,6 +156,7 @@ class MyFunHouse(object):
         self.__environment["pressure"] = self.read_pressure_hpa
         self.__environment["humidity"] = self.read_relative_humidity
         self.__environment["light"] = self.funhouse.peripherals.light
+        self.__last_environment_timestamp = time.monotonic()
 
         self.funhouse.set_text(
             "{:.1f}{}".format(self.__environment["temperature"], unit),
@@ -150,6 +168,26 @@ class MyFunHouse(object):
             "{:.0f}hPa".format(self.__environment["pressure"]),
             self.label(PRESSURE_LABEL))
         self.redraw_display()
+
+    def update_peripheral_state(self):
+        self.__last_peripheral_state = {
+            "button_up": self.funhouse.peripherals.button_up,
+            "button_down": self.funhouse.peripherals.button_down,
+            "button_sel": self.funhouse.peripherals.button_sel,
+            "captouch6": self.funhouse.peripherals.captouch6,
+            "captouch7": self.funhouse.peripherals.captouch7,
+            "captouch8": self.funhouse.peripherals.captouch8,
+            }
+        if self.__enable_pir:
+            self.__last_peripheral_state["pir_sensor"] = \
+                self.funhouse.peripherals.pir_sensor
+
+    def set_peripheral_state(self, periph, state):
+        previous = None
+        if periph in self.__last_peripheral_state:
+            previous = self.__last_peripheral_state[periph]
+            self.__last_peripheral_state[periph] = state
+        return previous
 
     def connected(self, client, userdata, result, payload):
         # FIXME: how to access fh status
@@ -170,7 +208,8 @@ class MyFunHouse(object):
             settings = json.loads(payload)
             if settings["state"] == "on":
                 if "brightness" in settings:
-                    self.funhouse.peripherals.dotstars.brightness = settings["brightness"] / 255
+                    self.funhouse.peripherals.dotstars.brightness = \
+                        settings["brightness"] / 255
                 else:
                     self.funhouse.peripherals.dotstars.brightness = 0.3
                 if "color" in settings:
@@ -178,6 +217,13 @@ class MyFunHouse(object):
             else:
                 self.funhouse.peripherals.dotstars.brightness = 0
             self.publish_light_state()
+
+    def publish_state(self, output):
+        self.funhouse.peripherals.led = True
+        print("Publishing to {}".format(self.__topic_state))
+        self.funhouse.network.mqtt_publish(self.__topic_state, json.dumps(output))
+        self.funhouse.peripherals.led = False
+        self.__last_publish_timestamp = time.monotonic()
 
     def publish_light_state(self):
         self.funhouse.peripherals.led = True
