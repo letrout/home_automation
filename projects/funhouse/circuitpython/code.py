@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 import time
 import json
-from fh import MyFunHouse
+from fh import MyFunHouse, TEMP_LABEL, HUMIDITY_LABEL, PRESSURE_LABEL
 
 PUBLISH_DELAY = 60
 ENVIRONMENT_CHECK_DELAY = 5
@@ -13,41 +13,12 @@ MQTT_TOPIC = "funhouse/state"
 LIGHT_STATE_TOPIC = "funhouse/light/state"
 LIGHT_COMMAND_TOPIC = "funhouse/light/set"
 INITIAL_LIGHT_COLOR = 0x008000
-USE_FAHRENHEIT = True
-TEMP_LABEL = "temp"
-HUMIDITY_LABEL = "hum"
-PRESSURE_LABEL = "pres"
 
 try:
     from secrets import secrets
 except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
-
-
-def update_enviro(fh, environment):
-
-    temp = fh.funhouse.peripherals.temperature
-    unit = "C"
-    if USE_FAHRENHEIT:
-        temp = temp * (9 / 5) + 32
-        unit = "F"
-
-    environment["temperature"] = temp
-    environment["pressure"] = fh.funhouse.peripherals.pressure
-    environment["humidity"] = fh.funhouse.peripherals.relative_humidity
-    environment["light"] = fh.funhouse.peripherals.light
-
-    fh.funhouse.set_text(
-        "{:.1f}{}".format(environment["temperature"], unit),
-        fh.label(TEMP_LABEL))
-    fh.funhouse.set_text(
-        "{:.1f}%".format(environment["humidity"]),
-        fh.label(HUMIDITY_LABEL))
-    fh.funhouse.set_text(
-        "{}hPa".format(environment["pressure"]),
-        fh.label(PRESSURE_LABEL))
-    fh.redraw_display()
 
 
 def connected(client, userdata, result, payload):
@@ -95,15 +66,15 @@ def publish_light_state(fh):
 
 
 def loop(
-        fh, environment, last_peripheral_state, last_environment_timestamp,
+        fh, last_peripheral_state, last_environment_timestamp,
         last_publish_timestamp):
     while True:
-        if not environment or (
+        if (len(fh.environment) == 0) or (
             time.monotonic() - last_environment_timestamp > ENVIRONMENT_CHECK_DELAY
         ):
-            update_enviro(fh, environment)
+            fh.update_enviro()
             last_environment_timestamp = time.monotonic()
-        output = environment
+        output = fh.environment
 
         peripheral_state_changed = False
         for peripheral in last_peripheral_state:
@@ -136,7 +107,7 @@ def loop(
 def main():
     global status
 
-    fh = MyFunHouse()
+    fh = MyFunHouse(temp="aht20", hum="aht20", press="dp310")
 
     # Add the labels
     fh.funhouse.add_text(
@@ -207,15 +178,14 @@ def main():
     if ENABLE_PIR:
         last_peripheral_state["pir_sensor"] = fh.funhouse.peripherals.pir_sensor
 
-    environment = {}
-    update_enviro(fh, environment)
+    fh.update_enviro()
     last_environment_timestamp = time.monotonic()
 
     # Provide Initial light state
     publish_light_state(fh)
 
     loop(
-        fh, environment, last_peripheral_state, last_environment_timestamp,
+        fh, last_peripheral_state, last_environment_timestamp,
         last_publish_timestamp)
 
 
