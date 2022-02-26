@@ -49,8 +49,6 @@ def loop(fh):
 
 
 def main():
-    global status
-
     fh = MyFunHouse(
         temp="aht20", hum="aht20", press="dp310", enable_pir=True,
         topic_state=MQTT_TOPIC, topic_lc=LIGHT_COMMAND_TOPIC, topic_ls=LIGHT_STATE_TOPIC

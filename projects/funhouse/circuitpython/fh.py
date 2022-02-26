@@ -70,6 +70,7 @@ class MyFunHouse(object):
         self.update_peripheral_state()
         self.funhouse.peripherals.dotstars.fill(INITIAL_LIGHT_COLOR)
         self.status = Circle(229, 10, 10, fill=0xFF0000, outline=0x880000)
+        self.funhouse.splash.append(self.status)
         self.funhouse.display.show(None)
         # Initialize a new MQTT Client object
         self.funhouse.network.init_mqtt(
@@ -143,7 +144,6 @@ class MyFunHouse(object):
 
     def redraw_display(self):
         self.funhouse.display.show(self.funhouse.splash)
-        # self.funhouse.splash.append(self.status)
 
     def update_enviro(self):
         temp = self.read_temp_c
@@ -191,15 +191,15 @@ class MyFunHouse(object):
 
     def connected(self, client, userdata, result, payload):
         # FIXME: how to access fh status
-        # status.fill = 0x00FF00
-        # status.outline = 0x008800
+        self.status.fill = 0x00FF00
+        self.status.outline = 0x008800
         print("Connected to MQTT! Subscribing...")
         client.subscribe(self.__topic_light_command)
 
     def disconnected(self, client):
         # FIXME: how to access fh status
-        # status.fill = 0xFF0000
-        # status.outline = 0x880000
+        self.status.fill = 0xFF0000
+        self.status.outline = 0x880000
         pass
 
     def message(self, client, topic, payload):
