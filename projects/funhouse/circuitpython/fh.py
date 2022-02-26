@@ -12,8 +12,16 @@ __maintainer__ = "Joel Luth"
 __email__ = "joel.luth@gmail.com"
 __status__ = "Prototype"
 
+import json
+
 from adafruit_display_shapes.circle import Circle
 from adafruit_funhouse import FunHouse
+
+try:
+    from secrets import secrets
+except ImportError:
+    print("MQTT secrets are kept in secrets.py, please add them there!")
+    raise
 
 INITIAL_LIGHT_COLOR = 0x008000
 BG_COLOR = 0x0F0F00
@@ -34,12 +42,17 @@ class MyFunHouse(object):
     """
     wrapper class for Adafruit FunHouse
     """
-    def __init__(self, funhouse=None, temp=None, hum=None, press=None):
+    def __init__(
+            self, funhouse=None, temp=None, hum=None, press=None,
+            topic_state=None, topic_ls=None, topic_lc=None):
         self.__labels = {}
         self.__environment = {}
         self.__temp = None
         self.__humidity = None
         self.__pressure = None
+        self.__topic_state = topic_state
+        self.__topic_light_state = topic_ls
+        self.__topic_light_command = topic_lc
         if funhouse is None:
             self.funhouse = FunHouse(default_bg=BG_COLOR)
         else:
@@ -53,6 +66,18 @@ class MyFunHouse(object):
         self.funhouse.peripherals.dotstars.fill(INITIAL_LIGHT_COLOR)
         self.status = Circle(229, 10, 10, fill=0xFF0000, outline=0x880000)
         self.funhouse.display.show(None)
+        # Initialize a new MQTT Client object
+        self.funhouse.network.init_mqtt(
+            secrets["mqtt_broker"],
+            secrets["mqtt_port"],
+            secrets["mqtt_user"],
+            secrets["mqtt_password"],
+        )
+        self.funhouse.network.on_mqtt_connect = self.connected
+        self.funhouse.network.on_mqtt_disconnect = self.disconnected
+        self.funhouse.network.on_mqtt_message = self.message
+        print("Attempting to connect to {}".format(secrets["mqtt_broker"]))
+        self.funhouse.network.mqtt_connect()
 
     @property
     def environment(self):
@@ -122,6 +147,46 @@ class MyFunHouse(object):
             "{:.1f}%".format(self.__environment["humidity"]),
             self.label(HUMIDITY_LABEL))
         self.funhouse.set_text(
-            "{}hPa".format(self.__environment["pressure"]),
+            "{:.0f}hPa".format(self.__environment["pressure"]),
             self.label(PRESSURE_LABEL))
         self.redraw_display()
+
+    def connected(self, client, userdata, result, payload):
+        # FIXME: how to access fh status
+        # status.fill = 0x00FF00
+        # status.outline = 0x008800
+        print("Connected to MQTT! Subscribing...")
+        client.subscribe(self.__topic_light_command)
+
+    def disconnected(self, client):
+        # FIXME: how to access fh status
+        # status.fill = 0xFF0000
+        # status.outline = 0x880000
+        pass
+
+    def message(self, client, topic, payload):
+        print("Topic {0} received new value: {1}".format(topic, payload))
+        if topic == self.__topic_light_command:
+            settings = json.loads(payload)
+            if settings["state"] == "on":
+                if "brightness" in settings:
+                    self.funhouse.peripherals.dotstars.brightness = settings["brightness"] / 255
+                else:
+                    self.funhouse.peripherals.dotstars.brightness = 0.3
+                if "color" in settings:
+                    self.funhouse.peripherals.dotstars.fill(settings["color"])
+            else:
+                self.funhouse.peripherals.dotstars.brightness = 0
+            self.publish_light_state()
+
+    def publish_light_state(self):
+        self.funhouse.peripherals.led = True
+        output = {
+            "brightness": round(self.funhouse.peripherals.dotstars.brightness * 255),
+            "state": "on" if self.funhouse.peripherals.dotstars.brightness > 0 else "off",
+            "color": self.funhouse.peripherals.dotstars[0],
+        }
+        # Publish the Dotstar State
+        print("Publishing to {}".format(self.__topic_light_state))
+        self.funhouse.network.mqtt_publish(self.__topic_light_state, json.dumps(output))
+        self.funhouse.peripherals.led = False
