@@ -10,6 +10,8 @@
 #define NUM_DOTSTAR 5
 #define BG_COLOR ST77XX_BLACK
 
+#define TEMP_F(c) (c * 9 / 5) + 32
+
 // display!
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
 // LEDs!
@@ -111,12 +113,12 @@ void loop() {
   dps.getEvents(&temp, &pressure);
   
   tft.print("DP310: ");
-  tft.print(temp.temperature, 0);
-  tft.print(" C ");
+  tft.print(TEMP_F(temp.temperature), 0);
+  tft.print(" F ");
   tft.print(pressure.pressure, 0);
   tft.print(" hPa");
   tft.println("              ");
-  Serial.printf("DPS310: %0.1f *C  %0.2f hPa\n", temp.temperature, pressure.pressure);
+  Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(temp.temperature), pressure.pressure);
 
 
   tft.setCursor(0, 20);
@@ -124,24 +126,24 @@ void loop() {
   aht.getEvent(&humidity, &temp);
 
   tft.print("AHT20: ");
-  tft.print(temp.temperature, 0);
-  tft.print(" C ");
+  tft.print(TEMP_F(temp.temperature), 0);
+  tft.print(" F ");
   tft.print(humidity.relative_humidity, 0);
   tft.print(" %");
   tft.println("              ");
-  Serial.printf("AHT20: %0.1f *C  %0.2f rH\n", temp.temperature, humidity.relative_humidity);
+  Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
 
   tft.setCursor(0, 40);
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   sht4.getEvent(&humidity, &temp);
 
   tft.print("SHT40: ");
-  tft.print(temp.temperature, 0);
-  tft.print(" C ");
+  tft.print(TEMP_F(temp.temperature), 0);
+  tft.print(" F ");
   tft.print(humidity.relative_humidity, 0);
   tft.print(" %");
   tft.println("              ");
-  Serial.printf("SHT40: %0.1f *C  %0.2f rH\n", temp.temperature, humidity.relative_humidity);
+  Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
 
 
   /****************** BUTTONS */
