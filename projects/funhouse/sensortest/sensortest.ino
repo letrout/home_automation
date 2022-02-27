@@ -23,8 +23,10 @@ Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 
 uint8_t LED_dutycycle = 0;
 uint16_t firstPixelHue = 0;
+const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
 
 void setup() {
+  uint8_t cursor_y = 0;
   //while (!Serial);
   Serial.begin(115200);
   delay(100);
@@ -49,7 +51,8 @@ void setup() {
   tft.setTextWrap(false);
 
   // check DPS!
-  tft.setCursor(0, 0);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("DP310? ");
 
@@ -65,7 +68,8 @@ void setup() {
   dps.configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
 
   // check AHT!
-  tft.setCursor(0, 20);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("AHT20? ");
   
@@ -78,7 +82,8 @@ void setup() {
   tft.println("OK!");
 
   // check SHT4x!
-  tft.setCursor(0, 40);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SHT4x? ");
   if (! sht4.begin()) {  
@@ -103,12 +108,14 @@ void setup() {
 
 
 void loop() {
+  uint8_t cursor_y = 0;
 
 
   /********************* sensors    */
   sensors_event_t humidity, temp, pressure;
   
-  tft.setCursor(0, 0);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   dps.getEvents(&temp, &pressure);
   
@@ -121,7 +128,8 @@ void loop() {
   Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(temp.temperature), pressure.pressure);
 
 
-  tft.setCursor(0, 20);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   aht.getEvent(&humidity, &temp);
 
@@ -133,7 +141,8 @@ void loop() {
   tft.println("              ");
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
 
-  tft.setCursor(0, 40);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   sht4.getEvent(&humidity, &temp);
 
@@ -148,7 +157,8 @@ void loop() {
 
   /****************** BUTTONS */
   /************* remove to make room for our other sensors *****
-  tft.setCursor(0, 40);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("Buttons: ");
   if (! digitalRead(BUTTON_DOWN)) {  
@@ -180,7 +190,8 @@ void loop() {
   /************* remove to make room for our other sensors *****
   uint16_t touchread;
   
-  tft.setCursor(0, 60);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Captouch 6: ");
   touchread = touchRead(6);
@@ -193,7 +204,8 @@ void loop() {
   tft.println("          ");
   Serial.printf("Captouch #6 reading: %d\n", touchread);
   
-  tft.setCursor(0, 80);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Captouch 7: ");
   touchread = touchRead(7);
@@ -207,7 +219,8 @@ void loop() {
   Serial.printf("Captouch #7 reading: %d\n", touchread);
 
 
-  tft.setCursor(0, 100);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Captouch 8: ");
   touchread = touchRead(8);
@@ -225,7 +238,8 @@ void loop() {
   /************************** ANALOG READ */
   uint16_t analogread;
 
-  tft.setCursor(0, 120);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Analog 0: ");
   analogread = analogRead(A0);
@@ -239,7 +253,8 @@ void loop() {
   Serial.printf("Analog A0 reading: %d\n", analogread);
 
 
-  tft.setCursor(0, 140);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Analog 1: ");
   analogread = analogRead(A1);
@@ -253,7 +268,8 @@ void loop() {
   Serial.printf("Analog A1 reading: %d\n", analogread);
 
   
-  tft.setCursor(0, 160);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Analog 2: ");
   analogread = analogRead(A2);
@@ -266,7 +282,8 @@ void loop() {
   tft.println("    ");
   Serial.printf("Analog A2 reading: %d\n", analogread);
 
-  tft.setCursor(0, 180);
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Light: ");
   analogread = analogRead(A3);
