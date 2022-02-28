@@ -24,6 +24,7 @@ Adafruit_SHT4x sht4 = Adafruit_SHT4x();
 uint8_t LED_dutycycle = 0;
 uint16_t firstPixelHue = 0;
 const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
+bool has_sht4x = false;
 
 void setup() {
   uint8_t cursor_y = 0;
@@ -86,13 +87,20 @@ void setup() {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SHT4x? ");
-  if (! sht4.begin()) {  
-    tft.setTextColor(ST77XX_RED);
-    tft.println("FAIL!");
-    while (1) delay(100);
+  uint8_t retries = 5, i = 0;
+  while (i < retries) {
+    if (! sht4.begin()) {  
+      tft.setTextColor(ST77XX_RED);
+      tft.println("FAIL!");
+      delay(100);
+      i++;
+    } else {
+      has_sht4x = true;
+      tft.setTextColor(ST77XX_GREEN);
+      tft.println("OK!");
+      break;
+    }
   }
-  tft.setTextColor(ST77XX_GREEN);
-  tft.println("OK!");
 
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(SPEAKER, OUTPUT);
@@ -141,19 +149,19 @@ void loop() {
   tft.println("              ");
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
 
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  sht4.getEvent(&humidity, &temp);
-
-  tft.print("SHT40: ");
-  tft.print(TEMP_F(temp.temperature), 0);
-  tft.print(" F ");
-  tft.print(humidity.relative_humidity, 0);
-  tft.print(" %");
-  tft.println("              ");
-  Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
-
+  if (has_sht4x) {
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+    sht4.getEvent(&humidity, &temp);
+    tft.print("SHT40: ");
+    tft.print(TEMP_F(temp.temperature), 0);
+    tft.print(" F ");
+    tft.print(humidity.relative_humidity, 0);
+    tft.print(" %");
+    tft.println("              ");
+    Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
+  }
 
   /****************** BUTTONS */
   /************* remove to make room for our other sensors *****
