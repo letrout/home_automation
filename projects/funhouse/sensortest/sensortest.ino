@@ -6,6 +6,8 @@
 #include <Adafruit_DPS310.h>
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_SHT4x.h>
+#include <SensirionI2CScd4x.h>
+#include <Wire.h>
 
 #define NUM_DOTSTAR 5
 #define BG_COLOR ST77XX_BLACK
@@ -19,15 +21,19 @@ Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTA
 // sensors!
 Adafruit_DPS310 dps;
 Adafruit_AHTX0 aht;
-Adafruit_SHT4x sht4 = Adafruit_SHT4x();
+Adafruit_SHT4x sht4x = Adafruit_SHT4x();
+SensirionI2CScd4x scd4x;
 
 uint8_t LED_dutycycle = 0;
 uint16_t firstPixelHue = 0;
 const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
 bool has_sht4x = false;
+bool has_scd4x = false;
 
 void setup() {
   uint8_t cursor_y = 0;
+  uint8_t retries = 5, i = 0;
+
   //while (!Serial);
   Serial.begin(115200);
   delay(100);
@@ -87,15 +93,36 @@ void setup() {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SHT4x? ");
-  uint8_t retries = 5, i = 0;
+  retries = 5, i = 0;
   while (i < retries) {
-    if (! sht4.begin()) {  
+    if (! sht4x.begin()) {  
       tft.setTextColor(ST77XX_RED);
       tft.println("FAIL!");
       delay(100);
       i++;
     } else {
       has_sht4x = true;
+      tft.setTextColor(ST77XX_GREEN);
+      tft.println("OK!");
+      break;
+    }
+  }
+
+  // check SCD-4X!
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.setTextColor(ST77XX_YELLOW);
+  tft.print("SCD-4X? ");
+  retries = 5, i = 0;
+  Wire.begin();
+  while (i < retries) {
+    if (setup_scd4x(scd4x)) {  
+      tft.setTextColor(ST77XX_RED);
+      tft.println("FAIL!");
+      delay(100);
+      i++;
+    } else {
+      has_scd4x = true;
       tft.setTextColor(ST77XX_GREEN);
       tft.println("OK!");
       break;
@@ -114,9 +141,11 @@ void setup() {
 }
 
 
-
 void loop() {
   uint8_t cursor_y = 0;
+
+  delay(5000);
+  tft.fillScreen(BG_COLOR);
 
 
   /********************* sensors    */
@@ -153,7 +182,7 @@ void loop() {
     tft.setCursor(0, cursor_y);
     cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    sht4.getEvent(&humidity, &temp);
+    sht4x.getEvent(&humidity, &temp);
     tft.print("SHT40: ");
     tft.print(TEMP_F(temp.temperature), 0);
     tft.print(" F ");
@@ -330,4 +359,55 @@ void tone(uint8_t pin, float frequency, float duration) {
   ledcWrite(1, 128);
   delay(duration);
   ledcWrite(1, 0);
+}
+
+
+uint16_t setup_scd4x(SensirionI2CScd4x& scd4x) {
+  uint16_t error;
+  char errorMessage[256];
+
+  scd4x.begin(Wire);
+  // stop potentially previously started measurement
+  error = scd4x.stopPeriodicMeasurement();
+  if (error) {
+    Serial.print("Error trying to execute stopPeriodicMeasurement(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+  }
+  uint16_t serial0;
+  uint16_t serial1;
+  uint16_t serial2;
+  error = scd4x.getSerialNumber(serial0, serial1, serial2);
+  if (error) {
+    Serial.print("Error trying to execute getSerialNumber(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+  } else {
+    printSerialNumber(serial0, serial1, serial2);
+  }
+  // Start Measurement
+  error = scd4x.startPeriodicMeasurement();
+  if (error) {
+    Serial.print("Error trying to execute startPeriodicMeasurement(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+  }
+  return error;
+}
+
+
+void printUint16Hex(uint16_t value) {
+  Serial.print(value < 4096 ? "0" : "");
+  Serial.print(value < 256 ? "0" : "");
+  Serial.print(value < 16 ? "0" : "");
+  Serial.print(value, HEX);
+}
+
+
+void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2) {
+  Serial.print("Serial: 0x");
+  printUint16Hex(serial0);
+  printUint16Hex(serial1);
+  printUint16Hex(serial2);
+  Serial.println();
 }
