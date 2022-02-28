@@ -11,14 +11,9 @@
 
 #define NUM_DOTSTAR 5
 #define BG_COLOR ST77XX_BLACK
+#define ALT_M 285 // altitude in meters, for SCD-4x calibration
 
 #define TEMP_F(c) (c * 9 / 5) + 32
-
-struct Scd4xReading {
-  uint16_t co2;
-  float temperature;
-  float humidity;
-};
 
 // display!
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
@@ -421,6 +416,13 @@ uint16_t setup_scd4x(SensirionI2CScd4x& scd4x) {
   } else {
     printSerialNumber(serial0, serial1, serial2);
   }
+  // Set altitude
+  error = scd4x.setSensorAltitude(ALT_M);
+  if (error) {
+    Serial.print("Error trying to execute setSensorAltitude(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+  }
   // Start Measurement
   error = scd4x.startPeriodicMeasurement();
   if (error) {
@@ -446,19 +448,4 @@ void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2) {
   printUint16Hex(serial1);
   printUint16Hex(serial2);
   Serial.println();
-}
-
-
-Scd4xReading get_scd4x(SensirionI2CScd4x& scd4x) {
-  uint16_t error;
-  char errorMessage[256];
-  uint16_t co2;
-  float temperature;
-  float humidity;
-  struct Scd4xReading result;
-
-  error = scd4x.readMeasurement(co2, temperature, humidity);
-
-  result = {co2, temperature, humidity};
-  return result;
 }
