@@ -14,6 +14,12 @@
 
 #define TEMP_F(c) (c * 9 / 5) + 32
 
+struct Scd4xReading {
+  uint16_t co2;
+  float temperature;
+  float humidity;
+};
+
 // display!
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
 // LEDs!
@@ -138,18 +144,20 @@ void setup() {
   ledcSetup(1, 2000, 8);
   ledcAttachPin(SPEAKER, 1);
   ledcWrite(1, 0);
+
+  tft.fillScreen(BG_COLOR);
 }
 
 
 void loop() {
   uint8_t cursor_y = 0;
 
-  delay(5000);
-  tft.fillScreen(BG_COLOR);
-
+  has_scd4x ? delay(5000) : delay(1000);
 
   /********************* sensors    */
   sensors_event_t humidity, temp, pressure;
+  uint16_t scd4x_co2, error;
+  float scd4x_temp, scd4x_hum;
   
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
@@ -190,6 +198,34 @@ void loop() {
     tft.print(" %");
     tft.println("              ");
     Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
+  }
+
+  if (has_scd4x) {
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+    error = scd4x.readMeasurement(scd4x_co2, scd4x_temp, scd4x_hum);
+    tft.print("SCD4x: ");
+    if (error) {
+      tft.print("error ");
+      tft.print(error, 0);
+      Serial.printf("SCD4x error %s\n", error);
+    } else if (scd4x_co2 == 0){
+      tft.print("error reading CO2");
+      Serial.printf("SCD4x error: CO2 reading 0\n");
+    } else {
+      tft.print(scd4x_co2, 0);
+      tft.print(" ppm ");
+      tft.setCursor(0, cursor_y);
+      cursor_y += tft_line_step;
+      tft.print("SCD4x: ");
+      tft.print(TEMP_F(scd4x_temp), 0);
+      tft.print(" F ");
+      tft.print(scd4x_hum, 0);
+      tft.print(" %");
+      tft.println("              ");
+      Serial.printf("SCD4x: %d ppm %0.1f *C  %0.2f rH\n", scd4x_co2, scd4x_temp, scd4x_hum);
+    }
   }
 
   /****************** BUTTONS */
@@ -410,4 +446,19 @@ void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2) {
   printUint16Hex(serial1);
   printUint16Hex(serial2);
   Serial.println();
+}
+
+
+Scd4xReading get_scd4x(SensirionI2CScd4x& scd4x) {
+  uint16_t error;
+  char errorMessage[256];
+  uint16_t co2;
+  float temperature;
+  float humidity;
+  struct Scd4xReading result;
+
+  error = scd4x.readMeasurement(co2, temperature, humidity);
+
+  result = {co2, temperature, humidity};
+  return result;
 }
