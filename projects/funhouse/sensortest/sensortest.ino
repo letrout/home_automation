@@ -256,6 +256,8 @@ void loop() {
     cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
     tft.print("SGP30: ");
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
     // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
     //float temperature = 22.1; // [°C]
     //float humidity = 45.2; // [%RH]
@@ -270,7 +272,7 @@ void loop() {
       tft.print(sgp30.eCO2, 0);
       tft.print(" ppm");
     }
-    if (! sgp.IAQmeasureRaw()) {
+    if (! sgp30.IAQmeasureRaw()) {
       Serial.println("SGP30 Raw Measurement failed");
     } else {
       tft.setCursor(0, cursor_y);
@@ -278,7 +280,7 @@ void loop() {
       tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
       tft.print("H2 ");
       tft.print(sgp30.rawH2, 0);
-      tft.print(" Ethanol ");
+      tft.print(" Eth ");
       tft.print(sgp30.rawEthanol, 0);
     }
   }
@@ -366,6 +368,7 @@ void loop() {
   /************************** ANALOG READ */
   uint16_t analogread;
 
+  /* ******************************************
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
@@ -409,6 +412,7 @@ void loop() {
   tft.print(analogread);
   tft.println("    ");
   Serial.printf("Analog A2 reading: %d\n", analogread);
+  ****************************** */
 
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
