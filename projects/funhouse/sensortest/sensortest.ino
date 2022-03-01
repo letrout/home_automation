@@ -8,7 +8,9 @@
 #include <Adafruit_SGP30.h>
 #include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
+#include <WiFi.h>
 #include <Wire.h>
+#include "secrets.h"
 
 #define NUM_DOTSTAR 5
 #define BG_COLOR ST77XX_BLACK
@@ -166,6 +168,24 @@ void setup() {
   ledcSetup(1, 2000, 8);
   ledcAttachPin(SPEAKER, 1);
   ledcWrite(1, 0);
+
+  // Connect to WiFi
+  WiFi.begin(ssid, password);
+  retries = 10, i = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    i++;
+    if (i > retries) {
+      break;
+    }
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
 
   tft.fillScreen(BG_COLOR);
 }
