@@ -5,6 +5,7 @@
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <Adafruit_DPS310.h>
 #include <Adafruit_AHTX0.h>
+#include <Adafruit_SGP30.h>
 #include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
 #include <Wire.h>
@@ -24,12 +25,14 @@ Adafruit_DPS310 dps;
 Adafruit_AHTX0 aht;
 Adafruit_SHT4x sht4x = Adafruit_SHT4x();
 SensirionI2CScd4x scd4x;
+Adafruit_SGP30 sgp30;
 
 uint8_t LED_dutycycle = 0;
 uint16_t firstPixelHue = 0;
 const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
 bool has_sht4x = false;
 bool has_scd4x = false;
+bool has_sgp30 = false;
 
 void setup() {
   uint8_t cursor_y = 0;
@@ -130,6 +133,30 @@ void setup() {
     }
   }
 
+  // check SGP30!
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.setTextColor(ST77XX_YELLOW);
+  tft.print("SGP30? ");
+  retries = 5, i = 0;
+  while (i < retries) {
+    if (! sgp30.begin()) {  
+      tft.setTextColor(ST77XX_RED);
+      tft.println("FAIL!");
+      delay(100);
+      i++;
+    } else {
+      has_sgp30 = true;
+      tft.setTextColor(ST77XX_GREEN);
+      tft.println("OK!");
+      Serial.print("Found SGP30 serial #");
+      Serial.print(sgp30.serialnumber[0], HEX);
+      Serial.print(sgp30.serialnumber[1], HEX);
+      Serial.println(sgp30.serialnumber[2], HEX);
+      break;
+    }
+  }
+
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(SPEAKER, OUTPUT);
 
@@ -199,6 +226,7 @@ void loop() {
     tft.setCursor(0, cursor_y);
     cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+    // TODO: setAmbientPressure() with value from DPS310?
     error = scd4x.readMeasurement(scd4x_co2, scd4x_temp, scd4x_hum);
     tft.print("SCD4x: ");
     if (error) {
@@ -220,6 +248,38 @@ void loop() {
       tft.print(" %");
       tft.println("              ");
       Serial.printf("SCD4x: %d ppm %0.1f *C  %0.2f rH\n", scd4x_co2, scd4x_temp, scd4x_hum);
+    }
+  }
+
+  if (has_sgp30) {
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+    tft.print("SGP30: ");
+    // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
+    //float temperature = 22.1; // [°C]
+    //float humidity = 45.2; // [%RH]
+    //sgp30.setHumidity(getAbsoluteHumidity(temperature, humidity))
+    if (! sgp30.IAQmeasure()) {
+      Serial.println("SGP30 Measurement failed");
+    } else {
+      tft.print("TVOC ");
+      tft.print(sgp30.TVOC, 0);
+      tft.print(" ppb ");
+      tft.print("eCO2 ");
+      tft.print(sgp30.eCO2, 0);
+      tft.print(" ppm");
+    }
+    if (! sgp.IAQmeasureRaw()) {
+      Serial.println("SGP30 Raw Measurement failed");
+    } else {
+      tft.setCursor(0, cursor_y);
+      cursor_y += tft_line_step;
+      tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+      tft.print("H2 ");
+      tft.print(sgp30.rawH2, 0);
+      tft.print(" Ethanol ");
+      tft.print(sgp30.rawEthanol, 0);
     }
   }
 
