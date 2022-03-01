@@ -193,13 +193,13 @@ void setup() {
 
 void loop() {
   uint8_t cursor_y = 0;
-
-  has_scd4x ? delay(5000) : delay(1000);
-
   /********************* sensors    */
   sensors_event_t humidity, temp, pressure;
   uint16_t scd4x_co2, error;
   float scd4x_temp, scd4x_hum;
+  float prim_temp_c, prim_hum;  // primary temp and humidity measurements
+
+  has_scd4x ? delay(5000) : delay(1000);
   
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
@@ -213,7 +213,7 @@ void loop() {
   tft.print(" hPa");
   tft.println("              ");
   Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(temp.temperature), pressure.pressure);
-
+  prim_temp_c = temp.temperature;
 
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
@@ -227,6 +227,8 @@ void loop() {
   tft.print(" %");
   tft.println("              ");
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
+  prim_temp_c = temp.temperature;
+  prim_hum = humidity.relative_humidity;
 
   if (has_sht4x) {
     tft.setCursor(0, cursor_y);
@@ -240,6 +242,8 @@ void loop() {
     tft.print(" %");
     tft.println("              ");
     Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
+    prim_temp_c = temp.temperature;
+    prim_hum = humidity.relative_humidity;
   }
 
   if (has_scd4x) {
@@ -268,6 +272,10 @@ void loop() {
       tft.print(" %");
       tft.println("              ");
       Serial.printf("SCD4x: %d ppm %0.1f *C  %0.2f rH\n", scd4x_co2, scd4x_temp, scd4x_hum);
+      if (! has_sht4x) {
+        prim_temp_c = scd4x_temp;
+        prim_hum = scd4x_hum;
+      }
     }
   }
 
@@ -276,18 +284,18 @@ void loop() {
     cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
     tft.print("SGP30: ");
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
     // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
     //float temperature = 22.1; // [°C]
     //float humidity = 45.2; // [%RH]
-    //sgp30.setHumidity(getAbsoluteHumidity(temperature, humidity))
+    sgp30.setHumidity(getAbsoluteHumidity(prim_temp_c, prim_hum));
     if (! sgp30.IAQmeasure()) {
       Serial.println("SGP30 Measurement failed");
     } else {
       tft.print("TVOC ");
       tft.print(sgp30.TVOC, 0);
       tft.print(" ppb ");
+      tft.setCursor(0, cursor_y);
+      cursor_y += tft_line_step;
       tft.print("eCO2 ");
       tft.print(sgp30.eCO2, 0);
       tft.print(" ppm");
@@ -532,4 +540,16 @@ void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2) {
   printUint16Hex(serial1);
   printUint16Hex(serial2);
   Serial.println();
+}
+
+
+/* return absolute humidity [mg/m^3] with approximation formula
+* @param temperature [°C]
+* @param humidity [%RH]
+*/
+uint32_t getAbsoluteHumidity(float temperature, float humidity) {
+    // approximation formula from Sensirion SGP30 Driver Integration chapter 3.15
+    const float absoluteHumidity = 216.7f * ((humidity / 100.0f) * 6.112f * exp((17.62f * temperature) / (243.12f + temperature)) / (273.15f + temperature)); // [g/m^3]
+    const uint32_t absoluteHumidityScaled = static_cast<uint32_t>(1000.0f * absoluteHumidity); // [mg/m^3]
+    return absoluteHumidityScaled;
 }
