@@ -36,6 +36,10 @@ const uint8_t tft_line_step = 20; // number of pixels in each tft line of text
 bool has_sht4x = false;
 bool has_scd4x = false;
 bool has_sgp30 = false;
+const unsigned long mqtt_ms = 60000;
+unsigned long mqtt_last_ms=0;
+boolean mqtt_pubnow = false;
+const char* measurement = "environment";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -219,9 +223,17 @@ void loop() {
   float scd4x_temp, scd4x_hum;
   float prim_temp_c, prim_hum;  // primary temp and humidity measurements
   char mqtt_msg [128];
-  const char* measurement = "environment";
 
   has_scd4x ? delay(5000) : delay(1000);
+  // MQTT publish interval expired?
+  // Serial.printf("current: %lu, last: %lu, interval: %lu\n", millis(), mqtt_last_ms, mqtt_ms);
+  if ((millis() - mqtt_last_ms) > mqtt_ms) {
+    mqtt_pubnow = true;
+    mqtt_last_ms = millis();
+  } else {
+    mqtt_pubnow = false;
+    client.loop();
+  }
   
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
@@ -235,9 +247,11 @@ void loop() {
   tft.print(" hPa");
   tft.println("              ");
   Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(temp.temperature), pressure.pressure);
-  sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(temp.temperature), pressure.pressure);
-  client.publish(topic, mqtt_msg);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  if (mqtt_pubnow) {
+    sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(temp.temperature), pressure.pressure);
+    client.publish(topic, mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
   prim_temp_c = temp.temperature;
 
   tft.setCursor(0, cursor_y);
@@ -252,9 +266,11 @@ void loop() {
   tft.print(" %");
   tft.println("              ");
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
-  sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, TEMP_F(temp.temperature), humidity.relative_humidity);
-  client.publish(topic, mqtt_msg);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  if (mqtt_pubnow) {
+    sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, TEMP_F(temp.temperature), humidity.relative_humidity);
+    client.publish(topic, mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
   prim_temp_c = temp.temperature;
   prim_hum = humidity.relative_humidity;
 
@@ -270,9 +286,11 @@ void loop() {
     tft.print(" %");
     tft.println("              ");
     Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
-    sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, TEMP_F(temp.temperature), humidity.relative_humidity);
-    client.publish(topic, mqtt_msg);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
+    if (mqtt_pubnow) {
+      sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, TEMP_F(temp.temperature), humidity.relative_humidity);
+      client.publish(topic, mqtt_msg);
+      memset(mqtt_msg, 0, sizeof mqtt_msg);
+    }
     prim_temp_c = temp.temperature;
     prim_hum = humidity.relative_humidity;
   }
@@ -303,9 +321,11 @@ void loop() {
       tft.print(" %");
       tft.println("              ");
       Serial.printf("SCD4x: %d ppm %0.1f *C  %0.2f rH\n", scd4x_co2, scd4x_temp, scd4x_hum);
-      sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x_co2, TEMP_F(scd4x_temp), scd4x_hum);
-      client.publish(topic, mqtt_msg);
-      memset(mqtt_msg, 0, sizeof mqtt_msg);
+      if (mqtt_pubnow) {
+        sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x_co2, TEMP_F(scd4x_temp), scd4x_hum);
+        client.publish(topic, mqtt_msg);
+        memset(mqtt_msg, 0, sizeof mqtt_msg);
+      }
       if (! has_sht4x) {
         prim_temp_c = scd4x_temp;
         prim_hum = scd4x_hum;
@@ -333,9 +353,11 @@ void loop() {
       tft.print("eCO2 ");
       tft.print(sgp30.eCO2, 0);
       tft.print(" ppm");
-      sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.TVOC, sgp30.eCO2);
-      client.publish(topic, mqtt_msg);
-      memset(mqtt_msg, 0, sizeof mqtt_msg);
+      if (mqtt_pubnow) {
+        sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.TVOC, sgp30.eCO2);
+        client.publish(topic, mqtt_msg);
+        memset(mqtt_msg, 0, sizeof mqtt_msg);
+      }
     }
     if (! sgp30.IAQmeasureRaw()) {
       Serial.println("SGP30 Raw Measurement failed");
@@ -347,9 +369,11 @@ void loop() {
       tft.print(sgp30.rawH2, 0);
       tft.print(" Eth ");
       tft.print(sgp30.rawEthanol, 0);
-      sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp30.rawH2, sgp30.rawEthanol);
-      client.publish(topic, mqtt_msg);
-      memset(mqtt_msg, 0, sizeof mqtt_msg);
+      if (mqtt_pubnow) {
+        sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp30.rawH2, sgp30.rawEthanol);
+        client.publish(topic, mqtt_msg);
+        memset(mqtt_msg, 0, sizeof mqtt_msg);
+      }
     }
   }
 
