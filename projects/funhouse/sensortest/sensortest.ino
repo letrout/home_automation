@@ -515,6 +515,11 @@ void loop() {
   tft.print(analogread);
   tft.println("    ");
   Serial.printf("Light sensor reading: %d\n", analogread);
+  if (mqtt_pubnow) {
+    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, analogread);
+    client.publish(topic, mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
   
   /************************** Beep! */
   if (digitalRead(BUTTON_SELECT)) {  
