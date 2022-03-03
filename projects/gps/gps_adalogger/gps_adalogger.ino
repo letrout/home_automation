@@ -33,7 +33,7 @@ bool usingInterrupt = false;
 #endif
 
 // Set the pins used
-#define chipSelect 10
+#define chipSelect 4  // For Feather 32u4 Adalogger
 #define ledPin 13
 
 File logfile;
@@ -77,7 +77,7 @@ void error(uint8_t errno) {
 void setup() {
   // for Leonardos, if you want to debug SD issues, uncomment this line
   // to see serial output
-  //while (!Serial);
+  while (!Serial);
 
   // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
   // also spit it out
@@ -94,7 +94,7 @@ void setup() {
     error(2);
   }
   char filename[15];
-  strcpy(filename, "GPSLOG00.TXT");
+  strcpy(filename, "GPSLOG00.LOG");
   for (uint8_t i = 0; i < 100; i++) {
     filename[6] = '0' + i/10;
     filename[7] = '0' + i%10;
