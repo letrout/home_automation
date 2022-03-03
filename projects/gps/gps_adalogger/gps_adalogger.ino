@@ -1,6 +1,5 @@
 #include <SPI.h>
 #include <Adafruit_GPS.h>
-#include <SoftwareSerial.h>
 #include <SD.h>
 #include <avr/sleep.h>
 
@@ -17,8 +16,7 @@
 // Pick one up today at the Adafruit electronics shop
 // and help support open source hardware & software! -ada
 // Fllybob added 10 sec logging option
-SoftwareSerial mySerial(8, 7);
-Adafruit_GPS GPS(&mySerial);
+Adafruit_GPS GPS(&Serial1);
 
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences
@@ -77,7 +75,7 @@ void error(uint8_t errno) {
 void setup() {
   // for Leonardos, if you want to debug SD issues, uncomment this line
   // to see serial output
-  while (!Serial);
+  // while (!Serial);
 
   // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
   // also spit it out
