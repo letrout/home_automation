@@ -34,6 +34,7 @@ bool usingInterrupt = false;
 #define chipSelect 4  // For Feather 32u4 Adalogger
 #define ledPin 13
 
+const bool debug = false; // Set to true to Serial print GPS log events
 File logfile;
 
 // read a Hex value and return the decimal equivalent
@@ -171,7 +172,7 @@ void loop() {
     // read data from the GPS in the 'main loop'
     char c = GPS.read();
     // if you want to debug, this is a good time to do it!
-    if (GPSECHO)
+    if (GPSECHO && debug)
       if (c) Serial.print(c);
   }
 
@@ -190,19 +191,22 @@ void loop() {
       return;  // we can fail to parse a sentence in which case we should just wait for another
 
     // Sentence parsed!
-    Serial.println("OK");
-    if (LOG_FIXONLY && !GPS.fix) {
+    if (debug)
+      Serial.println("OK");
+    if (LOG_FIXONLY && !GPS.fix && debug) {
       Serial.print("No Fix");
       return;
     }
 
     // Rad. lets log it!
-    Serial.println("Log");
+    if (debug)
+      Serial.println("Log");
 
     uint8_t stringsize = strlen(stringptr);
     if (stringsize != logfile.write((uint8_t *)stringptr, stringsize))    //write the string to the SD file
         error(4);
     if (strstr(stringptr, "RMC") || strstr(stringptr, "GGA"))   logfile.flush();
-    Serial.println();
+    if (debug)
+      Serial.println();
   }
 }
