@@ -33,8 +33,11 @@ bool usingInterrupt = false;
 // Set the pins used
 #define chipSelect 4  // For Feather 32u4 Adalogger
 #define ledPin 13
+#define VBATPIN A9  // battery analog output
 
 const bool debug = false; // Set to true to Serial print GPS log events
+const unsigned long batt_ms = 60 * 1000;  // query battery every X ms
+unsigned long batt_last_ms = 0;
 File logfile;
 
 // read a Hex value and return the decimal equivalent
@@ -209,4 +212,17 @@ void loop() {
     if (debug)
       Serial.println();
   }
+
+  if ((millis() - batt_last_ms) > batt_ms) {
+    printBattery();
+    batt_last_ms = millis();
+  }
+}
+
+void printBattery() {
+  float measuredvbat = analogRead(VBATPIN);
+  measuredvbat *= 2;    // we divided by 2, so multiply back
+  measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
+  measuredvbat /= 1024; // convert to voltage
+  Serial.print("VBat: " ); Serial.println(measuredvbat);
 }
