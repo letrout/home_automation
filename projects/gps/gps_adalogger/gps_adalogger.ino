@@ -213,7 +213,7 @@ void loop() {
       Serial.println();
   }
 
-  if ((millis() - batt_last_ms) > batt_ms) {
+  if (debug && (millis() - batt_last_ms) > batt_ms) {
     printBattery();
     batt_last_ms = millis();
   }
