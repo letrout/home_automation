@@ -23,6 +23,9 @@ Adafruit_GPS GPS(&Serial1);
 #define GPSECHO  true
 /* set to true to only log to SD when GPS has a fix, for debugging, keep it false */
 #define LOG_FIXONLY true
+#define DEBUG false // Set to true to Serial print GPS log events
+#define BATT_MS 10 * 60 * 1000 // query battery every X ms (0 for never)
+
 
 // this keeps track of whether we're using the interrupt
 // off by default!
@@ -35,8 +38,6 @@ bool usingInterrupt = false;
 #define ledPin 13
 #define VBATPIN A9  // battery analog output
 
-const bool debug = false; // Set to true to Serial print GPS log events
-const unsigned long batt_ms = 10000;  // query battery every X ms (0 for never)
 unsigned long batt_last_ms = 0;
 char filename[15];
 File logfile, battfile;
@@ -175,7 +176,7 @@ void loop() {
     // read data from the GPS in the 'main loop'
     char c = GPS.read();
     // if you want to debug, this is a good time to do it!
-    if (GPSECHO && debug)
+    if (GPSECHO && DEBUG)
       if (c) Serial.print(c);
   }
 
@@ -194,27 +195,27 @@ void loop() {
       return;  // we can fail to parse a sentence in which case we should just wait for another
 
     // Sentence parsed!
-    if (debug)
+    if (DEBUG)
       Serial.println("OK");
-    if (LOG_FIXONLY && !GPS.fix && debug) {
+    if (LOG_FIXONLY && !GPS.fix && DEBUG) {
       Serial.print("No Fix");
       return;
     }
 
     // Rad. lets log it!
-    if (debug)
+    if (DEBUG)
       Serial.println("Log");
 
     uint8_t stringsize = strlen(stringptr);
     if (stringsize != logfile.write((uint8_t *)stringptr, stringsize))    //write the string to the SD file
         error(4);
     if (strstr(stringptr, "RMC") || strstr(stringptr, "GGA"))   logfile.flush();
-    if (debug)
+    if (DEBUG)
       Serial.println();
   }
 
   // Log battery level
-  if ((batt_ms > 1000) && (millis() - batt_last_ms) > batt_ms) {
+  if ((BATT_MS > 1000) && (millis() - batt_last_ms) > BATT_MS) {
     printBattery();
     batt_last_ms = millis();
   }
