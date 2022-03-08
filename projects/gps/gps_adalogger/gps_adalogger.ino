@@ -22,7 +22,7 @@ Adafruit_GPS GPS(&Serial1);
 // Set to 'true' if you want to debug and listen to the raw GPS sentences
 #define GPSECHO  true
 /* set to true to only log to SD when GPS has a fix, for debugging, keep it false */
-#define LOG_FIXONLY false
+#define LOG_FIXONLY true
 
 // this keeps track of whether we're using the interrupt
 // off by default!
@@ -36,9 +36,10 @@ bool usingInterrupt = false;
 #define VBATPIN A9  // battery analog output
 
 const bool debug = false; // Set to true to Serial print GPS log events
-const unsigned long batt_ms = 60 * 1000;  // query battery every X ms
+const unsigned long batt_ms = 0;  // query battery every X ms (0 for never)
 unsigned long batt_last_ms = 0;
-File logfile;
+char filename[15];
+File logfile, battfile;
 
 // read a Hex value and return the decimal equivalent
 uint8_t parseHex(char c) {
@@ -95,7 +96,6 @@ void setup() {
     Serial.println("Card init. failed!");
     error(2);
   }
-  char filename[15];
   strcpy(filename, "GPSLOG00.LOG");
   for (uint8_t i = 0; i < 100; i++) {
     filename[6] = '0' + i/10;
@@ -119,6 +119,7 @@ void setup() {
   GPS.begin(9600);
 
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
+  // I only get GGA when I uncomment this line
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   // uncomment this line to turn on only the "minimum recommended" data
   //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
@@ -213,16 +214,32 @@ void loop() {
       Serial.println();
   }
 
-  if (debug && (millis() - batt_last_ms) > batt_ms) {
+  // Log battery level
+  if ((batt_ms > 1000) && (millis() - batt_last_ms) > batt_ms) {
     printBattery();
     batt_last_ms = millis();
   }
 }
 
 void printBattery() {
+  char line[5];
   float measuredvbat = analogRead(VBATPIN);
   measuredvbat *= 2;    // we divided by 2, so multiply back
   measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
   measuredvbat /= 1024; // convert to voltage
   Serial.print("VBat: " ); Serial.println(measuredvbat);
+  sprintf(line, "%.2f", measuredvbat);
+  logfile.close();
+  battfile = SD.open("battery.txt", FILE_WRITE);
+  // FIXME: this only prints a '?' on each line
+  battfile.println(line);
+  battfile.close();
+  logfile = SD.open(filename, FILE_WRITE);
+  if( ! logfile ) {
+    Serial.print("Couldnt open ");
+    Serial.println(filename);
+    error(3);
+  }
+  Serial.print("Writing to ");
+  Serial.println(filename);
 }
