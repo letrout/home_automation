@@ -36,7 +36,7 @@ bool usingInterrupt = false;
 #define VBATPIN A9  // battery analog output
 
 const bool debug = false; // Set to true to Serial print GPS log events
-const unsigned long batt_ms = 0;  // query battery every X ms (0 for never)
+const unsigned long batt_ms = 10000;  // query battery every X ms (0 for never)
 unsigned long batt_last_ms = 0;
 char filename[15];
 File logfile, battfile;
@@ -119,7 +119,6 @@ void setup() {
   GPS.begin(9600);
 
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
-  // I only get GGA when I uncomment this line
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   // uncomment this line to turn on only the "minimum recommended" data
   //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
@@ -222,13 +221,14 @@ void loop() {
 }
 
 void printBattery() {
-  char line[5];
+  String line = "";
   float measuredvbat = analogRead(VBATPIN);
   measuredvbat *= 2;    // we divided by 2, so multiply back
   measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
   measuredvbat /= 1024; // convert to voltage
   Serial.print("VBat: " ); Serial.println(measuredvbat);
-  sprintf(line, "%.2f", measuredvbat);
+  // sprintf(line, "%.2f", measuredvbat);
+  line = String(measuredvbat);
   logfile.close();
   battfile = SD.open("battery.txt", FILE_WRITE);
   // FIXME: this only prints a '?' on each line
@@ -240,6 +240,4 @@ void printBattery() {
     Serial.println(filename);
     error(3);
   }
-  Serial.print("Writing to ");
-  Serial.println(filename);
 }
