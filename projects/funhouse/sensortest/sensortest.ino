@@ -40,6 +40,7 @@ const unsigned long mqtt_ms = 60000;
 unsigned long mqtt_last_ms=0;
 boolean mqtt_pubnow = false;
 const char* measurement = "environment";
+String client_id;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -199,7 +200,7 @@ void setup() {
   client.setServer(mqtt_broker, mqtt_port);
   client.setCallback(callback);
   while (!client.connected()) {
-    String client_id = "esp32-client-";
+    client_id = "esp32-client-";
     client_id += String(WiFi.macAddress());
     Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
     if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
@@ -228,8 +229,19 @@ void loop() {
   // MQTT publish interval expired?
   // Serial.printf("current: %lu, last: %lu, interval: %lu\n", millis(), mqtt_last_ms, mqtt_ms);
   if ((millis() - mqtt_last_ms) > mqtt_ms) {
-    mqtt_pubnow = true;
-    mqtt_last_ms = millis();
+    if (!client.connected()) {
+      Serial.println("Reconnecting MQTT...");
+      if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
+        Serial.println("MQTT reconnected");
+        mqtt_pubnow = true;
+        mqtt_last_ms = millis();
+      } else {
+        Serial.println("Failed to reconnect MQTT!");
+      }
+    } else {
+      mqtt_pubnow = true;
+      mqtt_last_ms = millis();
+    }
   } else {
     mqtt_pubnow = false;
     client.loop();
