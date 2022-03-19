@@ -13,6 +13,7 @@
 #include <Wire.h>
 #include "secrets.h"
 
+#define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
 #define NUM_DOTSTAR 5
 #define BG_COLOR ST77XX_BLACK
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
@@ -40,7 +41,7 @@ const unsigned long mqtt_ms = 60000;
 unsigned long mqtt_last_ms=0;
 boolean mqtt_pubnow = false;
 const char* measurement = "environment";
-String client_id;
+char client_id[16] = "fh-"; // will be the MQTT client ID, after MAC appended
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -199,12 +200,18 @@ void setup() {
   // Connect to MQTT
   client.setServer(mqtt_broker, mqtt_port);
   client.setCallback(callback);
+  // append our MAC to client_id so it's unique
+  byte bmac[6];
+  WiFi.macAddress(bmac);
+  for (byte i = 0; i < ARRAY_LENGTH(bmac); ++i) {
+    char buf[3];
+    sprintf(buf, "%02x", bmac[i]);
+    strncat(client_id, buf, 3);
+  }
   while (!client.connected()) {
-    client_id = "esp32-client-";
-    client_id += String(WiFi.macAddress());
-    Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
-    if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
-      Serial.println("Public emqx mqtt broker connected");
+    Serial.printf("client %s connecting to mqtt broker...\n", client_id);
+    if (client.connect(client_id, mqtt_username, mqtt_password)) {
+      Serial.println("mqtt broker connected");
     } else {
       Serial.print("failed with state ");
       Serial.print(client.state());
@@ -231,7 +238,7 @@ void loop() {
   if ((millis() - mqtt_last_ms) > mqtt_ms) {
     if (!client.connected()) {
       Serial.println("Reconnecting MQTT...");
-      if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
+      if (client.connect(client_id, mqtt_username, mqtt_password)) {
         Serial.println("MQTT reconnected");
         mqtt_pubnow = true;
         mqtt_last_ms = millis();
