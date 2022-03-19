@@ -222,6 +222,7 @@ void loop() {
 
 void printBattery() {
   String line = "";
+  char ts[10];
   float measuredvbat = analogRead(VBATPIN);
   measuredvbat *= 2;    // we divided by 2, so multiply back
   measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
@@ -231,7 +232,14 @@ void printBattery() {
   line = String(measuredvbat);
   logfile.close();
   battfile = SD.open("battery.txt", FILE_WRITE);
-  // FIXME: this only prints a '?' on each line
+  sprintf(ts, "%2d:%2d:%2d ", GPS.hour, GPS.minute, GPS.seconds);
+  /*
+  battfile.print(GPS.hour);
+  battfile.print(GPS.minute);
+  battfile.print(GPS.seconds);
+  battfile.print(" ");
+  */
+  battfile.print(ts);
   battfile.println(line);
   battfile.close();
   logfile = SD.open(filename, FILE_WRITE);
