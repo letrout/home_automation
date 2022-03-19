@@ -221,7 +221,6 @@ void loop() {
 }
 
 void printBattery() {
-  // String line = "";
   char ts[10];
   char volts[5];
   float measuredvbat = analogRead(VBATPIN);
@@ -229,8 +228,6 @@ void printBattery() {
   measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
   measuredvbat /= 1024; // convert to voltage
   Serial.print("VBat: " ); Serial.println(measuredvbat);
-  // sprintf(line, "%.2f", measuredvbat);
-  //line = String(measuredvbat);
   sprintf(ts, "%02d:%02d:%02d ", GPS.hour, GPS.minute, GPS.seconds);
   dtostrf(measuredvbat, 4, 2, volts); // convert float to char for sd write
   logfile.close();
