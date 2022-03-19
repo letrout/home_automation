@@ -242,7 +242,7 @@ void printBattery() {
   battfile.print(volts);
   */
   battfile.print(ts);
-  battfile.println(volts);
+  battfile.println(volts);ntln(line);
   battfile.close();
   logfile = SD.open(filename, FILE_WRITE);
   if( ! logfile ) {
