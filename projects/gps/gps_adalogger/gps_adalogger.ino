@@ -221,26 +221,31 @@ void loop() {
 }
 
 void printBattery() {
-  String line = "";
+  // String line = "";
   char ts[10];
+  char volts[5];
   float measuredvbat = analogRead(VBATPIN);
   measuredvbat *= 2;    // we divided by 2, so multiply back
   measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
   measuredvbat /= 1024; // convert to voltage
   Serial.print("VBat: " ); Serial.println(measuredvbat);
   // sprintf(line, "%.2f", measuredvbat);
-  line = String(measuredvbat);
+  //line = String(measuredvbat);
+  sprintf(ts, "%02d:%02d:%02d ", GPS.hour, GPS.minute, GPS.seconds);
+  dtostrf(measuredvbat, 4, 2, volts); // convert float to char for sd write
   logfile.close();
   battfile = SD.open("battery.txt", FILE_WRITE);
-  sprintf(ts, "%2d:%2d:%2d ", GPS.hour, GPS.minute, GPS.seconds);
   /*
   battfile.print(GPS.hour);
+  battfile.print(":");
   battfile.print(GPS.minute);
+  battfile.print(":");
   battfile.print(GPS.seconds);
   battfile.print(" ");
+  battfile.print(volts);
   */
   battfile.print(ts);
-  battfile.println(line);
+  battfile.println(volts);
   battfile.close();
   logfile = SD.open(filename, FILE_WRITE);
   if( ! logfile ) {
