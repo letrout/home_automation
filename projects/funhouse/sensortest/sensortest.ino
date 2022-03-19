@@ -218,6 +218,7 @@ void setup() {
       delay(2000);
     }
  }
+ client.subscribe("influx/Owens/sensors/mbr/door");
 
   tft.fillScreen(BG_COLOR);
 } // setup()
@@ -652,4 +653,27 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println();
   Serial.println("-----------------------");
+  char value[length];
+  get_mqtt_val("temp_f", payload, value);
+  Serial.println(value);
+}
+
+
+// Is theere a better way (regex)?
+int get_mqtt_val(const char* field, const byte* payload, char* value) {
+  int ret = -1;
+  char* pch;
+  pch = strstr(field, (char*)payload);
+  if (pch != NULL) {
+    // search for field terminator (',' or ' ')
+    // skip index zero, which should be '='
+    for (int i = 1; i < strlen(pch); i++) {
+      if ((pch[i] == ',') || (pch[i] == ' ' )) {
+        break;
+      }
+      value[i] = (char)pch[i];
+      ret = 0;
+    }
+  }
+  return ret;
 }
