@@ -24,8 +24,6 @@ Adafruit_GPS GPS(&Serial1);
 /* set to true to only log to SD when GPS has a fix, for debugging, keep it false */
 #define LOG_FIXONLY true
 #define DEBUG false // Set to true to Serial print GPS log events
-#define BATT_MS 10 * 60 * 1000 // query battery every X ms (0 for never)
-
 
 // this keeps track of whether we're using the interrupt
 // off by default!
@@ -38,6 +36,7 @@ bool usingInterrupt = false;
 #define ledPin 13
 #define VBATPIN A9  // battery analog output
 
+const unsigned long batt_ms = 10 * 60 * 1000ul;  // query battery every X ms (0 for never)
 unsigned long batt_last_ms = 0;
 char filename[15];
 File logfile, battfile;
@@ -215,7 +214,7 @@ void loop() {
   }
 
   // Log battery level
-  if ((BATT_MS > 1000) && (millis() - batt_last_ms) > BATT_MS) {
+  if ((batt_ms > 1000) && ((millis() - batt_last_ms) > batt_ms)) {
     printBattery();
     batt_last_ms = millis();
   }
