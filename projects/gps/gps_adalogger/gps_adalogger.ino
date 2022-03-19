@@ -24,8 +24,6 @@ Adafruit_GPS GPS(&Serial1);
 /* set to true to only log to SD when GPS has a fix, for debugging, keep it false */
 #define LOG_FIXONLY true
 #define DEBUG false // Set to true to Serial print GPS log events
-#define BATT_MS 10 * 60 * 1000 // query battery every X ms (0 for never)
-
 
 // this keeps track of whether we're using the interrupt
 // off by default!
@@ -38,6 +36,7 @@ bool usingInterrupt = false;
 #define ledPin 13
 #define VBATPIN A9  // battery analog output
 
+const unsigned long batt_ms = 10 * 60 * 1000ul;  // query battery every X ms (0 for never)
 unsigned long batt_last_ms = 0;
 char filename[15];
 File logfile, battfile;
@@ -215,25 +214,35 @@ void loop() {
   }
 
   // Log battery level
-  if ((BATT_MS > 1000) && (millis() - batt_last_ms) > BATT_MS) {
+  if ((batt_ms > 1000) && ((millis() - batt_last_ms) > batt_ms)) {
     printBattery();
     batt_last_ms = millis();
   }
 }
 
 void printBattery() {
-  String line = "";
+  char ts[10];
+  char volts[5];
   float measuredvbat = analogRead(VBATPIN);
   measuredvbat *= 2;    // we divided by 2, so multiply back
   measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
   measuredvbat /= 1024; // convert to voltage
   Serial.print("VBat: " ); Serial.println(measuredvbat);
-  // sprintf(line, "%.2f", measuredvbat);
-  line = String(measuredvbat);
+  sprintf(ts, "%02d:%02d:%02d ", GPS.hour, GPS.minute, GPS.seconds);
+  dtostrf(measuredvbat, 4, 2, volts); // convert float to char for sd write
   logfile.close();
   battfile = SD.open("battery.txt", FILE_WRITE);
-  // FIXME: this only prints a '?' on each line
-  battfile.println(line);
+  /*
+  battfile.print(GPS.hour);
+  battfile.print(":");
+  battfile.print(GPS.minute);
+  battfile.print(":");
+  battfile.print(GPS.seconds);
+  battfile.print(" ");
+  battfile.print(volts);
+  */
+  battfile.print(ts);
+  battfile.println(volts);ntln(line);
   battfile.close();
   logfile = SD.open(filename, FILE_WRITE);
   if( ! logfile ) {
