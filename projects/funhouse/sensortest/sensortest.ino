@@ -654,16 +654,27 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.println();
   Serial.println("-----------------------");
   char value[length];
-  get_mqtt_val("temp_f", payload, value);
+  get_mqtt_val("temp_f", payload, length, value);
   Serial.println(value);
 }
 
 
 // Is theere a better way (regex)?
-int get_mqtt_val(const char* field, const byte* payload, char* value) {
+int get_mqtt_val(const char* field, const byte* payload, int length, char* value) {
   int ret = -1;
+  char msg[length];
   char* pch;
-  pch = strstr(field, (char*)payload);
+  //memccpy(msg, payload, sizeof(payload), sizeof(char));
+  for (int i = 0; i < length; i++) {
+    msg[i] = (char)payload[i];
+    Serial.print(msg[i]);
+  }
+  Serial.println();
+  pch = strstr(msg, field); // payload starting at field name
+  pch = strtok(pch, "=, "); // split result on delimiters
+  pch = strtok(NULL, "=, ");  // get the second token after split
+  /*
+  Serial.println(pch);
   if (pch != NULL) {
     // search for field terminator (',' or ' ')
     // skip index zero, which should be '='
@@ -671,9 +682,10 @@ int get_mqtt_val(const char* field, const byte* payload, char* value) {
       if ((pch[i] == ',') || (pch[i] == ' ' )) {
         break;
       }
-      value[i] = (char)pch[i];
+      value[i] = pch[i];
       ret = 0;
     }
   }
+  */
   return ret;
 }
