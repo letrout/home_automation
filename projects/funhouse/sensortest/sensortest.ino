@@ -653,26 +653,30 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println();
   Serial.println("-----------------------");
-  char value[length];
-  get_mqtt_val("temp_f", payload, length, value);
+  char* value;
+  get_mqtt_val("temp_f", payload, length, &value);
   Serial.println(value);
 }
 
 
 // Is theere a better way (regex)?
-int get_mqtt_val(const char* field, const byte* payload, int length, char* value) {
+int get_mqtt_val(const char* field, const byte* payload, int length, char** value) {
   int ret = -1;
   char msg[length];
-  char* pch;
   //memccpy(msg, payload, sizeof(payload), sizeof(char));
   for (int i = 0; i < length; i++) {
     msg[i] = (char)payload[i];
     Serial.print(msg[i]);
   }
   Serial.println();
-  pch = strstr(msg, field); // payload starting at field name
-  pch = strtok(pch, "=, "); // split result on delimiters
-  pch = strtok(NULL, "=, ");  // get the second token after split
+  *value = strstr(msg, field); // payload starting at field name
+  if (*value != NULL) {
+    *value = strtok(*value, "=, "); // split result on delimiters
+  }
+  if (*value != NULL) {
+    *value = strtok(NULL, "=, ");  // get the second token after split
+  }
+  (*value != NULL) ? (ret = 0): (ret = 1);
   /*
   Serial.println(pch);
   if (pch != NULL) {
