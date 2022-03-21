@@ -653,39 +653,42 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println();
   Serial.println("-----------------------");
-  char* value;
+  
+  /* example: extract the "temp_f" field from mqtt msg */
+  float value;
   int ret;
   ret = get_mqtt_val("temp_f", payload, length, &value);
   if (ret == 0) {
     Serial.print("value: ");
     Serial.println(value);
-    float f;
-    //sscanf(value, "%f", &f);
-    f = atof(value);
-    Serial.print("f value: ");
-    Serial.println(f);
   }
 }
 
 
-// Is theere a better way (regex)?
-int get_mqtt_val(const char* field, const byte* payload, int length, char** value) {
+// Is there a better way (regex)?
+int get_mqtt_val(const char* field, const byte* payload, int length, float* value) {
   int ret = -1;
   char msg[length];
+  char *pch;
   //memccpy(msg, payload, sizeof(payload), sizeof(char));
   for (int i = 0; i < length; i++) {
     msg[i] = (char)payload[i];
     Serial.print(msg[i]);
   }
   Serial.println();
-  *value = strstr(msg, field); // payload starting at field name
-  if (*value != NULL) {
-    *value = strtok(*value, "=, "); // split result on delimiters
+  pch = strstr(msg, field); // payload starting at field name
+  if (pch != NULL) {
+    pch = strtok(pch, "=, "); // split result on delimiters
   }
-  if (*value != NULL) {
-    *value = strtok(NULL, "=, ");  // get the second token after split
+  if (pch != NULL) {
+    pch = strtok(NULL, "=, ");  // get the second token after split
   }
-  ((*value == NULL) || (*value[0] =='\0')) ? (ret = 1): (ret = 0);
+  if ((pch == NULL) || (pch[0] =='\0')) {
+    ret = 1;
+  } else {
+    *value = atof(pch);
+    ret = 0;
+  }
   /*
   Serial.println(pch);
   if (pch != NULL) {
