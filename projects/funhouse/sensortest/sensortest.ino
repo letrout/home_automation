@@ -228,7 +228,7 @@ void loop() {
   uint8_t cursor_y = 0;
   /********************* sensors    */
   sensors_event_t humidity, temp, pressure;
-  uint16_t scd4x_co2, error;
+  uint16_t scd4x_co2, error, light;
   float scd4x_temp, scd4x_hum;
   float prim_temp_c, prim_hum;  // primary temp and humidity measurements
   char mqtt_msg [128];
@@ -530,13 +530,13 @@ void loop() {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Light: ");
-  analogread = analogRead(A3);
+  light = analogRead(A3);
   tft.setTextColor(ST77XX_WHITE, BG_COLOR);
-  tft.print(analogread);
+  tft.print(light);
   tft.println("    ");
-  Serial.printf("Light sensor reading: %d\n", analogread);
+  Serial.printf("Light sensor reading: %d\n", light);
   if (mqtt_pubnow) {
-    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, analogread);
+    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, light);
     client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
@@ -556,11 +556,18 @@ void loop() {
   LED_dutycycle += 32;
   
   // rainbow dotstars
+  uint8_t pixel_bright;
+  // dim dotstars as ambient light decreases
+  pixel_bright = map(light, 0, 8192, 0, 255);
   for (int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
       int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
       pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue)));
   }
+  pixels.setBrightness(pixel_bright);
   pixels.show(); // Update strip with new contents
+  Serial.print("pixel brightness: ");
+  Serial.println(pixel_bright);
+
   firstPixelHue += 256;
 } // loop()
 
