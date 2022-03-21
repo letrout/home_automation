@@ -654,8 +654,17 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.println();
   Serial.println("-----------------------");
   char* value;
-  get_mqtt_val("temp_f", payload, length, &value);
-  Serial.println(value);
+  int ret;
+  ret = get_mqtt_val("temp_f", payload, length, &value);
+  if (ret == 0) {
+    Serial.print("value: ");
+    Serial.println(value);
+    float f;
+    //sscanf(value, "%f", &f);
+    f = atof(value);
+    Serial.print("f value: ");
+    Serial.println(f);
+  }
 }
 
 
@@ -676,7 +685,7 @@ int get_mqtt_val(const char* field, const byte* payload, int length, char** valu
   if (*value != NULL) {
     *value = strtok(NULL, "=, ");  // get the second token after split
   }
-  (*value != NULL) ? (ret = 0): (ret = 1);
+  ((*value == NULL) || (*value[0] =='\0')) ? (ret = 1): (ret = 0);
   /*
   Serial.println(pch);
   if (pch != NULL) {
