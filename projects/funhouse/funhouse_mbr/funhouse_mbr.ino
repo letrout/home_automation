@@ -1,4 +1,4 @@
-// For testing sensors with the Adafruit FunHouse
+// Adafruit FunHouse in MBR
 
 #include <Adafruit_DotStar.h>
 #include <Adafruit_GFX.h>    // Core graphics library
@@ -30,14 +30,20 @@ Adafruit_SHT4x sht4x = Adafruit_SHT4x();
 SensirionI2CScd4x scd4x;
 Adafruit_SGP30 sgp30;
 
+// timers
+const unsigned long mqtt_ms = 60000;  // publish to mqtt every x ms
+unsigned long mqtt_last_ms = 0;
+const unsigned long sensor_ms = 1000;  // read sensors every x ms
+unsigned long sensor_last_ms = 0;
+const unsigned long scd4x_ms = 5000; // read SCD4x sensors every x ms
+unsigned long scd4x_last_ms = 0;
+
 uint8_t LED_dutycycle = 0;
 uint16_t firstPixelHue = 0;
 const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
 bool has_sht4x = false;
 bool has_scd4x = false;
 bool has_sgp30 = false;
-const unsigned long mqtt_ms = 60000;
-unsigned long mqtt_last_ms=0;
 boolean mqtt_pubnow = false;
 const char* measurement = "environment";
 
@@ -216,7 +222,12 @@ void setup() {
 
 
 void loop() {
-  uint8_t cursor_y = 0;
+  has_scd4x ? delay(5000) : delay(1000);
+
+  // timers
+  unsigned long now = millis();
+  bool sensors_update = false;
+  bool scd4x_update = false;
   /********************* sensors    */
   sensors_event_t humidity, temp, pressure;
   uint16_t scd4x_co2, error;
@@ -224,9 +235,22 @@ void loop() {
   float prim_temp_c, prim_hum;  // primary temp and humidity measurements
   char mqtt_msg [128];
 
-  has_scd4x ? delay(5000) : delay(1000);
+  uint8_t cursor_y = 0;
+
+  // check timers
+  if ((now - sensor_last_ms) > sensor_ms) {
+    sensors_update = true;
+    sensor_last_ms = now;
+  } else {
+    sensors_update = false;
+  }
+  if ((now - scd4x_last_ms) > scd4x_ms) {
+    scd4x_update = true;
+    scd4x_last_ms = now;
+  } else {
+    scd4x_update = false;
+  }
   // MQTT publish interval expired?
-  // Serial.printf("current: %lu, last: %lu, interval: %lu\n", millis(), mqtt_last_ms, mqtt_ms);
   if ((millis() - mqtt_last_ms) > mqtt_ms) {
     mqtt_pubnow = true;
     mqtt_last_ms = millis();
