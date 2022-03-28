@@ -19,6 +19,7 @@ const char* mqtt_password = MQTT_PASSWORD;
 const int door_pin = D1;
 const char* door_name = "front";
 int door_state; // 0 - closed, 1 - open
+int door_last_state = 0;
 const long utcOffsetInSeconds = 0;
 const unsigned long ntp_update_ms = 30 * 60 * 1000L; // NTP update interval ms
 unsigned long ntp_last_ms = 0L;
@@ -98,10 +99,14 @@ void loop() {
   } else {
     Serial.println("Door closed");
   }
-  // Publish to MQTT
-  sprintf(mqtt_msg, "%s,door=%s state=%d", measurement, door_name, door_state);
-  client.publish(topic, mqtt_msg);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  // Publish changes to MQTT
+  // publish all open events? or just changes?
+  if (door_state != door_last_state) {
+    sprintf(mqtt_msg, "%s,door=%s state=%d", measurement, door_name, door_state);
+    client.publish(topic, mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
+  door_last_state = door_state;
 
   client.loop();
   delay(1000);
