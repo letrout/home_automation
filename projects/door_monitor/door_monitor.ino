@@ -26,6 +26,7 @@ unsigned long ntp_last_ms = 0L;
 char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
 const char* measurement = "doors";
 const char* topic = "events";
+
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
@@ -102,7 +103,7 @@ void loop() {
   // Publish changes to MQTT
   // publish all open events? or just changes?
   if (door_state != door_last_state) {
-    sprintf(mqtt_msg, "%s,door=%s state=%d", measurement, door_name, door_state);
+    sprintf(mqtt_msg, "%s,door=%s state=%d %lu%s", measurement, door_name, door_state, timeClient.getEpochTime(), "000000000");
     client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
