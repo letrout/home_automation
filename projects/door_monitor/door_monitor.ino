@@ -18,8 +18,8 @@ const char* mqtt_password = MQTT_PASSWORD;
 
 const int door_pin = D1;
 const char* door_name = "front";
-int door_state; // 0 - closed, 1 - open
-int door_last_state = 0;
+boolean door_state; // 0 - closed, 1 - open
+boolean door_last_state = 0;
 const long utcOffsetInSeconds = 0;
 const unsigned long ntp_update_ms = 30 * 60 * 1000L; // NTP update interval ms
 unsigned long ntp_last_ms = 0L;
