@@ -2,6 +2,7 @@
 #include <PubSubClient.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <string.h>
 
 #include "secrets.h"
 
@@ -104,7 +105,9 @@ void loop() {
   // publish all open events? or just changes?
   if (door_state != door_last_state) {
     sprintf(mqtt_msg, "%s,door=%s state=%d %lu%s", measurement, door_name, door_state, timeClient.getEpochTime(), "000000000");
-    client.publish(topic, mqtt_msg);
+    int len = strlen(mqtt_msg) + 1;
+    client.publish(topic, (uint8_t*)mqtt_msg, len, true);
+    // client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   door_last_state = door_state;
