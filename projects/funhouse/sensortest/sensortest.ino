@@ -13,6 +13,7 @@
 #include <Wire.h>
 #include "secrets.h"
 
+#define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
 #define NUM_DOTSTAR 5
 #define BG_COLOR ST77XX_BLACK
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
@@ -40,6 +41,7 @@ const unsigned long mqtt_ms = 60000;
 unsigned long mqtt_last_ms=0;
 boolean mqtt_pubnow = false;
 const char* measurement = "environment";
+char client_id[16] = "fh-"; // will be the MQTT client ID, after MAC appended
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -198,18 +200,25 @@ void setup() {
   // Connect to MQTT
   client.setServer(mqtt_broker, mqtt_port);
   client.setCallback(callback);
+  // append our MAC to client_id so it's unique
+  byte bmac[6];
+  WiFi.macAddress(bmac);
+  for (byte i = 0; i < ARRAY_LENGTH(bmac); ++i) {
+    char buf[3];
+    sprintf(buf, "%02x", bmac[i]);
+    strncat(client_id, buf, 3);
+  }
   while (!client.connected()) {
-    String client_id = "esp32-client-";
-    client_id += String(WiFi.macAddress());
-    Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
-    if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
-      Serial.println("Public emqx mqtt broker connected");
+    Serial.printf("client %s connecting to mqtt broker...\n", client_id);
+    if (client.connect(client_id, mqtt_username, mqtt_password)) {
+      Serial.println("mqtt broker connected");
     } else {
       Serial.print("failed with state ");
       Serial.print(client.state());
       delay(2000);
     }
  }
+ client.subscribe("influx/Owens/sensors/mbr/door");
 
   tft.fillScreen(BG_COLOR);
 } // setup()
@@ -219,7 +228,7 @@ void loop() {
   uint8_t cursor_y = 0;
   /********************* sensors    */
   sensors_event_t humidity, temp, pressure;
-  uint16_t scd4x_co2, error;
+  uint16_t scd4x_co2, error, light;
   float scd4x_temp, scd4x_hum;
   float prim_temp_c, prim_hum;  // primary temp and humidity measurements
   char mqtt_msg [128];
@@ -228,8 +237,19 @@ void loop() {
   // MQTT publish interval expired?
   // Serial.printf("current: %lu, last: %lu, interval: %lu\n", millis(), mqtt_last_ms, mqtt_ms);
   if ((millis() - mqtt_last_ms) > mqtt_ms) {
-    mqtt_pubnow = true;
-    mqtt_last_ms = millis();
+    if (!client.connected()) {
+      Serial.println("Reconnecting MQTT...");
+      if (client.connect(client_id, mqtt_username, mqtt_password)) {
+        Serial.println("MQTT reconnected");
+        mqtt_pubnow = true;
+        mqtt_last_ms = millis();
+      } else {
+        Serial.println("Failed to reconnect MQTT!");
+      }
+    } else {
+      mqtt_pubnow = true;
+      mqtt_last_ms = millis();
+    }
   } else {
     mqtt_pubnow = false;
     client.loop();
@@ -510,13 +530,13 @@ void loop() {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Light: ");
-  analogread = analogRead(A3);
+  light = analogRead(A3);
   tft.setTextColor(ST77XX_WHITE, BG_COLOR);
-  tft.print(analogread);
+  tft.print(light);
   tft.println("    ");
-  Serial.printf("Light sensor reading: %d\n", analogread);
+  Serial.printf("Light sensor reading: %d\n", light);
   if (mqtt_pubnow) {
-    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, analogread);
+    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, light);
     client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
@@ -536,11 +556,18 @@ void loop() {
   LED_dutycycle += 32;
   
   // rainbow dotstars
+  uint8_t pixel_bright;
+  // dim dotstars as ambient light decreases
+  pixel_bright = map(light, 0, 8192, 0, 255);
   for (int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
       int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
       pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue)));
   }
+  pixels.setBrightness(pixel_bright);
   pixels.show(); // Update strip with new contents
+  Serial.print("pixel brightness: ");
+  Serial.println(pixel_bright);
+
   firstPixelHue += 256;
 } // loop()
 
@@ -633,4 +660,55 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println();
   Serial.println("-----------------------");
+  
+  /* example: extract the "temp_f" field from mqtt msg */
+  float value;
+  int ret;
+  ret = get_mqtt_val("temp_f", payload, length, &value);
+  if (ret == 0) {
+    Serial.print("value: ");
+    Serial.println(value);
+  }
+}
+
+
+// Is there a better way (regex)?
+int get_mqtt_val(const char* field, const byte* payload, int length, float* value) {
+  int ret = -1;
+  char msg[length];
+  char *pch;
+  //memccpy(msg, payload, sizeof(payload), sizeof(char));
+  for (int i = 0; i < length; i++) {
+    msg[i] = (char)payload[i];
+    Serial.print(msg[i]);
+  }
+  Serial.println();
+  pch = strstr(msg, field); // payload starting at field name
+  if (pch != NULL) {
+    pch = strtok(pch, "=, "); // split result on delimiters
+  }
+  if (pch != NULL) {
+    pch = strtok(NULL, "=, ");  // get the second token after split
+  }
+  if ((pch == NULL) || (pch[0] =='\0')) {
+    ret = 1;
+  } else {
+    *value = atof(pch);
+    ret = 0;
+  }
+  /*
+  Serial.println(pch);
+  if (pch != NULL) {
+    // search for field terminator (',' or ' ')
+    // skip index zero, which should be '='
+    for (int i = 1; i < strlen(pch); i++) {
+      if ((pch[i] == ',') || (pch[i] == ' ' )) {
+        break;
+      }
+      value[i] = pch[i];
+      ret = 0;
+    }
+  }
+  */
+  return ret;
 }
