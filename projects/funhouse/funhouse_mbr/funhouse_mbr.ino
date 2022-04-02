@@ -30,6 +30,13 @@ Adafruit_SHT4x sht4x = Adafruit_SHT4x();
 SensirionI2CScd4x scd4x;
 Adafruit_SGP30 sgp30;
 
+// Sensors
+sensors_event_t dps_temp, dps_pressure;
+sensors_event_t aht_humidity, aht_temp;
+sensors_event_t sht_humidity, sht_temp;
+uint16_t scd4x_co2;
+float scd4x_temp, scd4x_hum;
+
 // timers
 const unsigned long mqtt_ms = 60000;  // publish to mqtt every x ms
 unsigned long mqtt_last_ms = 0;
@@ -222,6 +229,8 @@ void setup() {
 
 
 void loop() {
+  uint16_t error;
+
   has_scd4x ? delay(5000) : delay(1000);
 
   // timers
@@ -229,9 +238,7 @@ void loop() {
   bool sensors_update = false;
   bool scd4x_update = false;
   /********************* sensors    */
-  sensors_event_t humidity, temp, pressure;
-  uint16_t scd4x_co2, error;
-  float scd4x_temp, scd4x_hum;
+
   float prim_temp_c, prim_hum;  // primary temp and humidity measurements
   char mqtt_msg [128];
 
@@ -262,61 +269,61 @@ void loop() {
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  dps.getEvents(&temp, &pressure);
+  dps.getEvents(&dps_temp, &dps_pressure);
   
   tft.print("DP310: ");
-  tft.print(TEMP_F(temp.temperature), 0);
+  tft.print(TEMP_F(dps_temp.temperature), 0);
   tft.print(" F ");
-  tft.print(pressure.pressure, 0);
+  tft.print(dps_pressure.pressure, 0);
   tft.print(" hPa");
   tft.println("              ");
-  Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(temp.temperature), pressure.pressure);
+  Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps_temp.temperature), dps_pressure.pressure);
   if (mqtt_pubnow) {
-    sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(temp.temperature), pressure.pressure);
+    sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(dps_temp.temperature), dps_pressure.pressure);
     client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
-  prim_temp_c = temp.temperature;
+  prim_temp_c = dps_temp.temperature;
 
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  aht.getEvent(&humidity, &temp);
+  aht.getEvent(&aht_humidity, &aht_temp);
 
   tft.print("AHT20: ");
-  tft.print(TEMP_F(temp.temperature), 0);
+  tft.print(TEMP_F(aht_temp.temperature), 0);
   tft.print(" F ");
-  tft.print(humidity.relative_humidity, 0);
+  tft.print(aht_humidity.relative_humidity, 0);
   tft.print(" %");
   tft.println("              ");
-  Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
+  Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
   if (mqtt_pubnow) {
-    sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, TEMP_F(temp.temperature), humidity.relative_humidity);
+    sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
     client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
-  prim_temp_c = temp.temperature;
-  prim_hum = humidity.relative_humidity;
+  prim_temp_c = aht_temp.temperature;
+  prim_hum = aht_humidity.relative_humidity;
 
   if (has_sht4x) {
     tft.setCursor(0, cursor_y);
     cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    sht4x.getEvent(&humidity, &temp);
+    sht4x.getEvent(&sht_humidity, &sht_temp);
     tft.print("SHT40: ");
-    tft.print(TEMP_F(temp.temperature), 0);
+    tft.print(TEMP_F(sht_temp.temperature), 0);
     tft.print(" F ");
-    tft.print(humidity.relative_humidity, 0);
+    tft.print(sht_humidity.relative_humidity, 0);
     tft.print(" %");
     tft.println("              ");
-    Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(temp.temperature), humidity.relative_humidity);
+    Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
     if (mqtt_pubnow) {
-      sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, TEMP_F(temp.temperature), humidity.relative_humidity);
+      sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
       client.publish(topic, mqtt_msg);
       memset(mqtt_msg, 0, sizeof mqtt_msg);
     }
-    prim_temp_c = temp.temperature;
-    prim_hum = humidity.relative_humidity;
+    prim_temp_c = sht_temp.temperature;
+    prim_hum = sht_humidity.relative_humidity;
   }
 
   if (has_scd4x) {
