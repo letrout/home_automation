@@ -34,8 +34,9 @@ Adafruit_SGP30 sgp30;
 sensors_event_t dps_temp, dps_pressure;
 sensors_event_t aht_humidity, aht_temp;
 sensors_event_t sht_humidity, sht_temp;
-uint16_t scd4x_co2;
+uint16_t scd4x_co2, ambient_light;
 float scd4x_temp, scd4x_hum;
+float prim_temp_c, prim_hum;  // primary temp and humidity measurements
 
 // timers
 const unsigned long mqtt_ms = 60000;  // publish to mqtt every x ms
@@ -51,7 +52,6 @@ const uint8_t tft_line_step = 20; // number of pixels in each tft line of text
 bool has_sht4x = false;
 bool has_scd4x = false;
 bool has_sgp30 = false;
-boolean mqtt_pubnow = false;
 const char* measurement = "environment";
 
 WiFiClient espClient;
@@ -230,6 +230,8 @@ void setup() {
 
 void loop() {
   uint16_t error;
+  char mqtt_msg [128];
+  uint8_t cursor_y = 0;
 
   has_scd4x ? delay(5000) : delay(1000);
 
@@ -237,12 +239,7 @@ void loop() {
   unsigned long now = millis();
   bool sensors_update = false;
   bool scd4x_update = false;
-  /********************* sensors    */
-
-  float prim_temp_c, prim_hum;  // primary temp and humidity measurements
-  char mqtt_msg [128];
-
-  uint8_t cursor_y = 0;
+  bool mqtt_pubnow = false;
 
   // check timers
   if ((now - sensor_last_ms) > sensor_ms) {
@@ -262,7 +259,6 @@ void loop() {
     mqtt_pubnow = true;
     mqtt_last_ms = millis();
   } else {
-    mqtt_pubnow = false;
     client.loop();
   }
   
@@ -541,13 +537,13 @@ void loop() {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Light: ");
-  analogread = analogRead(A3);
+  ambient_light = analogRead(A3);
   tft.setTextColor(ST77XX_WHITE, BG_COLOR);
-  tft.print(analogread);
+  tft.print(ambient_light);
   tft.println("    ");
-  Serial.printf("Light sensor reading: %d\n", analogread);
+  Serial.printf("Light sensor reading: %d\n", ambient_light);
   if (mqtt_pubnow) {
-    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, analogread);
+    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambient_light);
     client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
