@@ -556,6 +556,7 @@ void loop() {
 
 /**
  * @brief Read the sensors
+ * store results in global variables
  */
 void read_sensors() {
   // DPS310
@@ -593,6 +594,7 @@ void read_sensors() {
 
 /**
  * @brief Read the SCD40 sensor
+ * store the results in global variables
  * 
  * @return uint16_t error code returned from sensor readMeasurement()
  */
@@ -615,6 +617,13 @@ uint16_t read_scd4x() {
 }
 
 
+/**
+ * @brief output a tone to the speaker
+ * 
+ * @param pin 
+ * @param frequency 
+ * @param duration 
+ */
 void tone(uint8_t pin, float frequency, float duration) {
   ledcSetup(1, frequency, 8);
   ledcAttachPin(pin, 1);
@@ -624,6 +633,12 @@ void tone(uint8_t pin, float frequency, float duration) {
 }
 
 
+/**
+ * @brief Set the up scd4x object
+ * 
+ * @param scd4x SCD40 object
+ * @return uint16_t error value
+ */
 uint16_t setup_scd4x(SensirionI2CScd4x& scd4x) {
   uint16_t error;
   char errorMessage[256];
@@ -665,6 +680,11 @@ uint16_t setup_scd4x(SensirionI2CScd4x& scd4x) {
 }
 
 
+/**
+ * @brief serial print an int in hexadecimal
+ * 
+ * @param value the integer value to be printed
+ */
 void printUint16Hex(uint16_t value) {
   Serial.print(value < 4096 ? "0" : "");
   Serial.print(value < 256 ? "0" : "");
@@ -673,6 +693,13 @@ void printUint16Hex(uint16_t value) {
 }
 
 
+/**
+ * @brief serial print a serial number
+ * 
+ * @param serial0 
+ * @param serial1 
+ * @param serial2 
+ */
 void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2) {
   Serial.print("Serial: 0x");
   printUint16Hex(serial0);
@@ -694,6 +721,13 @@ uint32_t getAbsoluteHumidity(float temperature, float humidity) {
 }
 
 
+/**
+ * @brief MQTT subscribe callback function
+ * 
+ * @param topic the topic of the message
+ * @param payload the message payload
+ * @param length length of the message payload
+ */
 void callback(char *topic, byte *payload, unsigned int length) {
   Serial.print("Message arrived in topic: ");
   Serial.println(topic);
