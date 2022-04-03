@@ -11,6 +11,7 @@
 #include <SensirionI2CScd4x.h>
 #include <WiFi.h>
 #include <Wire.h>
+#include "funhouse_mbr.h"
 #include "secrets.h"
 
 #define NUM_DOTSTAR 5
@@ -257,7 +258,7 @@ void loop() {
     scd4x_update = false;
   }
 
-  display_sensors();
+  cursor_y = display_sensors(cursor_y);
 
   // MQTT publish interval expired?
   if ((millis() - mqtt_last_ms) > mqtt_ms) {
@@ -676,8 +677,8 @@ void callback(char *topic, byte *payload, unsigned int length) {
 }
 
 
-uint8_t display_sensors() {
-  uint8_t cursor_y = 0;
+uint8_t display_sensors(const uint8_t cursor_y_start) {
+  uint8_t cursor_y = cursor_y_start;
   const uint8_t tft_line_step = 20;
 
   // DPS310
