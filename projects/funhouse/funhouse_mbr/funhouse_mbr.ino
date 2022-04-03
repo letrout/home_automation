@@ -256,6 +256,9 @@ void loop() {
   } else {
     scd4x_update = false;
   }
+
+  display_sensors();
+
   // MQTT publish interval expired?
   if ((millis() - mqtt_last_ms) > mqtt_ms) {
     mqtt_pubnow = true;
@@ -264,16 +267,7 @@ void loop() {
     client.loop();
   }
   
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  
-  tft.print("DP310: ");
-  tft.print(TEMP_F(dps_temp.temperature), 0);
-  tft.print(" F ");
-  tft.print(dps_pressure.pressure, 0);
-  tft.print(" hPa");
-  tft.println("              ");
+  // DPS310
   Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps_temp.temperature), dps_pressure.pressure);
   if (mqtt_pubnow) {
     sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(dps_temp.temperature), dps_pressure.pressure);
@@ -281,16 +275,7 @@ void loop() {
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
 
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-
-  tft.print("AHT20: ");
-  tft.print(TEMP_F(aht_temp.temperature), 0);
-  tft.print(" F ");
-  tft.print(aht_humidity.relative_humidity, 0);
-  tft.print(" %");
-  tft.println("              ");
+  // AHT20
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
   if (mqtt_pubnow) {
     sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
@@ -298,16 +283,8 @@ void loop() {
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
 
+  // SHT40
   if (has_sht4x) {
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    tft.print("SHT40: ");
-    tft.print(TEMP_F(sht_temp.temperature), 0);
-    tft.print(" F ");
-    tft.print(sht_humidity.relative_humidity, 0);
-    tft.print(" %");
-    tft.println("              ");
     Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
     if (mqtt_pubnow) {
       sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
@@ -316,31 +293,18 @@ void loop() {
     }
   }
 
-  if (has_scd4x) {
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+   // SCD40
+  if (has_scd4x && scd4x_update) {
     // TODO: setAmbientPressure() with value from DPS310?
     scd4x_error = read_scd4x();
-    tft.print("SCD4x: ");
     if (scd4x_error) {
-      tft.print("error ");
-      tft.print(scd4x_error, 0);
+      // tft.print("error ");
+      // tft.print(scd4x_error, 0);
       Serial.printf("SCD4x error %s\n", scd4x_error);
     } else if (scd4x_co2 == 0){
-      tft.print("error reading CO2");
+      // tft.print("error reading CO2");
       Serial.printf("SCD4x error: CO2 reading 0\n");
     } else {
-      tft.print(scd4x_co2, 0);
-      tft.print(" ppm ");
-      tft.setCursor(0, cursor_y);
-      cursor_y += tft_line_step;
-      tft.print("SCD4x: ");
-      tft.print(TEMP_F(scd4x_temp), 0);
-      tft.print(" F ");
-      tft.print(scd4x_hum, 0);
-      tft.print(" %");
-      tft.println("              ");
       Serial.printf("SCD4x: %d ppm %0.1f *C  %0.2f rH\n", scd4x_co2, scd4x_temp, scd4x_hum);
       if (mqtt_pubnow) {
         sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x_co2, TEMP_F(scd4x_temp), scd4x_hum);
@@ -351,35 +315,10 @@ void loop() {
   }
 
   if (has_sgp30) {
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    tft.print("SGP30: ");
-    // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
-    //float temperature = 22.1; // [°C]
-    //float humidity = 45.2; // [%RH]
-    tft.print("TVOC ");
-    tft.print(sgp_tvoc, 0);
-    tft.print(" ppb ");
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.print("eCO2 ");
-    tft.print(sgp_eco2, 0);
-    tft.print(" ppm");
     if (mqtt_pubnow) {
       sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp_tvoc, sgp_eco2);
       client.publish(topic, mqtt_msg);
       memset(mqtt_msg, 0, sizeof mqtt_msg);
-    }
-
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    tft.print("H2 ");
-    tft.print(sgp_raw_h2, 0);
-    tft.print(" Eth ");
-    tft.print(sgp_raw_ethanol, 0);
-    if (mqtt_pubnow) {
       sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp_raw_h2, sgp_raw_ethanol);
       client.publish(topic, mqtt_msg);
       memset(mqtt_msg, 0, sizeof mqtt_msg);
@@ -515,14 +454,6 @@ void loop() {
   Serial.printf("Analog A2 reading: %d\n", analogread);
   ****************************** */
 
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("Light: ");
-  ambient_light = analogRead(A3);
-  tft.setTextColor(ST77XX_WHITE, BG_COLOR);
-  tft.print(ambient_light);
-  tft.println("    ");
   Serial.printf("Light sensor reading: %d\n", ambient_light);
   if (mqtt_pubnow) {
     sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambient_light);
@@ -566,6 +497,8 @@ void read_sensors() {
   aht.getEvent(&aht_humidity, &aht_temp);
   prim_temp_c = aht_temp.temperature;
   prim_hum = aht_humidity.relative_humidity;
+  // Light sensor
+  ambient_light = analogRead(A3);
   // SHT40
   if (has_sht4x) {
     sht4x.getEvent(&sht_humidity, &sht_temp);
@@ -573,6 +506,9 @@ void read_sensors() {
     prim_hum = sht_humidity.relative_humidity;
   }
   // SGP30
+  // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
+  //float temperature = 22.1; // [°C]
+  //float humidity = 45.2; // [%RH]
   if (has_sgp30) {
     sgp30.setHumidity(getAbsoluteHumidity(prim_temp_c, prim_hum));
     if (! sgp30.IAQmeasure()) {
@@ -737,4 +673,101 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println();
   Serial.println("-----------------------");
+}
+
+
+uint8_t display_sensors() {
+  uint8_t cursor_y = 0;
+  const uint8_t tft_line_step = 20;
+
+  // DPS310
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print("DP310: ");
+  tft.print(TEMP_F(dps_temp.temperature), 0);
+  tft.print(" F ");
+  tft.print(dps_pressure.pressure, 0);
+  tft.print(" hPa");
+  tft.println("              ");
+
+  // AHT20
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print("AHT20: ");
+  tft.print(TEMP_F(aht_temp.temperature), 0);
+  tft.print(" F ");
+  tft.print(aht_humidity.relative_humidity, 0);
+  tft.print(" %");
+  tft.println("              ");
+
+  // SHT40
+  if (has_sht4x) {
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+    tft.print("SHT40: ");
+    tft.print(TEMP_F(sht_temp.temperature), 0);
+    tft.print(" F ");
+    tft.print(sht_humidity.relative_humidity, 0);
+    tft.print(" %");
+    tft.println("              ");
+  }
+
+  // SCD40
+  if (has_scd4x) {
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+    tft.print("SCD4x: ");
+    tft.print(scd4x_co2, 0);
+    tft.print(" ppm ");
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.print("SCD4x: ");
+    tft.print(TEMP_F(scd4x_temp), 0);
+    tft.print(" F ");
+    tft.print(scd4x_hum, 0);
+    tft.print(" %");
+    tft.println("              ");
+  }
+
+  // SGP30
+  if (has_sgp30) {
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+    tft.print("SGP30: ");
+    // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
+    //float temperature = 22.1; // [°C]
+    //float humidity = 45.2; // [%RH]
+    tft.print("TVOC ");
+    tft.print(sgp_tvoc, 0);
+    tft.print(" ppb ");
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.print("eCO2 ");
+    tft.print(sgp_eco2, 0);
+    tft.print(" ppm");
+
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+    tft.print("H2 ");
+    tft.print(sgp_raw_h2, 0);
+    tft.print(" Eth ");
+    tft.print(sgp_raw_ethanol, 0);
+  }
+
+  // Light sensor
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print("Light: ");
+  tft.setTextColor(ST77XX_WHITE, BG_COLOR);
+  tft.print(ambient_light);
+  tft.println("    ");
+
+  return cursor_y;
 }
