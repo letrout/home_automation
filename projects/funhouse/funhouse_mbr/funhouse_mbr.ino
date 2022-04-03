@@ -35,6 +35,7 @@ sensors_event_t dps_temp, dps_pressure;
 sensors_event_t aht_humidity, aht_temp;
 sensors_event_t sht_humidity, sht_temp;
 uint16_t scd4x_co2, ambient_light;
+uint16_t sgp_tvoc, sgp_eco2, sgp_raw_h2, sgp_raw_ethanol;
 float scd4x_temp, scd4x_hum;
 float prim_temp_c, prim_hum;  // primary temp and humidity measurements
 
@@ -357,38 +358,31 @@ void loop() {
     // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
     //float temperature = 22.1; // [°C]
     //float humidity = 45.2; // [%RH]
-    if (! sgp30.IAQmeasure()) {
-      Serial.println("SGP30 Measurement failed");
-    } else {
-      tft.print("TVOC ");
-      tft.print(sgp30.TVOC, 0);
-      tft.print(" ppb ");
-      tft.setCursor(0, cursor_y);
-      cursor_y += tft_line_step;
-      tft.print("eCO2 ");
-      tft.print(sgp30.eCO2, 0);
-      tft.print(" ppm");
-      if (mqtt_pubnow) {
-        sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.TVOC, sgp30.eCO2);
-        client.publish(topic, mqtt_msg);
-        memset(mqtt_msg, 0, sizeof mqtt_msg);
-      }
+    tft.print("TVOC ");
+    tft.print(sgp_tvoc, 0);
+    tft.print(" ppb ");
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.print("eCO2 ");
+    tft.print(sgp_eco2, 0);
+    tft.print(" ppm");
+    if (mqtt_pubnow) {
+      sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp_tvoc, sgp_eco2);
+      client.publish(topic, mqtt_msg);
+      memset(mqtt_msg, 0, sizeof mqtt_msg);
     }
-    if (! sgp30.IAQmeasureRaw()) {
-      Serial.println("SGP30 Raw Measurement failed");
-    } else {
-      tft.setCursor(0, cursor_y);
-      cursor_y += tft_line_step;
-      tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-      tft.print("H2 ");
-      tft.print(sgp30.rawH2, 0);
-      tft.print(" Eth ");
-      tft.print(sgp30.rawEthanol, 0);
-      if (mqtt_pubnow) {
-        sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp30.rawH2, sgp30.rawEthanol);
-        client.publish(topic, mqtt_msg);
-        memset(mqtt_msg, 0, sizeof mqtt_msg);
-      }
+
+    tft.setCursor(0, cursor_y);
+    cursor_y += tft_line_step;
+    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+    tft.print("H2 ");
+    tft.print(sgp_raw_h2, 0);
+    tft.print(" Eth ");
+    tft.print(sgp_raw_ethanol, 0);
+    if (mqtt_pubnow) {
+      sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp_raw_h2, sgp_raw_ethanol);
+      client.publish(topic, mqtt_msg);
+      memset(mqtt_msg, 0, sizeof mqtt_msg);
     }
   }
 
@@ -580,6 +574,18 @@ void read_sensors() {
   // SGP30
   if (has_sgp30) {
     sgp30.setHumidity(getAbsoluteHumidity(prim_temp_c, prim_hum));
+    if (! sgp30.IAQmeasure()) {
+      Serial.println("SGP30 Measurement failed");
+    } else {
+      sgp_tvoc = sgp30.TVOC;
+      sgp_eco2 = sgp30.eCO2;
+    }
+    if (! sgp30.IAQmeasureRaw()) {
+      Serial.println("SGP30 Raw Measurement failed");
+    } else {
+      sgp_raw_h2 = sgp30.rawH2;
+      sgp_raw_ethanol = sgp30.rawEthanol;
+    }
   }
   return;
 }
