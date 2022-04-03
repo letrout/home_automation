@@ -229,7 +229,7 @@ void setup() {
 
 
 void loop() {
-  uint16_t error;
+  uint16_t scd4x_error;
   char mqtt_msg [128];
   uint8_t cursor_y = 0;
 
@@ -245,6 +245,7 @@ void loop() {
   if ((now - sensor_last_ms) > sensor_ms) {
     sensors_update = true;
     sensor_last_ms = now;
+    read_sensors();
   } else {
     sensors_update = false;
   }
@@ -265,7 +266,6 @@ void loop() {
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  dps.getEvents(&dps_temp, &dps_pressure);
   
   tft.print("DP310: ");
   tft.print(TEMP_F(dps_temp.temperature), 0);
@@ -279,12 +279,10 @@ void loop() {
     client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
-  prim_temp_c = dps_temp.temperature;
 
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  aht.getEvent(&aht_humidity, &aht_temp);
 
   tft.print("AHT20: ");
   tft.print(TEMP_F(aht_temp.temperature), 0);
@@ -298,14 +296,11 @@ void loop() {
     client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
-  prim_temp_c = aht_temp.temperature;
-  prim_hum = aht_humidity.relative_humidity;
 
   if (has_sht4x) {
     tft.setCursor(0, cursor_y);
     cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    sht4x.getEvent(&sht_humidity, &sht_temp);
     tft.print("SHT40: ");
     tft.print(TEMP_F(sht_temp.temperature), 0);
     tft.print(" F ");
@@ -318,8 +313,6 @@ void loop() {
       client.publish(topic, mqtt_msg);
       memset(mqtt_msg, 0, sizeof mqtt_msg);
     }
-    prim_temp_c = sht_temp.temperature;
-    prim_hum = sht_humidity.relative_humidity;
   }
 
   if (has_scd4x) {
@@ -327,12 +320,12 @@ void loop() {
     cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
     // TODO: setAmbientPressure() with value from DPS310?
-    error = scd4x.readMeasurement(scd4x_co2, scd4x_temp, scd4x_hum);
+    scd4x_error = read_scd4x();
     tft.print("SCD4x: ");
-    if (error) {
+    if (scd4x_error) {
       tft.print("error ");
-      tft.print(error, 0);
-      Serial.printf("SCD4x error %s\n", error);
+      tft.print(scd4x_error, 0);
+      Serial.printf("SCD4x error %s\n", scd4x_error);
     } else if (scd4x_co2 == 0){
       tft.print("error reading CO2");
       Serial.printf("SCD4x error: CO2 reading 0\n");
@@ -353,10 +346,6 @@ void loop() {
         client.publish(topic, mqtt_msg);
         memset(mqtt_msg, 0, sizeof mqtt_msg);
       }
-      if (! has_sht4x) {
-        prim_temp_c = scd4x_temp;
-        prim_hum = scd4x_hum;
-      }
     }
   }
 
@@ -368,7 +357,6 @@ void loop() {
     // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
     //float temperature = 22.1; // [°C]
     //float humidity = 45.2; // [%RH]
-    sgp30.setHumidity(getAbsoluteHumidity(prim_temp_c, prim_hum));
     if (! sgp30.IAQmeasure()) {
       Serial.println("SGP30 Measurement failed");
     } else {
@@ -570,6 +558,55 @@ void loop() {
   pixels.show(); // Update strip with new contents
   firstPixelHue += 256;
 } // loop()
+
+
+/**
+ * @brief Read the sensors
+ */
+void read_sensors() {
+  // DPS310
+  dps.getEvents(&dps_temp, &dps_pressure);
+  prim_temp_c = dps_temp.temperature;
+  // AHT20
+  aht.getEvent(&aht_humidity, &aht_temp);
+  prim_temp_c = aht_temp.temperature;
+  prim_hum = aht_humidity.relative_humidity;
+  // SHT40
+  if (has_sht4x) {
+    sht4x.getEvent(&sht_humidity, &sht_temp);
+    prim_temp_c = sht_temp.temperature;
+    prim_hum = sht_humidity.relative_humidity;
+  }
+  // SGP30
+  if (has_sgp30) {
+    sgp30.setHumidity(getAbsoluteHumidity(prim_temp_c, prim_hum));
+  }
+  return;
+}
+
+
+/**
+ * @brief Read the SCD40 sensor
+ * 
+ * @return uint16_t error code returned from sensor readMeasurement()
+ */
+uint16_t read_scd4x() {
+  uint16_t error = 0;
+  if (has_scd4x) {
+    error = scd4x.readMeasurement(scd4x_co2, scd4x_temp, scd4x_hum);
+  }
+  if (error) {
+    // Let the caller handler error?
+    // Serial.printf("SCD4x error %s\n", error);
+  } else if (scd4x_co2 == 0) {
+    // Let the caller handle co2==0?
+    // Serial.printf("SCD4x error: CO2 reading 0\n");
+  } else if (! has_sht4x) {
+    prim_temp_c = scd4x_temp;
+    prim_hum = scd4x_hum;
+  }
+  return error;
+}
 
 
 void tone(uint8_t pin, float frequency, float duration) {
