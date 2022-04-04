@@ -226,6 +226,8 @@ void setup() {
     }
  }
 
+  // SCD40 needs a few seconds to be ready
+  has_scd4x ? delay(5000) : delay(1000);
   tft.fillScreen(BG_COLOR);
 } // setup()
 
@@ -234,7 +236,7 @@ void loop() {
   uint16_t scd4x_error;
   uint8_t cursor_y = 0;
 
-  has_scd4x ? delay(5000) : delay(1000);
+  // has_scd4x ? delay(5000) : delay(1000);
 
   // timers
   unsigned long now = millis();
@@ -432,6 +434,8 @@ void loop() {
   }
   pixels.show(); // Update strip with new contents
   firstPixelHue += 256;
+
+  delay(1000);
 } // loop()
 
 
