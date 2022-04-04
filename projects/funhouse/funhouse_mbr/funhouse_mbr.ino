@@ -445,9 +445,21 @@ void loop() {
   // rainbow dotstars
   // dim dotstars as ambient light decreases
   pixel_bright = map(ambient_light, 0, 8192, 0, 255);
+  /*
   for (int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
+      if (has_scd4x && (i == 2)) { // third pixel will use CO2 for hue
+        continue;
+      }
       int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
       pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue)));
+  }
+  */
+  if (has_scd4x) {
+    uint16_t co2_hue;
+    co2_hue = map(scd4x_co2, 400, 4000, 0, 22000);  // 400ppm=green, 4000ppm=red
+    pixels.setPixelColor(2, pixels.gamma32(pixels.ColorHSV(co2_hue)));
+    Serial.print("CO2 pixel hue ");
+    Serial.println(co2_hue);
   }
   pixels.setBrightness(pixel_bright);
   pixels.show(); // Update strip with new contents
