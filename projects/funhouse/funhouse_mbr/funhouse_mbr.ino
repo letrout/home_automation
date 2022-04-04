@@ -58,6 +58,8 @@ bool has_sht4x = false;
 bool has_scd4x = false;
 bool has_sgp30 = false;
 const char* measurement = "environment";
+const char* plants_topic = "influx/Owens/plants";
+uint8_t peppers[4]; // store moisture content for four pepper plants
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -228,6 +230,8 @@ void setup() {
       delay(2000);
     }
  }
+ // get pepper plant data
+ client.subscribe(plants_topic);
 
   // SCD40 needs a few seconds to be ready
   has_scd4x ? delay(5000) : delay(1000);
@@ -610,6 +614,7 @@ uint32_t getAbsoluteHumidity(float temperature, float humidity) {
 
 
 void callback(char *topic, byte *payload, unsigned int length) {
+  char* pch;
   Serial.print("Message arrived in topic: ");
   Serial.println(topic);
   Serial.print("Message:");
@@ -618,6 +623,9 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println();
   Serial.println("-----------------------");
+  if (pch = strstr(topic, plants_topic)) {
+    get_pepper_mqtt(payload, length);
+  }
 }
 
 
@@ -714,6 +722,17 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   tft.print(ambient_light);
   tft.println("    ");
 
+  // Pepper plant soil moisture (from MQTT)
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print("Pepper:");
+  for (int i=0; i < (sizeof(peppers)/sizeof(peppers[0])); i++) {
+    tft.print(" ");
+    tft.print(peppers[i]);
+  }
+  //tft.println("");
+
   return cursor_y;
 }
 
@@ -758,4 +777,54 @@ void mqtt_pub_sensors() {
   }
 
   return;
+}
+
+
+int8_t get_pepper_mqtt(const byte* payload, const int length) {
+  int8_t ret = -1;
+  char msg[length];
+  char *pch;
+  uint8_t pepper_number;
+  //memccpy(msg, payload, sizeof(payload), sizeof(char));
+  for (int i = 0; i < length; i++) {
+    msg[i] = (char)payload[i];
+  }
+
+  // Get the pepper number
+  pch = strstr(msg, "plant"); // payload starting at "plant"
+  if (pch != NULL) {
+    pch = strtok(pch, "=, "); // split result on delimiters
+  }
+  if (pch != NULL) {
+    pch = strtok(NULL, "=pepper, ");  // get the second token after split
+  }
+  if ((pch == NULL) || (pch[0] =='\0')) {
+    return 1;
+  }
+  pepper_number = atoi(pch);
+  if (pepper_number > ((sizeof(peppers) / sizeof(peppers[0]) - 1))) {
+    return 2;
+  }
+  // Get the wet %
+  for (int i = 0; i < length; i++) {
+    msg[i] = (char)payload[i];
+  }
+  pch = strstr(msg, "wet_pct"); // payload starting at value name
+  if (pch != NULL) {
+    pch = strtok(pch, "=, "); // split result on delimiters
+  }
+  if (pch != NULL) {
+    pch = strtok(NULL, "=, ");  // get the second token after split
+  }
+  if ((pch == NULL) || (pch[0] =='\0')) {
+    ret = 3;
+  } else {
+    peppers[pepper_number - 1] = atoi(pch);
+    ret = 0;
+    Serial.print("pepper ");
+    Serial.print(pepper_number);
+    Serial.print(": ");
+    Serial.println(peppers[pepper_number - 1]);
+  }
+  return ret;
 }
