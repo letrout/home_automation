@@ -41,6 +41,8 @@ float scd4x_temp, scd4x_hum;
 float prim_temp_c, prim_hum;  // primary temp and humidity measurements
 
 // timers
+const unsigned long display_ms = 10000; // display on for x ms after UP button push
+unsigned long up_pressed_ms = 0;  // last time UP button pressed
 const unsigned long mqtt_ms = 60000;  // publish to mqtt every x ms
 unsigned long mqtt_last_ms = 0;
 const unsigned long sensor_ms = 1000;  // read sensors every x ms
@@ -271,13 +273,27 @@ void loop() {
     }
   }
 
-  cursor_y = display_sensors(cursor_y);
+  // If UP pressed, display for display_ms ms
+  if (digitalRead(BUTTON_UP)) {
+    Serial.println("UP pressed");
+    // tone(SPEAKER, 1319, 200); // tone1 - E6
+    // tone(SPEAKER, 988, 100);  // tone2 - B5
+    // delay(100);
+    up_pressed_ms = now;
+  }
+  if ((now - up_pressed_ms) < display_ms) {
+    digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
+    cursor_y = display_sensors(cursor_y);
+  } else {
+    digitalWrite(TFT_BACKLIGHT, LOW); // Backlight off
+  }
 
   // MQTT publish interval expired?
-  if ((millis() - mqtt_last_ms) > mqtt_ms) {
+  now = millis();
+  if ((now - mqtt_last_ms) > mqtt_ms) {
     mqtt_pubnow = true;
     mqtt_pub_sensors();
-    mqtt_last_ms = millis();
+    mqtt_last_ms = now;
   } else {
     client.loop();
   }
