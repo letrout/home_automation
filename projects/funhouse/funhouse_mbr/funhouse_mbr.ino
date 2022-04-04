@@ -269,7 +269,6 @@ void loop() {
   }
   
   // DPS310
-  Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps_temp.temperature), dps_pressure.pressure);
   if (mqtt_pubnow) {
     sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(dps_temp.temperature), dps_pressure.pressure);
     client.publish(topic, mqtt_msg);
@@ -277,7 +276,6 @@ void loop() {
   }
 
   // AHT20
-  Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
   if (mqtt_pubnow) {
     sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
     client.publish(topic, mqtt_msg);
@@ -286,7 +284,6 @@ void loop() {
 
   // SHT40
   if (has_sht4x) {
-    Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
     if (mqtt_pubnow) {
       sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
       client.publish(topic, mqtt_msg);
@@ -306,7 +303,6 @@ void loop() {
       // tft.print("error reading CO2");
       Serial.printf("SCD4x error: CO2 reading 0\n");
     } else {
-      Serial.printf("SCD4x: %d ppm %0.1f *C  %0.2f rH\n", scd4x_co2, scd4x_temp, scd4x_hum);
       if (mqtt_pubnow) {
         sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x_co2, TEMP_F(scd4x_temp), scd4x_hum);
         client.publish(topic, mqtt_msg);
@@ -455,7 +451,6 @@ void loop() {
   Serial.printf("Analog A2 reading: %d\n", analogread);
   ****************************** */
 
-  Serial.printf("Light sensor reading: %d\n", ambient_light);
   if (mqtt_pubnow) {
     sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambient_light);
     client.publish(topic, mqtt_msg);
@@ -490,17 +485,21 @@ void read_sensors() {
   // DPS310
   dps.getEvents(&dps_temp, &dps_pressure);
   prim_temp_c = dps_temp.temperature;
+  Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps_temp.temperature), dps_pressure.pressure);
   // AHT20
   aht.getEvent(&aht_humidity, &aht_temp);
   prim_temp_c = aht_temp.temperature;
   prim_hum = aht_humidity.relative_humidity;
+  Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
   // Light sensor
   ambient_light = analogRead(A3);
+  Serial.printf("Light sensor reading: %d\n", ambient_light);
   // SHT40
   if (has_sht4x) {
     sht4x.getEvent(&sht_humidity, &sht_temp);
     prim_temp_c = sht_temp.temperature;
     prim_hum = sht_humidity.relative_humidity;
+    Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
   }
   // SGP30
   // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
@@ -529,6 +528,8 @@ uint16_t read_scd4x() {
   uint16_t error = 0;
   if (has_scd4x) {
     error = scd4x.readMeasurement(scd4x_co2, scd4x_temp, scd4x_hum);
+  } else {
+    return 1;
   }
   if (error) {
     // Let the caller handler error?
@@ -540,6 +541,7 @@ uint16_t read_scd4x() {
     prim_temp_c = scd4x_temp;
     prim_hum = scd4x_hum;
   }
+  Serial.printf("SCD4x: %d ppm %0.1f *C  %0.2f rH\n", scd4x_co2, scd4x_temp, scd4x_hum);
   return error;
 }
 
