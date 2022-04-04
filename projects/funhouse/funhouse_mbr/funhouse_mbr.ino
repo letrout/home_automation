@@ -236,8 +236,6 @@ void loop() {
   uint16_t scd4x_error;
   uint8_t cursor_y = 0;
 
-  // has_scd4x ? delay(5000) : delay(1000);
-
   // timers
   unsigned long now = millis();
   bool sensors_update = false;
@@ -259,17 +257,6 @@ void loop() {
     scd4x_update = false;
   }
 
-  cursor_y = display_sensors(cursor_y);
-
-  // MQTT publish interval expired?
-  if ((millis() - mqtt_last_ms) > mqtt_ms) {
-    mqtt_pubnow = true;
-    mqtt_pub_sensors();
-    mqtt_last_ms = millis();
-  } else {
-    client.loop();
-  }
-
    // SCD40
   if (has_scd4x && scd4x_update) {
     // TODO: setAmbientPressure() with value from DPS310?
@@ -282,6 +269,17 @@ void loop() {
       // tft.print("error reading CO2");
       Serial.printf("SCD4x error: CO2 reading 0\n");
     }
+  }
+
+  cursor_y = display_sensors(cursor_y);
+
+  // MQTT publish interval expired?
+  if ((millis() - mqtt_last_ms) > mqtt_ms) {
+    mqtt_pubnow = true;
+    mqtt_pub_sensors();
+    mqtt_last_ms = millis();
+  } else {
+    client.loop();
   }
 
   /****************** BUTTONS */
