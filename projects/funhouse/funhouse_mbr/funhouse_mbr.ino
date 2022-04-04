@@ -52,6 +52,7 @@ unsigned long scd4x_last_ms = 0;
 
 uint8_t LED_dutycycle = 0;
 uint16_t firstPixelHue = 0;
+uint8_t pixel_bright;
 const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
 bool has_sht4x = false;
 bool has_scd4x = false;
@@ -442,10 +443,13 @@ void loop() {
   LED_dutycycle += 32;
   
   // rainbow dotstars
+  // dim dotstars as ambient light decreases
+  pixel_bright = map(ambient_light, 0, 8192, 0, 255);
   for (int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
       int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
       pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue)));
   }
+  pixels.setBrightness(pixel_bright);
   pixels.show(); // Update strip with new contents
   firstPixelHue += 256;
 
