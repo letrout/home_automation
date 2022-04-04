@@ -17,6 +17,7 @@
 #define NUM_DOTSTAR 5
 #define BG_COLOR ST77XX_BLACK
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
+#define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
 #define TEMP_F(c) (c * 9 / 5) + 32
 
@@ -59,7 +60,7 @@ bool has_scd4x = false;
 bool has_sgp30 = false;
 const char* measurement = "environment";
 const char* plants_topic = "influx/Owens/plants";
-uint8_t peppers[4]; // store moisture content for four pepper plants
+uint8_t peppers[PEPPER_PLANTS]; // store moisture content for four pepper plants
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -458,6 +459,17 @@ void loop() {
       pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue)));
   }
   */
+  // Set dotstars to pepper plant moisture (from MQTT)
+  uint16_t pepper_hues[PEPPER_PLANTS];
+  for (int i=0; i < PEPPER_PLANTS; i++) {
+    pepper_hues[i] = map(peppers[i], 0, 100, 44000, 0); // 0=red, 100=blue
+  }
+  pixels.setPixelColor(0, pixels.gamma32(pixels.ColorHSV(pepper_hues[3])));
+  pixels.setPixelColor(1, pixels.gamma32(pixels.ColorHSV(pepper_hues[2])));
+  pixels.setPixelColor(3, pixels.gamma32(pixels.ColorHSV(pepper_hues[1])));
+  pixels.setPixelColor(4, pixels.gamma32(pixels.ColorHSV(pepper_hues[0])));
+
+  // Set middle dotstar hue by CO2 level
   if (has_scd4x) {
     uint16_t co2_hue;
     co2_hue = map(scd4x_co2, 400, 4000, 0, 22000);  // 400ppm=green, 4000ppm=red
@@ -727,7 +739,7 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Pepper:");
-  for (int i=0; i < (sizeof(peppers)/sizeof(peppers[0])); i++) {
+  for (int i=0; i < PEPPER_PLANTS; i++) {
     tft.print(" ");
     tft.print(peppers[i]);
   }
@@ -802,7 +814,7 @@ int8_t get_pepper_mqtt(const byte* payload, const int length) {
     return 1;
   }
   pepper_number = atoi(pch);
-  if (pepper_number > ((sizeof(peppers) / sizeof(peppers[0]) - 1))) {
+  if (pepper_number > PEPPER_PLANTS) {
     return 2;
   }
   // Get the wet %

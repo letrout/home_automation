@@ -89,3 +89,13 @@ uint8_t display_sensors(const uint8_t cursor_y_start = 0);
  * 
  */
 void mqtt_pub_sensors(void);
+
+
+/**
+ * @brief Get the pepper plant moisture level from MQTT
+ * 
+ * @param payload MQTT payload
+ * @param length length of payload
+ * @return int8_t error code (0 on success)
+ */
+int8_t get_pepper_mqtt(const byte* payload, const int length);
