@@ -232,7 +232,6 @@ void setup() {
 
 void loop() {
   uint16_t scd4x_error;
-  char mqtt_msg [128];
   uint8_t cursor_y = 0;
 
   has_scd4x ? delay(5000) : delay(1000);
@@ -263,32 +262,10 @@ void loop() {
   // MQTT publish interval expired?
   if ((millis() - mqtt_last_ms) > mqtt_ms) {
     mqtt_pubnow = true;
+    mqtt_pub_sensors();
     mqtt_last_ms = millis();
   } else {
     client.loop();
-  }
-  
-  // DPS310
-  if (mqtt_pubnow) {
-    sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(dps_temp.temperature), dps_pressure.pressure);
-    client.publish(topic, mqtt_msg);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-  }
-
-  // AHT20
-  if (mqtt_pubnow) {
-    sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
-    client.publish(topic, mqtt_msg);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-  }
-
-  // SHT40
-  if (has_sht4x) {
-    if (mqtt_pubnow) {
-      sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
-      client.publish(topic, mqtt_msg);
-      memset(mqtt_msg, 0, sizeof mqtt_msg);
-    }
   }
 
    // SCD40
@@ -302,23 +279,6 @@ void loop() {
     } else if (scd4x_co2 == 0){
       // tft.print("error reading CO2");
       Serial.printf("SCD4x error: CO2 reading 0\n");
-    } else {
-      if (mqtt_pubnow) {
-        sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x_co2, TEMP_F(scd4x_temp), scd4x_hum);
-        client.publish(topic, mqtt_msg);
-        memset(mqtt_msg, 0, sizeof mqtt_msg);
-      }
-    }
-  }
-
-  if (has_sgp30) {
-    if (mqtt_pubnow) {
-      sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp_tvoc, sgp_eco2);
-      client.publish(topic, mqtt_msg);
-      memset(mqtt_msg, 0, sizeof mqtt_msg);
-      sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp_raw_h2, sgp_raw_ethanol);
-      client.publish(topic, mqtt_msg);
-      memset(mqtt_msg, 0, sizeof mqtt_msg);
     }
   }
 
@@ -450,12 +410,6 @@ void loop() {
   tft.println("    ");
   Serial.printf("Analog A2 reading: %d\n", analogread);
   ****************************** */
-
-  if (mqtt_pubnow) {
-    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambient_light);
-    client.publish(topic, mqtt_msg);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-  }
   
   /************************** Beep! */
   if (digitalRead(BUTTON_SELECT)) {  
@@ -727,4 +681,47 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   tft.println("    ");
 
   return cursor_y;
+}
+
+
+void mqtt_pub_sensors() {
+  char mqtt_msg [128];
+
+  // TODO: check/reconnect connection to broker?
+
+  // DPS310
+  sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(dps_temp.temperature), dps_pressure.pressure);
+  client.publish(topic, mqtt_msg);
+  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  // AHT20
+  sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
+  client.publish(topic, mqtt_msg);
+  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  // Ambient light
+  sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambient_light);
+  client.publish(topic, mqtt_msg);
+  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  // SHT40
+  if (has_sht4x) {
+    sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
+    client.publish(topic, mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
+  // SCD40
+  if (has_scd4x) {
+    sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x_co2, TEMP_F(scd4x_temp), scd4x_hum);
+    client.publish(topic, mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
+  // SGP30
+  if (has_sgp30) {
+    sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp_tvoc, sgp_eco2);
+    client.publish(topic, mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+    sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp_raw_h2, sgp_raw_ethanol);
+    client.publish(topic, mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
+
+  return;
 }

@@ -82,3 +82,10 @@ void callback(char *topic, byte *payload, unsigned int length);
  * @return uint8_t the final cursor value
  */
 uint8_t display_sensors(const uint8_t cursor_y_start = 0);
+
+
+/**
+ * @brief publish sensor readings to MQTT broker
+ * 
+ */
+void mqtt_pub_sensors(void);
