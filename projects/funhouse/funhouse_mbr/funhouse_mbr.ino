@@ -75,7 +75,7 @@ void setup() {
   
   pixels.begin(); // Initialize pins for output
   pixels.show();  // Turn all LEDs off ASAP
-  pixels.setBrightness(20);
+  pixels.setBrightness(255);
 
   pinMode(BUTTON_DOWN, INPUT_PULLDOWN);
   pinMode(BUTTON_SELECT, INPUT_PULLDOWN);
@@ -462,12 +462,16 @@ void loop() {
   // Set dotstars to pepper plant moisture (from MQTT)
   uint16_t pepper_hues[PEPPER_PLANTS];
   for (int i=0; i < PEPPER_PLANTS; i++) {
-    pepper_hues[i] = map(peppers[i], 0, 100, 26000L, 0L); // 0=red, 100=blue
+    pepper_hues[i] = map(peppers[i], 0, 100, 0, 26000); // 0=red, 100=blue
+    Serial.print("wet_pct: ");
+    Serial.print(peppers[i]);
+    Serial.print(", hue: ");
+    Serial.println(pepper_hues[i]);
   }
-  pixels.setPixelColor(0, pixels.gamma32(pixels.ColorHSV(pepper_hues[3])));
-  pixels.setPixelColor(1, pixels.gamma32(pixels.ColorHSV(pepper_hues[2])));
-  pixels.setPixelColor(3, pixels.gamma32(pixels.ColorHSV(pepper_hues[1])));
-  pixels.setPixelColor(4, pixels.gamma32(pixels.ColorHSV(pepper_hues[0])));
+  pixels.setPixelColor(0, pixels.gamma32(pixels.ColorHSV(pepper_hues[3], 255, pixel_bright)));
+  pixels.setPixelColor(1, pixels.gamma32(pixels.ColorHSV(pepper_hues[2], 255, pixel_bright)));
+  pixels.setPixelColor(3, pixels.gamma32(pixels.ColorHSV(pepper_hues[1], 255, pixel_bright)));
+  pixels.setPixelColor(4, pixels.gamma32(pixels.ColorHSV(pepper_hues[0], 255, pixel_bright)));
   /*
   pixels.setPixelColor(0, pixels.ColorHSV(pepper_hues[3]));
   pixels.setPixelColor(1, pixels.ColorHSV(pepper_hues[2]));
@@ -479,12 +483,12 @@ void loop() {
   // Set middle dotstar hue by CO2 level
   if (has_scd4x) {
     uint16_t co2_hue;
-    co2_hue = map(scd4x_co2, 400, 4000, 0L, 22000L);  // 400ppm=green, 4000ppm=red
-    pixels.setPixelColor(2, pixels.gamma32(pixels.ColorHSV(co2_hue)));
+    co2_hue = map(scd4x_co2, 400, 4000, 22000, 0);  // 400ppm=green, 4000ppm=red
+    pixels.setPixelColor(2, pixels.gamma32(pixels.ColorHSV(co2_hue, 255, pixel_bright)));
     Serial.print("CO2 pixel hue ");
     Serial.println(co2_hue);
   }
-  pixels.setBrightness(pixel_bright);
+  // pixels.setBrightness(pixel_bright);
   pixels.show(); // Update strip with new contents
   firstPixelHue += 256;
 
