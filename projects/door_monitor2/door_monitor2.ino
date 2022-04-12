@@ -4,6 +4,8 @@
 #include <NTPClient.h>
 #include <string.h>
 
+// Use appropriate header file for the location
+#include "kitchen.h"
 #include "secrets.h"
 
 #define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
@@ -17,15 +19,14 @@ const int mqtt_port = MQTT_PORT;
 const char* mqtt_username = MQTT_USER;
 const char* mqtt_password = MQTT_PASSWORD;
 
-const int door_pin = D1;
-const char* door_name = "garage_side";
 int door_state = -1; // 0 - closed, 1 - open
 int door_last_state = -1; // initialize to invalid state
 const long utcOffsetInSeconds = 0;
 const unsigned long ntp_update_ms = 30 * 60 * 1000L; // NTP update interval ms
 unsigned long ntp_last_ms = 0L;
 char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
-const char* measurement = "open";
+const char* measurement = "sensor";
+const char* msmt_type = "door";
 const char* topic = "influx/Owens/events/doors";
 
 WiFiClient wifiClient;
@@ -113,7 +114,9 @@ void loop() {
   }
   */
   // Publish all door states (even if unchanged)
-  sprintf(mqtt_msg, "%s,door=%s state=%d %lu%s", measurement, door_name, door_state, timeClient.getEpochTime(), "000000000");
+  sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
+          measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
+  //sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d", measurement, location, room, room_loc, msmt_type, door_state);
   int len = strlen(mqtt_msg) + 1;
   client.publish(topic, (uint8_t*)mqtt_msg, len, true);
   // client.publish(topic, mqtt_msg);
