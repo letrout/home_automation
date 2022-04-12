@@ -88,8 +88,6 @@ void setup()
 void loop() {
   unsigned long now = millis();
   char mqtt_msg [128];
-  // Serial.print("Connected, IP address: ");
-  // Serial.println(WiFi.localIP());
   if ((now - ntp_last_ms) > ntp_update_ms) {
     ntp_last_ms = now;
     timeClient.update();
