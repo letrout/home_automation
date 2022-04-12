@@ -117,7 +117,7 @@ void loop() {
   sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
           measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
   //sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d", measurement, location, room, room_loc, msmt_type, door_state);
-  int len = strlen(mqtt_msg) + 1;
+  int len = strlen(mqtt_msg);
   client.publish(topic, (uint8_t*)mqtt_msg, len, true);
   // client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
