@@ -4,6 +4,7 @@
 #include <NTPClient.h>
 #include <string.h>
 
+#include "door_monitor.h"
 // Use appropriate header file for the location
 #include "kitchen.h"
 #include "secrets.h"
