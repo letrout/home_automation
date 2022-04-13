@@ -55,6 +55,8 @@ void setup()
   Serial.println();
   Serial.print("Connected, IP address: ");
   Serial.println(WiFi.localIP());
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
 
   // NTP
   timeClient.begin();
