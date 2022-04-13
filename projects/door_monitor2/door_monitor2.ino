@@ -74,16 +74,7 @@ void setup()
     sprintf(buf, "%02x", bmac[i]);
     strncat(client_id, buf, 3);
   }
-  while (!client.connected()) {
-    Serial.printf("client %s connecting to mqtt broker...\n", client_id);
-    if (client.connect(client_id, mqtt_username, mqtt_password)) {
-      Serial.println("mqtt broker connected");
-    } else {
-      Serial.print("failed with state ");
-      Serial.print(client.state());
-      delay(2000);
-    }
-  }
+  mqtt_reconnect();
 } // setup()
 
 void loop() {
@@ -101,24 +92,14 @@ void loop() {
   } else {
     Serial.println("Door closed");
   }
-  // Publish changes to MQTT
-  // publish all open events? or just changes?
-  /*
-  if (door_state != door_last_state) {
-    sprintf(mqtt_msg, "%s,door=%s state=%d %lu%s", measurement, door_name, door_state, timeClient.getEpochTime(), "000000000");
-    int len = strlen(mqtt_msg) + 1;
-    client.publish(topic, (uint8_t*)mqtt_msg, len, true);
-    // client.publish(topic, mqtt_msg);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-  }
-  */
-  // Publish all door states (even if unchanged)
+
+  // MQTT publish all door states (even if unchanged)
+  // message in influxdb2 line protocol format
   sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
           measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
-  //sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d", measurement, location, room, room_loc, msmt_type, door_state);
   int len = strlen(mqtt_msg);
+  mqtt_reconnect();
   client.publish(topic, (uint8_t*)mqtt_msg, len, true);
-  // client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   door_last_state = door_state;
 
@@ -154,4 +135,17 @@ void callback(char *topic, byte *payload, unsigned int length) {
     Serial.println(value);
   }
   */
+}
+
+void mqtt_reconnect() {
+  while (!client.connected()) {
+    Serial.printf("client %s connecting to mqtt broker...\n", client_id);
+    if (client.connect(client_id, mqtt_username, mqtt_password)) {
+      Serial.println("mqtt broker connected");
+    } else {
+      Serial.print("failed with state ");
+      Serial.print(client.state());
+      delay(2000);
+    }
+  }
 }
