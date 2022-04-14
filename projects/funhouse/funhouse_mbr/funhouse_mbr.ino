@@ -215,22 +215,13 @@ void setup() {
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
   }
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
 
   // Connect to MQTT
   client.setServer(mqtt_broker, mqtt_port);
   client.setCallback(callback);
-  while (!client.connected()) {
-    String client_id = "esp32-client-";
-    client_id += String(WiFi.macAddress());
-    Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
-    if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
-      Serial.println("Public emqx mqtt broker connected");
-    } else {
-      Serial.print("failed with state ");
-      Serial.print(client.state());
-      delay(2000);
-    }
- }
+  mqtt_reconnect();
  // get pepper plant data
  client.subscribe(plants_topic);
 
@@ -763,7 +754,8 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
 void mqtt_pub_sensors() {
   char mqtt_msg [128];
 
-  // TODO: check/reconnect connection to broker?
+  // check/reconnect connection to broker
+  mqtt_reconnect();
 
   // DPS310
   sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(dps_temp.temperature), dps_pressure.pressure);
@@ -850,4 +842,20 @@ int8_t get_pepper_mqtt(const byte* payload, const int length) {
     Serial.println(peppers[pepper_number - 1]);
   }
   return ret;
+}
+
+
+void mqtt_reconnect() {
+  while (!client.connected()) {
+    String client_id = "esp32-client-";
+    client_id += String(WiFi.macAddress());
+    Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
+    if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
+      Serial.println("Public emqx mqtt broker connected");
+    } else {
+      Serial.print("failed with state ");
+      Serial.print(client.state());
+      delay(2000);
+    }
+ }
 }
