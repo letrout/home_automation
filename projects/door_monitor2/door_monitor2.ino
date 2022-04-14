@@ -4,6 +4,9 @@
 #include <NTPClient.h>
 #include <string.h>
 
+#include "door_monitor.h"
+// Use appropriate header file for the location
+#include "kitchen.h"
 #include "secrets.h"
 
 #define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
@@ -17,15 +20,14 @@ const int mqtt_port = MQTT_PORT;
 const char* mqtt_username = MQTT_USER;
 const char* mqtt_password = MQTT_PASSWORD;
 
-const int door_pin = D1;
-const char* door_name = "garage_side";
 int door_state = -1; // 0 - closed, 1 - open
 int door_last_state = -1; // initialize to invalid state
 const long utcOffsetInSeconds = 0;
 const unsigned long ntp_update_ms = 30 * 60 * 1000L; // NTP update interval ms
 unsigned long ntp_last_ms = 0L;
 char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
-const char* measurement = "open";
+const char* measurement = "sensor";
+const char* msmt_type = "door";
 const char* topic = "influx/Owens/events/doors";
 
 WiFiClient wifiClient;
@@ -53,6 +55,8 @@ void setup()
   Serial.println();
   Serial.print("Connected, IP address: ");
   Serial.println(WiFi.localIP());
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
 
   // NTP
   timeClient.begin();
@@ -72,23 +76,12 @@ void setup()
     sprintf(buf, "%02x", bmac[i]);
     strncat(client_id, buf, 3);
   }
-  while (!client.connected()) {
-    Serial.printf("client %s connecting to mqtt broker...\n", client_id);
-    if (client.connect(client_id, mqtt_username, mqtt_password)) {
-      Serial.println("mqtt broker connected");
-    } else {
-      Serial.print("failed with state ");
-      Serial.print(client.state());
-      delay(2000);
-    }
-  }
+  mqtt_reconnect();
 } // setup()
 
 void loop() {
   unsigned long now = millis();
   char mqtt_msg [128];
-  // Serial.print("Connected, IP address: ");
-  // Serial.println(WiFi.localIP());
   if ((now - ntp_last_ms) > ntp_update_ms) {
     ntp_last_ms = now;
     timeClient.update();
@@ -101,22 +94,14 @@ void loop() {
   } else {
     Serial.println("Door closed");
   }
-  // Publish changes to MQTT
-  // publish all open events? or just changes?
-  /*
-  if (door_state != door_last_state) {
-    sprintf(mqtt_msg, "%s,door=%s state=%d %lu%s", measurement, door_name, door_state, timeClient.getEpochTime(), "000000000");
-    int len = strlen(mqtt_msg) + 1;
-    client.publish(topic, (uint8_t*)mqtt_msg, len, true);
-    // client.publish(topic, mqtt_msg);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-  }
-  */
-  // Publish all door states (even if unchanged)
-  sprintf(mqtt_msg, "%s,door=%s state=%d %lu%s", measurement, door_name, door_state, timeClient.getEpochTime(), "000000000");
-  int len = strlen(mqtt_msg) + 1;
+
+  // MQTT publish all door states (even if unchanged)
+  // message in influxdb2 line protocol format
+  sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
+          measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
+  int len = strlen(mqtt_msg);
+  mqtt_reconnect();
   client.publish(topic, (uint8_t*)mqtt_msg, len, true);
-  // client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   door_last_state = door_state;
 
@@ -152,4 +137,17 @@ void callback(char *topic, byte *payload, unsigned int length) {
     Serial.println(value);
   }
   */
+}
+
+void mqtt_reconnect() {
+  while (!client.connected()) {
+    Serial.printf("client %s connecting to mqtt broker...\n", client_id);
+    if (client.connect(client_id, mqtt_username, mqtt_password)) {
+      Serial.println("mqtt broker connected");
+    } else {
+      Serial.print("failed with state ");
+      Serial.print(client.state());
+      delay(2000);
+    }
+  }
 }
