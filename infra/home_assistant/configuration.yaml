@@ -11,10 +11,38 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
+alarm_control_panel:
+  - platform: manual
+    name: "Home Alarm"
+    code: ""
+    arming_time: 30
+    delay_time: 20
+    trigger_time: 4
+    disarmed:
+      trigger_time: 0
+    armed_home:
+      arming_time: 0
+      delay_time: 0
+
+automation:
+- alias: 'Trigger alarm while armed away'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.back_door
+      to: "active"
+  condition:
+    - condition: state
+      entity_id: alarm_control_panel.home_alarm
+      state: armed_away
+  action:
+    service: alarm_control_panel.alarm_trigger
+    target:
+      entity_id: alarm_control_panel.home_alarm
+
 sensor:
   - platform: mqtt
     state_topic: "Owens/sensors/mbr/door/temp_F"
-    name: Master BR temperature
+    name: Master "BR temperature"
     unit_of_measurement: 'F'
 
   - platform: mqtt
@@ -60,7 +88,7 @@ sensor:
 binary_sensor:
   - platform: mqtt
     state_topic: "influx/Owens/events/#"
-    name: Garage side door
+    name: "Garage side door"
     payload_on: 1
     payload_off: 0
     qos: 0
@@ -91,5 +119,17 @@ binary_sensor:
     device_class: door
     value_template: >
       {% if value.split(',')[2].split('=')[1] == 'mud' and value.split(',')[3].split('=')[1] == 'back' %}
+        {{ value.split(' ')[1].split('=')[1] }}
+      {% endif %}
+
+  - platform: mqtt
+    state_topic: "influx/Owens/events/#"
+    name: Kitchen door
+    payload_on: 1
+    payload_off: 0
+    qos: 0
+    device_class: door
+    value_template: >
+      {% if value.split(',')[2].split('=')[1] == 'kitchen' and value.split(',')[3].split('=')[1] == 'deck' %}
         {{ value.split(' ')[1].split('=')[1] }}
       {% endif %}
