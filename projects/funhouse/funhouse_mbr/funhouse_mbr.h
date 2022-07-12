@@ -2,6 +2,9 @@
 #include <SensirionI2CScd4x.h>
 #endif
 
+#include "fh_globals.h"
+#include "fh_sensors.h"
+
 /**
  * @brief Read the sensors
  * store results in global variables

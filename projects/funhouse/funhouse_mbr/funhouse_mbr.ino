@@ -3,12 +3,11 @@
 #include <Adafruit_DotStar.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-#include <Adafruit_DPS310.h>
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_SGP30.h>
 #include <Adafruit_SHT4x.h>
-#include <PubSubClient.h>
 #include <SensirionI2CScd4x.h>
+#include <PubSubClient.h>
 #include <WiFi.h>
 #include <Wire.h>
 #include "funhouse_mbr.h"
@@ -26,14 +25,12 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
 // LEDs!
 Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
 // sensors!
-Adafruit_DPS310 dps;
 Adafruit_AHTX0 aht;
 Adafruit_SHT4x sht4x = Adafruit_SHT4x();
 SensirionI2CScd4x scd4x;
 Adafruit_SGP30 sgp30;
 
 // Sensors
-sensors_event_t dps_temp, dps_pressure;
 sensors_event_t aht_humidity, aht_temp;
 sensors_event_t sht_humidity, sht_temp;
 uint16_t scd4x_co2, ambient_light;
@@ -99,15 +96,12 @@ void setup() {
   tft.print("DP310? ");
 
   
-  if (! dps.begin_I2C()) {  
+  if (setup_dps310()) {  
     tft.setTextColor(ST77XX_RED);
     tft.println("FAIL!");
-    while (1) delay(100);
   }
   tft.setTextColor(ST77XX_GREEN);
   tft.println("OK!");
-  dps.configurePressure(DPS310_64HZ, DPS310_64SAMPLES);
-  dps.configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
 
   // check AHT!
   tft.setCursor(0, cursor_y);
@@ -489,7 +483,7 @@ void loop() {
 
 void read_sensors() {
   // DPS310
-  dps.getEvents(&dps_temp, &dps_pressure);
+  read_dps310();
   prim_temp_c = dps_temp.temperature;
   Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps_temp.temperature), dps_pressure.pressure);
   // AHT20
