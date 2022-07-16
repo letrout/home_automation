@@ -1,7 +1,5 @@
 #include "fh_sensors.h"
 
-Adafruit_DPS310 dps;
-
 uint8_t setup_dps310() {
   uint8_t i;
   uint8_t retval = 1;
@@ -35,6 +33,6 @@ uint8_t read_dps310() {
     }
   } else {
     Serial.println("DPS310 temp or pressure not available");
-    return 1;
+    return 2;
   }
 }

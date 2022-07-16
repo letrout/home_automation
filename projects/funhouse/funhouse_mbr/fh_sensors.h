@@ -5,7 +5,7 @@
 #include "fh_globals.h"
 
 // sensors objects
-extern Adafruit_DPS310 dps;
+Adafruit_DPS310 dps;
 
 // sensor values
 // DPS310
@@ -23,7 +23,7 @@ uint8_t setup_dps310(void);
 /**
  * @brief Read values from the DPS310
  * 
- * @return uint8_t 0 on success
+ * @return uint8_t 0 on success, 1 on failure, 2 if new values not available
  */
 uint8_t read_dps310(void);
 
