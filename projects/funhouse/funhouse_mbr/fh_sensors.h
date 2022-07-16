@@ -5,7 +5,7 @@
 #include "fh_globals.h"
 
 // sensors objects
-Adafruit_DPS310 dps;
+extern Adafruit_DPS310 dps;
 
 // sensor values
 // DPS310
