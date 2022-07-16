@@ -95,7 +95,7 @@ void setup() {
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("DP310? ");
 
-  
+  Serial.println("Setup DPS310...");
   if (setup_dps310()) {  
     tft.setTextColor(ST77XX_RED);
     tft.println("FAIL!");

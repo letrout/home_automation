@@ -23,7 +23,7 @@ uint8_t setup_dps310(void);
 /**
  * @brief Read values from the DPS310
  * 
- * @return uint8_t 0 in success
+ * @return uint8_t 0 on success
  */
 uint8_t read_dps310(void);
 
