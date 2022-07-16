@@ -1,3 +1,6 @@
+#ifndef FH_MBR_H
+#define FH_MBR_H
+
 #ifndef __SparkFun_SCD4x_ARDUINO_LIBARARY_H__
 #include <SensirionI2CScd4x.h>
 #endif
@@ -111,3 +114,5 @@ int8_t get_pepper_mqtt(const byte* payload, const int length);
  * 
  */
 void mqtt_reconnect(void);
+
+#endif // FH_MBR_H
