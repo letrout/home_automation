@@ -8,6 +8,9 @@
 #include "fh_globals.h"
 #include "fh_sensors.h"
 
+// sensors objects
+extern FhDps310 dps;
+
 /**
  * @brief Read the sensors
  * store results in global variables

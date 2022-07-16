@@ -96,7 +96,7 @@ void setup() {
   tft.print("DP310? ");
 
   Serial.println("Setup DPS310...");
-  if (setup_dps310()) {  
+  if (dps.setup_dps310()) {  
     tft.setTextColor(ST77XX_RED);
     tft.println("FAIL!");
   }
@@ -483,9 +483,9 @@ void loop() {
 
 void read_sensors() {
   // DPS310
-  if(!read_dps310()) {
-    prim_temp_c = dps_temp.temperature;
-    Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps_temp.temperature), dps_pressure.pressure);
+  if(!dps.read_dps310()) {
+    prim_temp_c = dps.last_temp_c();
+    Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps.last_temp_c()), dps.last_press_hpa());
   }
   // AHT20
   aht.getEvent(&aht_humidity, &aht_temp);
@@ -647,9 +647,9 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("DP310: ");
-  tft.print(TEMP_F(dps_temp.temperature), 0);
+  tft.print(TEMP_F(dps.last_temp_c()), 0);
   tft.print(" F ");
-  tft.print(dps_pressure.pressure, 0);
+  tft.print(dps.last_press_hpa(), 0);
   tft.print(" hPa");
   tft.println("              ");
 
@@ -753,7 +753,7 @@ void mqtt_pub_sensors() {
   mqtt_reconnect();
 
   // DPS310
-  sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(dps_temp.temperature), dps_pressure.pressure);
+  sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(dps.last_temp_c()), dps.last_press_hpa());
   client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // AHT20

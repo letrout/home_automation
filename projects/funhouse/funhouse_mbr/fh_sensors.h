@@ -4,9 +4,6 @@
 #include <Adafruit_DPS310.h>
 #include "fh_globals.h"
 
-// sensors objects
-extern Adafruit_DPS310 dps;
-
 // sensor values
 // DPS310
 extern sensors_event_t dps_temp, dps_pressure;

@@ -1,13 +1,16 @@
 #include "fh_sensors.h"
 
 // sensors objects
-Adafruit_DPS310 dps;
+FhDps310 dps;
 
 // sensor values
 // DPS310
 sensors_event_t dps_temp, dps_pressure;
 
 // DPS310
+FhDps310::FhDps310(void) {
+}
+
 uint8_t FhDps310::setup_dps310(void) {
   uint8_t i;
   uint8_t retval = 1;
