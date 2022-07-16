@@ -243,6 +243,7 @@ void loop() {
 
   // check timers
   if ((now - sensor_last_ms) > sensor_ms) {
+    Serial.println("sensor update timer...");
     sensors_update = true;
     sensor_last_ms = now;
     read_sensors();
@@ -250,6 +251,7 @@ void loop() {
     sensors_update = false;
   }
   if ((now - scd4x_last_ms) > scd4x_ms) {
+    Serial.println("SCD4x update timer...");
     scd4x_update = true;
     scd4x_last_ms = now;
   } else {
@@ -258,6 +260,7 @@ void loop() {
 
    // SCD40
   if (has_scd4x && scd4x_update) {
+    Serial.println("SCD4x read...");
     // TODO: setAmbientPressure() with value from DPS310?
     scd4x_error = read_scd4x();
     if (scd4x_error) {
@@ -288,6 +291,7 @@ void loop() {
   // MQTT publish interval expired?
   now = millis();
   if ((now - mqtt_last_ms) > mqtt_ms) {
+    Serial.println("MQTT update timer...");
     mqtt_pubnow = true;
     mqtt_pub_sensors();
     mqtt_last_ms = now;
@@ -440,6 +444,7 @@ void loop() {
   
   // rainbow dotstars
   // dim dotstars as ambient light decreases
+  Serial.println("set pixel bright...");
   pixel_bright = map(ambient_light, 0, 8192, 0, 255);
   /*
   for (int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
@@ -451,6 +456,7 @@ void loop() {
   }
   */
   // Set dotstars to pepper plant moisture (from MQTT)
+  Serial.println("pixel pepper...");
   uint16_t pepper_hues[PEPPER_PLANTS];
   for (int i=0; i < PEPPER_PLANTS; i++) {
     pepper_hues[i] = map(peppers[i], 0, 100, 26000, 0); // 0=red, 100=blue
@@ -473,6 +479,7 @@ void loop() {
 
   // Set middle dotstar hue by CO2 level
   if (has_scd4x) {
+    Serial.println("SCD4x pixel...");
     uint16_t co2_hue;
     co2_hue = map(scd4x_co2, 400, 4000, 0, 26000);  // 400ppm=green, 4000ppm=red
     pixels.setPixelColor(2, pixels.gamma32(pixels.ColorHSV(co2_hue, 255, pixel_bright)));
