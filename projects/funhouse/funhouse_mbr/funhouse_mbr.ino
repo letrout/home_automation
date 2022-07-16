@@ -483,9 +483,10 @@ void loop() {
 
 void read_sensors() {
   // DPS310
-  read_dps310();
-  prim_temp_c = dps_temp.temperature;
-  Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps_temp.temperature), dps_pressure.pressure);
+  if(!read_dps310()) {
+    prim_temp_c = dps_temp.temperature;
+    Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps_temp.temperature), dps_pressure.pressure);
+  }
   // AHT20
   aht.getEvent(&aht_humidity, &aht_temp);
   prim_temp_c = aht_temp.temperature;
