@@ -8,13 +8,6 @@
 #include "fh_globals.h"
 #include "fh_sensors.h"
 
-// sensors objects
-Adafruit_DPS310 dps;
-
-// sensor values
-// DPS310
-sensors_event_t dps_temp, dps_pressure;
-
 /**
  * @brief Read the sensors
  * store results in global variables
