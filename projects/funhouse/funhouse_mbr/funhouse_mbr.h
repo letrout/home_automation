@@ -10,6 +10,7 @@
 
 // sensors objects
 extern FhDps310 dps;
+extern FhAht20 aht;
 
 /**
  * @brief Read the sensors

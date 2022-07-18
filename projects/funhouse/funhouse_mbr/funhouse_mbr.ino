@@ -3,7 +3,6 @@
 #include <Adafruit_DotStar.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-#include <Adafruit_AHTX0.h>
 #include <Adafruit_SGP30.h>
 #include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
@@ -23,13 +22,11 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
 // LEDs!
 Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
 // sensors!
-Adafruit_AHTX0 aht;
 Adafruit_SHT4x sht4x = Adafruit_SHT4x();
 SensirionI2CScd4x scd4x;
 Adafruit_SGP30 sgp30;
 
 // Sensors
-sensors_event_t aht_humidity, aht_temp;
 sensors_event_t sht_humidity, sht_temp;
 uint16_t scd4x_co2, ambient_light;
 uint16_t sgp_tvoc, sgp_eco2, sgp_raw_h2, sgp_raw_ethanol;
@@ -481,15 +478,16 @@ void loop() {
 
 void read_sensors() {
   // DPS310
-  if(!dps.readDps310()) {
+  if (!dps.readDps310()) {
     prim_temp_f = dps.last_temp_f();
     Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", dps.last_temp_f(), dps.last_press_hpa());
   }
   // AHT20
-  aht.getEvent(&aht_humidity, &aht_temp);
-  prim_temp_f = TEMP_F(aht_temp.temperature);
-  prim_hum = aht_humidity.relative_humidity;
-  Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
+ if (!aht.readAht20()) {
+   prim_temp_f = aht.last_temp_f();
+   prim_hum = aht.last_hum_pct();
+ }
+  Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", aht.last_temp_f(), aht.last_hum_pct());
   // Light sensor
   ambient_light = analogRead(A3);
   Serial.printf("Light sensor reading: %d\n", ambient_light);
@@ -656,9 +654,9 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("AHT20: ");
-  tft.print(TEMP_F(aht_temp.temperature), 0);
+  tft.print(aht.last_temp_f(), 0);
   tft.print(" F ");
-  tft.print(aht_humidity.relative_humidity, 0);
+  tft.print(aht.last_hum_pct(), 0);
   tft.print(" %");
   tft.println("              ");
 
@@ -755,7 +753,7 @@ void mqtt_pub_sensors() {
   client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // AHT20
-  sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
+  sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, aht.last_temp_f(), aht.last_hum_pct());
   client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // Ambient light
