@@ -30,7 +30,7 @@ uint8_t FhDps310::readDps310(void) {
   sensors_event_t t, p;
   if (pressureAvailable() && temperatureAvailable()) {
     if (getEvents(&t, &p)) {
-      last_temp_c_ = t.temperature;
+      last_temp_f_ = TEMP_F(t.temperature);
       last_press_hpa_ = p.pressure;
       last_read_ms_ = millis();
       return 0;

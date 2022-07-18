@@ -18,8 +18,6 @@
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
 #define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
-#define TEMP_F(c) (c * 9 / 5) + 32
-
 // display!
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
 // LEDs!
@@ -36,7 +34,7 @@ sensors_event_t sht_humidity, sht_temp;
 uint16_t scd4x_co2, ambient_light;
 uint16_t sgp_tvoc, sgp_eco2, sgp_raw_h2, sgp_raw_ethanol;
 float scd4x_temp, scd4x_hum;
-float prim_temp_c, prim_hum;  // primary temp and humidity measurements
+float prim_temp_f, prim_hum;  // primary temp and humidity measurements
 
 // timers
 const unsigned long display_ms = 10000; // display on for x ms after UP button push
@@ -484,12 +482,12 @@ void loop() {
 void read_sensors() {
   // DPS310
   if(!dps.readDps310()) {
-    prim_temp_c = dps.last_temp_c();
-    Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps.last_temp_c()), dps.last_press_hpa());
+    prim_temp_f = dps.last_temp_f();
+    Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", dps.last_temp_f(), dps.last_press_hpa());
   }
   // AHT20
   aht.getEvent(&aht_humidity, &aht_temp);
-  prim_temp_c = aht_temp.temperature;
+  prim_temp_f = TEMP_F(aht_temp.temperature);
   prim_hum = aht_humidity.relative_humidity;
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", TEMP_F(aht_temp.temperature), aht_humidity.relative_humidity);
   // Light sensor
@@ -498,7 +496,7 @@ void read_sensors() {
   // SHT40
   if (has_sht4x) {
     sht4x.getEvent(&sht_humidity, &sht_temp);
-    prim_temp_c = sht_temp.temperature;
+    prim_temp_f = TEMP_F(sht_temp.temperature);
     prim_hum = sht_humidity.relative_humidity;
     Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
   }
@@ -507,7 +505,7 @@ void read_sensors() {
   //float temperature = 22.1; // [°C]
   //float humidity = 45.2; // [%RH]
   if (has_sgp30) {
-    sgp30.setHumidity(getAbsoluteHumidity(prim_temp_c, prim_hum));
+    sgp30.setHumidity(getAbsoluteHumidity(TEMP_C(prim_temp_f), prim_hum));
     if (! sgp30.IAQmeasure()) {
       Serial.println("SGP30 Measurement failed");
     } else {
@@ -539,7 +537,7 @@ uint16_t read_scd4x() {
     // Let the caller handle co2==0?
     // Serial.printf("SCD4x error: CO2 reading 0\n");
   } else if (! has_sht4x) {
-    prim_temp_c = scd4x_temp;
+    prim_temp_f = TEMP_F(scd4x_temp);
     prim_hum = scd4x_hum;
   }
   Serial.printf("SCD4x: %d ppm %0.1f *C  %0.2f rH\n", scd4x_co2, scd4x_temp, scd4x_hum);
