@@ -7,7 +7,7 @@ FhDps310 dps;
 FhDps310::FhDps310(void) {
 }
 
-uint8_t FhDps310::setup_dps310(void) {
+uint8_t FhDps310::setupDps310(void) {
   uint8_t i;
   uint8_t retval = 1;
   for (i = 1; i++; i <= 5 ) {
@@ -26,13 +26,13 @@ uint8_t FhDps310::setup_dps310(void) {
   return retval;
 }
 
-uint8_t FhDps310::read_dps310(void) {
+uint8_t FhDps310::readDps310(void) {
   sensors_event_t t, p;
   if (pressureAvailable() && temperatureAvailable()) {
     if (getEvents(&t, &p)) {
-      _last_temp_c = t.temperature;
-      _last_press_hpa = p.pressure;
-      _last_read_ms = millis();
+      last_temp_c_ = t.temperature;
+      last_press_hpa_ = p.pressure;
+      last_read_ms_ = millis();
       return 0;
     } else {
       Serial.println("DPS310 read failed!");

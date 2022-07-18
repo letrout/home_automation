@@ -96,7 +96,7 @@ void setup() {
   tft.print("DP310? ");
 
   Serial.println("Setup DPS310...");
-  if (dps.setup_dps310()) {  
+  if (dps.setupDps310()) {  
     tft.setTextColor(ST77XX_RED);
     tft.println("FAIL!");
   }
@@ -483,7 +483,7 @@ void loop() {
 
 void read_sensors() {
   // DPS310
-  if(!dps.read_dps310()) {
+  if(!dps.readDps310()) {
     prim_temp_c = dps.last_temp_c();
     Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", TEMP_F(dps.last_temp_c()), dps.last_press_hpa());
   }
