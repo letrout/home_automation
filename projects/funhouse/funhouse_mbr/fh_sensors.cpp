@@ -3,10 +3,6 @@
 // sensors objects
 FhDps310 dps;
 
-// sensor values
-// DPS310
-sensors_event_t dps_temp, dps_pressure;
-
 // DPS310
 FhDps310::FhDps310(void) {
 }
