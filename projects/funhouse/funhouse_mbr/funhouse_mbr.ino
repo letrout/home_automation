@@ -645,7 +645,7 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("DP310: ");
-  tft.print(TEMP_F(dps.last_temp_c()), 0);
+  tft.print(dps.last_temp_f(), 0);
   tft.print(" F ");
   tft.print(dps.last_press_hpa(), 0);
   tft.print(" hPa");
@@ -751,7 +751,7 @@ void mqtt_pub_sensors() {
   mqtt_reconnect();
 
   // DPS310
-  sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, TEMP_F(dps.last_temp_c()), dps.last_press_hpa());
+  sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, dps.last_temp_f(), dps.last_press_hpa());
   client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // AHT20
