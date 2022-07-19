@@ -98,8 +98,7 @@ uint8_t FhSgp30::setupSgp30(void) {
   return retval;
 }
 
-// FIXME: defaults need to be in the prototype, not here
-uint8_t FhSgp30::readSgp30(float temp_c = -1000, float hum_pct = -1) {
+uint8_t FhSgp30::readSgp30(float temp_c, float hum_pct) {
   uint8_t retval = 0;
   if ((hum_pct > 0) && (temp_c > -100)) {
     setHumidity(getAbsoluteHumidity(temp_c, hum_pct));

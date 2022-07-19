@@ -111,7 +111,7 @@ class FhSgp30 : public Adafruit_SGP30 {
      * @param hum_pct optional relative humidity
      * @return uint8_t 0 on success, 1 on failure
      */
-    uint8_t readSgp30(float temp_c, float hum_pct);
+    uint8_t readSgp30(float temp_c= -1000, float hum_pct = -1);
 };
 #endif /* ADAFRUIT_SGP30_H */
 
