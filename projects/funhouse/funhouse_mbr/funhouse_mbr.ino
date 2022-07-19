@@ -3,7 +3,6 @@
 #include <Adafruit_DotStar.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-#include <Adafruit_SGP30.h>
 #include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
 #include <PubSubClient.h>
@@ -24,12 +23,10 @@ Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTA
 // sensors!
 Adafruit_SHT4x sht4x = Adafruit_SHT4x();
 SensirionI2CScd4x scd4x;
-Adafruit_SGP30 sgp30;
 
 // Sensors
 sensors_event_t sht_humidity, sht_temp;
 uint16_t scd4x_co2, ambient_light;
-uint16_t sgp_tvoc, sgp_eco2, sgp_raw_h2, sgp_raw_ethanol;
 float scd4x_temp, scd4x_hum;
 float prim_temp_f, prim_hum;  // primary temp and humidity measurements
 
@@ -154,10 +151,25 @@ void setup() {
   }
 
   // check SGP30!
+  #ifdef ADAFRUIT_SGP30_H
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SGP30? ");
+  if (sgp30.setupSgp30()) {
+    tft.setTextColor(ST77XX_RED);
+    tft.println("FAIL!");
+  } else {
+    has_sgp30 = true;
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println("OK!");
+    // FIXME: move to FhSgp30 class
+    Serial.print("Found SGP30 serial #");
+    Serial.print(sgp30.serialnumber[0], HEX);
+    Serial.print(sgp30.serialnumber[1], HEX);
+    Serial.println(sgp30.serialnumber[2], HEX);
+  }
+  /*
   retries = 5, i = 0;
   while (i < retries) {
     if (! sgp30.begin()) {  
@@ -176,6 +188,8 @@ void setup() {
       break;
     }
   }
+  */
+  #endif
 
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(SPEAKER, OUTPUT);
@@ -502,6 +516,7 @@ void read_sensors() {
   // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
   //float temperature = 22.1; // [°C]
   //float humidity = 45.2; // [%RH]
+  /*
   if (has_sgp30) {
     sgp30.setHumidity(getAbsoluteHumidity(TEMP_C(prim_temp_f), prim_hum));
     if (! sgp30.IAQmeasure()) {
@@ -517,6 +532,12 @@ void read_sensors() {
       sgp_raw_ethanol = sgp30.rawEthanol;
     }
   }
+  */
+  #ifdef ADAFRUIT_SGP30_H
+  sgp30.readSgp30(TEMP_C(prim_temp_f), prim_hum);
+  Serial.printf("SGP30: %d eCO2 ppm  %d tvoc ppb \n", sgp30.last_eco2(), sgp30.last_tvoc());
+  Serial.printf("SGP30: %d ethanol ppm  %d H2 ppm \n", sgp30.last_raw_ethanol(), sgp30.last_raw_h2());
+  #endif
   return;
 }
 
@@ -610,14 +631,6 @@ void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2) {
 }
 
 
-uint32_t getAbsoluteHumidity(float temperature, float humidity) {
-    // approximation formula from Sensirion SGP30 Driver Integration chapter 3.15
-    const float absoluteHumidity = 216.7f * ((humidity / 100.0f) * 6.112f * exp((17.62f * temperature) / (243.12f + temperature)) / (273.15f + temperature)); // [g/m^3]
-    const uint32_t absoluteHumidityScaled = static_cast<uint32_t>(1000.0f * absoluteHumidity); // [mg/m^3]
-    return absoluteHumidityScaled;
-}
-
-
 void callback(char *topic, byte *payload, unsigned int length) {
   char* pch;
   Serial.print("Message arrived in topic: ");
@@ -692,31 +705,28 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   }
 
   // SGP30
-  if (has_sgp30) {
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    tft.print("SGP30: ");
-    // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
-    //float temperature = 22.1; // [°C]
-    //float humidity = 45.2; // [%RH]
-    tft.print("TVOC ");
-    tft.print(sgp_tvoc, 0);
-    tft.print(" ppb ");
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.print("eCO2 ");
-    tft.print(sgp_eco2, 0);
-    tft.print(" ppm");
+  #ifdef ADAFRUIT_SGP30_H
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print("SGP30: ");
+  tft.print("TVOC ");
+  tft.print(sgp30.last_tvoc(), 0);
+  tft.print(" ppb ");
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.print("eCO2 ");
+  tft.print(sgp30.last_eco2(), 0);
+  tft.print(" ppm");
 
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    tft.print("H2 ");
-    tft.print(sgp_raw_h2, 0);
-    tft.print(" Eth ");
-    tft.print(sgp_raw_ethanol, 0);
-  }
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print("H2 ");
+  tft.print(sgp30.last_raw_h2(), 0);
+  tft.print(" Eth ");
+  tft.print(sgp30.last_raw_ethanol(), 0);
+  #endif
 
   // Light sensor
   tft.setCursor(0, cursor_y);
@@ -773,14 +783,14 @@ void mqtt_pub_sensors() {
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   // SGP30
-  if (has_sgp30) {
-    sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp_tvoc, sgp_eco2);
-    client.publish(topic, mqtt_msg);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-    sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp_raw_h2, sgp_raw_ethanol);
-    client.publish(topic, mqtt_msg);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-  }
+  #ifdef ADAFRUIT_SGP30_H
+  sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.last_tvoc(), sgp30.last_eco2());
+  client.publish(topic, mqtt_msg);
+  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp30.last_raw_h2(), sgp30.last_raw_ethanol());
+  client.publish(topic, mqtt_msg);
+  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  #endif
 
   return;
 }

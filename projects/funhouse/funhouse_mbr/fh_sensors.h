@@ -3,10 +3,21 @@
 
 #include <Adafruit_DPS310.h>
 #include <Adafruit_AHTX0.h>
+#include <Adafruit_SGP30.h>
 #include "fh_globals.h"
 
 #define TEMP_F(c) (c * 9 / 5) + 32
 #define TEMP_C(f) (f - 32) * 5 / 9
+
+/**
+ * @brief Get the Absolute Humidity in mg/m^3
+ * approximation formula from Sensirion SGP30 Driver Integration chapter 3.15
+ * 
+ * @param temp_c Temperature in Celsius 
+ * @param hum_pct Relative humidity %
+ * @return uint32_t 
+ */
+uint32_t getAbsoluteHumidity(float temp_c, float hum_pct);
 
 /**
  * @brief Class to extend Adafruit_DPS310
@@ -59,5 +70,47 @@ class FhAht20 : public Adafruit_AHTX0 {
 
     uint8_t readAht20();
 };
+
+#ifdef ADAFRUIT_SGP30_H
+/**
+ * @brief Class to extend Adafruit_SGP30
+ * 
+ */
+class FhSgp30 : public Adafruit_SGP30 {
+  private:
+    uint16_t last_tvoc_;
+    uint16_t last_eco2_;
+    uint16_t last_raw_h2_;
+    uint16_t last_raw_ethanol_;
+    unsigned long last_read_ms_;
+    unsigned long last_read_raw_ms_;
+
+  public:
+    FhSgp30();
+    uint16_t last_tvoc() const { return last_tvoc_; }
+    uint16_t last_eco2() const { return last_eco2_; }
+    uint16_t last_raw_h2() const { return last_raw_h2_; }
+    uint16_t last_raw_ethanol() const { return last_raw_ethanol_; }
+    unsigned long last_read_ms() const { return last_read_ms_; }
+    unsigned long last_read_raw_ms() const { return last_read_raw_ms_; }
+
+    /**
+     * @brief Initialize the sgp30 object
+     * 
+     * @return uint8_t 0 on success
+     */
+    uint8_t setupSgp30();
+
+    /**
+     * @brief Read the SGP30 sensor
+     * If the temp and humidity are passed, a correction factor will be used
+     * 
+     * @param temp_c optional temperature in Celsius
+     * @param hum_pct optional relative humidity
+     * @return uint8_t 0 on success, 1 on failure
+     */
+    uint8_t readSgp30(float temp_c, float hum_pct);
+};
+#endif /* ADAFRUIT_SGP30_H */
 
 #endif /* FH_SENSORS_H */

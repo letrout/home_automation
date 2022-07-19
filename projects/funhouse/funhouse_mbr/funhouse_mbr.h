@@ -11,6 +11,9 @@
 // sensors objects
 extern FhDps310 dps;
 extern FhAht20 aht;
+#ifdef ADAFRUIT_SGP30_H
+extern FhSgp30 sgp30;
+#endif
 
 /**
  * @brief Read the sensors
