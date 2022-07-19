@@ -14,6 +14,9 @@ extern FhAht20 aht;
 #ifdef ADAFRUIT_SGP30_H
 extern FhSgp30 sgp30;
 #endif
+#ifdef ADAFRUIT_SHT4x_H
+extern FhSht40 sht4x;
+#endif
 
 /**
  * @brief Read the sensors
@@ -66,16 +69,6 @@ void printUint16Hex(uint16_t value);
  * @param serial2 
  */
 void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2);
-
-
-/**
- * @brief return absolute humidity [mg/m^3] with approximation formula
- * 
- * @param temperature temperature [°C]
- * @param humidity humidity [%RH]
- * @return uint32_t humidity in mg/m^3
- */
-uint32_t getAbsoluteHumidity(float temperature, float humidity);
 
 
 /**

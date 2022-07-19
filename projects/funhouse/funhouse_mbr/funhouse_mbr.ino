@@ -3,7 +3,6 @@
 #include <Adafruit_DotStar.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-#include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
@@ -21,11 +20,9 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
 // LEDs!
 Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
 // sensors!
-Adafruit_SHT4x sht4x = Adafruit_SHT4x();
 SensirionI2CScd4x scd4x;
 
 // Sensors
-sensors_event_t sht_humidity, sht_temp;
 uint16_t scd4x_co2, ambient_light;
 float scd4x_temp, scd4x_hum;
 float prim_temp_f, prim_hum;  // primary temp and humidity measurements
@@ -110,24 +107,20 @@ void setup() {
   tft.println("OK!");
 
   // check SHT4x!
+  #ifdef ADAFRUIT_SHT4x_H
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SHT4x? ");
-  retries = 5, i = 0;
-  while (i < retries) {
-    if (! sht4x.begin()) {  
-      tft.setTextColor(ST77XX_RED);
-      tft.println("FAIL!");
-      delay(100);
-      i++;
-    } else {
-      has_sht4x = true;
-      tft.setTextColor(ST77XX_GREEN);
-      tft.println("OK!");
-      break;
-    }
+  if (sht4x.setupSht40()) {
+    tft.setTextColor(ST77XX_RED);
+    tft.println("FAIL!");
+  } else {
+    has_sht4x = true;
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println("OK!");
   }
+  #endif
 
   // check SCD-4X!
   tft.setCursor(0, cursor_y);
@@ -169,26 +162,6 @@ void setup() {
     Serial.print(sgp30.serialnumber[1], HEX);
     Serial.println(sgp30.serialnumber[2], HEX);
   }
-  /*
-  retries = 5, i = 0;
-  while (i < retries) {
-    if (! sgp30.begin()) {  
-      tft.setTextColor(ST77XX_RED);
-      tft.println("FAIL!");
-      delay(100);
-      i++;
-    } else {
-      has_sgp30 = true;
-      tft.setTextColor(ST77XX_GREEN);
-      tft.println("OK!");
-      Serial.print("Found SGP30 serial #");
-      Serial.print(sgp30.serialnumber[0], HEX);
-      Serial.print(sgp30.serialnumber[1], HEX);
-      Serial.println(sgp30.serialnumber[2], HEX);
-      break;
-    }
-  }
-  */
   #endif
 
   pinMode(LED_BUILTIN, OUTPUT);
@@ -506,38 +479,18 @@ void read_sensors() {
   ambient_light = analogRead(A3);
   Serial.printf("Light sensor reading: %d\n", ambient_light);
   // SHT40
-  if (has_sht4x) {
-    sht4x.getEvent(&sht_humidity, &sht_temp);
-    prim_temp_f = TEMP_F(sht_temp.temperature);
-    prim_hum = sht_humidity.relative_humidity;
-    Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
-  }
-  // SGP30
-  // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
-  //float temperature = 22.1; // [°C]
-  //float humidity = 45.2; // [%RH]
-  /*
-  if (has_sgp30) {
-    sgp30.setHumidity(getAbsoluteHumidity(TEMP_C(prim_temp_f), prim_hum));
-    if (! sgp30.IAQmeasure()) {
-      Serial.println("SGP30 Measurement failed");
-    } else {
-      sgp_tvoc = sgp30.TVOC;
-      sgp_eco2 = sgp30.eCO2;
-    }
-    if (! sgp30.IAQmeasureRaw()) {
-      Serial.println("SGP30 Raw Measurement failed");
-    } else {
-      sgp_raw_h2 = sgp30.rawH2;
-      sgp_raw_ethanol = sgp30.rawEthanol;
-    }
-  }
-  */
+  #ifdef ADAFRUIT_SHT4x_H
+  sht4x.readSht40();
+  prim_temp_f = sht4x.last_temp_f();
+  prim_hum = sht4x.last_hum_pct();
+  Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", sht4x.last_temp_f(), sht4x.last_hum_pct());
+  #endif
   #ifdef ADAFRUIT_SGP30_H
   sgp30.readSgp30(TEMP_C(prim_temp_f), prim_hum);
   Serial.printf("SGP30: %d eCO2 ppm  %d tvoc ppb \n", sgp30.last_eco2(), sgp30.last_tvoc());
   Serial.printf("SGP30: %d ethanol ppm  %d H2 ppm \n", sgp30.last_raw_ethanol(), sgp30.last_raw_h2());
   #endif
+
   return;
 }
 
@@ -674,17 +627,17 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   tft.println("              ");
 
   // SHT40
-  if (has_sht4x) {
+  #ifdef ADAFRUIT_SHT4x_H
     tft.setCursor(0, cursor_y);
     cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
     tft.print("SHT40: ");
-    tft.print(TEMP_F(sht_temp.temperature), 0);
+    tft.print(sht4x.last_temp_f(), 0);
     tft.print(" F ");
-    tft.print(sht_humidity.relative_humidity, 0);
+    tft.print(sht4x.last_hum_pct(), 0);
     tft.print(" %");
     tft.println("              ");
-  }
+  #endif
 
   // SCD40
   if (has_scd4x) {
@@ -771,11 +724,11 @@ void mqtt_pub_sensors() {
   client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // SHT40
-  if (has_sht4x) {
-    sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, TEMP_F(sht_temp.temperature), sht_humidity.relative_humidity);
-    client.publish(topic, mqtt_msg);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-  }
+  #ifdef ADAFRUIT_SHT4x_H
+  sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, sht4x.last_temp_f(), sht4x.last_hum_pct());
+  client.publish(topic, mqtt_msg);
+  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  #endif
   // SCD40
   if (has_scd4x) {
     sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x_co2, TEMP_F(scd4x_temp), scd4x_hum);

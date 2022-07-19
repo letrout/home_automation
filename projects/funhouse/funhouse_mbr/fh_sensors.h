@@ -4,6 +4,7 @@
 #include <Adafruit_DPS310.h>
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_SGP30.h>
+#include <Adafruit_SHT4x.h>
 #include "fh_globals.h"
 
 #define TEMP_F(c) (c * 9 / 5) + 32
@@ -112,5 +113,34 @@ class FhSgp30 : public Adafruit_SGP30 {
     uint8_t readSgp30(float temp_c, float hum_pct);
 };
 #endif /* ADAFRUIT_SGP30_H */
+
+#ifdef ADAFRUIT_SHT4x_H
+/**
+ * @brief Class to extend Adafruit_SHT4x
+ * 
+ */
+class FhSht40 : public Adafruit_SHT4x {
+  private:
+    float last_temp_f_;
+    float last_hum_pct_;
+    unsigned long last_read_ms_;
+
+  public:
+    FhSht40();
+    float last_temp_f() const { return last_temp_f_; }
+    float last_temp_c() const { return TEMP_C(last_temp_f_); }
+    float last_hum_pct() const { return last_hum_pct_; }
+    unsigned long last_read_ms() const { return last_read_ms_; }
+
+    /**
+     * @brief Initialize the sht40 object
+     * 
+     * @return uint8_t 0 on success
+     */
+    uint8_t setupSht40();
+
+    uint8_t readSht40();
+};
+#endif /* ADAFRUIT_SHT4x_H */
 
 #endif /* FH_SENSORS_H */

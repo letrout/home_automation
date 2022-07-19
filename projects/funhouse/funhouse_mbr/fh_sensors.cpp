@@ -6,6 +6,9 @@ FhAht20 aht;
 #ifdef ADAFRUIT_SGP30_H
 FhSgp30 sgp30;
 #endif
+#ifdef ADAFRUIT_SHT4x_H
+FhSht40 sht4x = FhSht40();
+#endif
 
 uint32_t getAbsoluteHumidity(float temp_c, float hum_pct) {
   // approximation formula from Sensirion SGP30 Driver Integration chapter 3.15
@@ -114,3 +117,35 @@ uint8_t FhSgp30::readSgp30(float temp_c = -1000, float hum_pct = -1) {
   return retval;
 }
 #endif /* ADAFRUIT_SGP30_H */
+
+#ifdef ADAFRUIT_SHT4x_H
+FhSht40::FhSht40(void) {
+}
+
+uint8_t FhSht40::setupSht40(void) {
+  uint8_t i;
+  uint8_t retval = 1;
+  for (i = 1; i++; i <= 5 ) {
+    if (begin()) {
+      retval = 0;
+      break;
+    } else {
+      Serial.println("Connect to SGP30 FAILED!");
+      delay(100);
+    }
+  }
+  return retval;
+}
+
+uint8_t FhSht40::readSht40(void) {
+  sensors_event_t t, h;
+  if (getEvent(&h, &t)) {
+    last_read_ms_ = millis();
+    last_temp_f_ = TEMP_F(t.temperature);
+    last_hum_pct_ = h.relative_humidity;
+    return 0;
+  } else {
+    return 1;
+  }
+}
+#endif /* ADAFRUIT_SHT4x_H */
