@@ -3,7 +3,6 @@
 #include <Adafruit_DotStar.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-#include <SensirionI2CScd4x.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Wire.h>
@@ -19,12 +18,9 @@
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
 // LEDs!
 Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
-// sensors!
-SensirionI2CScd4x scd4x;
 
 // Sensors
-uint16_t scd4x_co2, ambient_light;
-float scd4x_temp, scd4x_hum;
+uint16_t ambient_light;
 float prim_temp_f, prim_hum;  // primary temp and humidity measurements
 
 // timers
@@ -35,7 +31,6 @@ unsigned long mqtt_last_ms = 0;
 const unsigned long sensor_ms = 1000;  // read sensors every x ms
 unsigned long sensor_last_ms = 0;
 const unsigned long scd4x_ms = 5000; // read SCD4x sensors every x ms
-unsigned long scd4x_last_ms = 0;
 
 uint8_t LED_dutycycle = 0;
 uint16_t firstPixelHue = 0;
@@ -122,6 +117,7 @@ void setup() {
   }
   #endif
 
+  #ifdef SENSIRIONI2CSCD4X_H
   // check SCD-4X!
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
@@ -130,7 +126,7 @@ void setup() {
   retries = 5, i = 0;
   Wire.begin();
   while (i < retries) {
-    if (setup_scd4x(scd4x)) {  
+    if (scd4x.setupScd40(ALT_M)) {  
       tft.setTextColor(ST77XX_RED);
       tft.println("FAIL!");
       delay(100);
@@ -142,6 +138,7 @@ void setup() {
       break;
     }
   }
+  #endif /* SENSIRIONI2CSCD4X_H */
 
   // check SGP30!
   #ifdef ADAFRUIT_SGP30_H
@@ -214,7 +211,6 @@ void loop() {
   // timers
   unsigned long now = millis();
   bool sensors_update = false;
-  bool scd4x_update = false;
   bool mqtt_pubnow = false;
 
   // check timers
@@ -225,26 +221,23 @@ void loop() {
   } else {
     sensors_update = false;
   }
-  if ((now - scd4x_last_ms) > scd4x_ms) {
-    scd4x_update = true;
-    scd4x_last_ms = now;
-  } else {
-    scd4x_update = false;
-  }
-
-   // SCD40
-  if (has_scd4x && scd4x_update) {
-    // TODO: setAmbientPressure() with value from DPS310?
-    scd4x_error = read_scd4x();
+  #ifdef SENSIRIONI2CSCD4X_H
+  // Update SCD40
+  if ((now - scd4x.last_read_ms()) > scd4x_ms) {
+    scd4x_error = scd4x.readScd40();
     if (scd4x_error) {
       // tft.print("error ");
       // tft.print(scd4x_error, 0);
       Serial.printf("SCD4x error %s\n", scd4x_error);
-    } else if (scd4x_co2 == 0){
-      // tft.print("error reading CO2");
-      Serial.printf("SCD4x error: CO2 reading 0\n");
+    } else {
+      Serial.printf("SCD40: %d CO2 ppm %0.1f *F  %0.2f rH\n", scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
+#ifndef ADAFRUIT_SHT4x_H
+      prim_temp_f = scd4x.last_temp_f();
+      prim_hum = scd4x.last_hum_pct();
+#endif
     }
   }
+  #endif /* SENSIRIONI2CSCD4X_H */
 
   // If UP pressed, display for display_ms ms
   if (digitalRead(BUTTON_UP)) {
@@ -446,15 +439,14 @@ void loop() {
   pixels.setPixelColor(4, pixels.ColorHSV(pepper_hues[0]));
   */
 
-
+#ifdef SENSIRIONI2CSCD4X_H
   // Set middle dotstar hue by CO2 level
-  if (has_scd4x) {
     uint16_t co2_hue;
-    co2_hue = map(scd4x_co2, 400, 4000, 0, 26000);  // 400ppm=green, 4000ppm=red
+    co2_hue = map(scd4x.last_co2_ppm(), 400, 4000, 0, 26000);  // 400ppm=green, 4000ppm=red
     pixels.setPixelColor(2, pixels.gamma32(pixels.ColorHSV(co2_hue, 255, pixel_bright)));
     Serial.print("CO2 pixel hue ");
     Serial.println(co2_hue);
-  }
+#endif
   // pixels.setBrightness(pixel_bright);
   pixels.show(); // Update strip with new contents
   firstPixelHue += 256;
@@ -495,75 +487,12 @@ void read_sensors() {
 }
 
 
-uint16_t read_scd4x() {
-  uint16_t error = 0;
-  if (has_scd4x) {
-    error = scd4x.readMeasurement(scd4x_co2, scd4x_temp, scd4x_hum);
-  } else {
-    return 1;
-  }
-  if (error) {
-    // Let the caller handler error?
-    // Serial.printf("SCD4x error %s\n", error);
-  } else if (scd4x_co2 == 0) {
-    // Let the caller handle co2==0?
-    // Serial.printf("SCD4x error: CO2 reading 0\n");
-  } else if (! has_sht4x) {
-    prim_temp_f = TEMP_F(scd4x_temp);
-    prim_hum = scd4x_hum;
-  }
-  Serial.printf("SCD4x: %d ppm %0.1f *C  %0.2f rH\n", scd4x_co2, scd4x_temp, scd4x_hum);
-  return error;
-}
-
-
 void tone(uint8_t pin, float frequency, float duration) {
   ledcSetup(1, frequency, 8);
   ledcAttachPin(pin, 1);
   ledcWrite(1, 128);
   delay(duration);
   ledcWrite(1, 0);
-}
-
-
-uint16_t setup_scd4x(SensirionI2CScd4x& scd4x) {
-  uint16_t error;
-  char errorMessage[256];
-
-  scd4x.begin(Wire);
-  // stop potentially previously started measurement
-  error = scd4x.stopPeriodicMeasurement();
-  if (error) {
-    Serial.print("Error trying to execute stopPeriodicMeasurement(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-  }
-  uint16_t serial0;
-  uint16_t serial1;
-  uint16_t serial2;
-  error = scd4x.getSerialNumber(serial0, serial1, serial2);
-  if (error) {
-    Serial.print("Error trying to execute getSerialNumber(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-  } else {
-    printSerialNumber(serial0, serial1, serial2);
-  }
-  // Set altitude
-  error = scd4x.setSensorAltitude(ALT_M);
-  if (error) {
-    Serial.print("Error trying to execute setSensorAltitude(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-  }
-  // Start Measurement
-  error = scd4x.startPeriodicMeasurement();
-  if (error) {
-    Serial.print("Error trying to execute startPeriodicMeasurement(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-  }
-  return error;
 }
 
 
@@ -645,14 +574,14 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
     cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
     tft.print("SCD4x: ");
-    tft.print(scd4x_co2, 0);
+    tft.print(scd4x.last_co2_ppm(), 0);
     tft.print(" ppm ");
     tft.setCursor(0, cursor_y);
     cursor_y += tft_line_step;
     tft.print("SCD4x: ");
-    tft.print(TEMP_F(scd4x_temp), 0);
+    tft.print(scd4x.last_temp_f(), 0);
     tft.print(" F ");
-    tft.print(scd4x_hum, 0);
+    tft.print(scd4x.last_hum_pct(), 0);
     tft.print(" %");
     tft.println("              ");
   }
@@ -731,7 +660,7 @@ void mqtt_pub_sensors() {
   #endif
   // SCD40
   if (has_scd4x) {
-    sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x_co2, TEMP_F(scd4x_temp), scd4x_hum);
+    sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
     client.publish(topic, mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }

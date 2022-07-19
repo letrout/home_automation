@@ -5,6 +5,7 @@
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_SGP30.h>
 #include <Adafruit_SHT4x.h>
+#include <SensirionI2CScd4x.h>
 #include "fh_globals.h"
 
 #define TEMP_F(c) (c * 9 / 5) + 32
@@ -142,5 +143,44 @@ class FhSht40 : public Adafruit_SHT4x {
     uint8_t readSht40();
 };
 #endif /* ADAFRUIT_SHT4x_H */
+
+#ifdef SENSIRIONI2CSCD4X_H
+/**
+ * @brief Class to extend SensirionI2CScd4x
+ * 
+ */
+class FhScd40 : public SensirionI2CScd4x {
+  private:
+    uint16_t altitude_m_ = 0;
+    float last_temp_f_;
+    float last_hum_pct_;
+    uint16_t last_co2_ppm_;
+    unsigned long last_read_ms_;
+
+  public:
+    FhScd40();
+    float last_temp_f() const { return last_temp_f_; }
+    float last_temp_c() const { return TEMP_C(last_temp_f_); }
+    float last_hum_pct() const { return last_hum_pct_; }
+    uint16_t last_co2_ppm() const { return last_co2_ppm_; }
+    unsigned long last_read_ms() const { return last_read_ms_; }
+
+    /**
+     * @brief Initialize the SCD40 sensor
+     * 
+     * @param altitude_m optional - altitude in meters
+     * @return uint16_t error code, 0 on success
+     */
+    uint16_t setupScd40(uint16_t altitude_m = 0);
+
+    /**
+     * @brief Read data from the SCD40
+     * 
+     * @param ambient_press_hpa optional - ambient pressure in hPa, for pressure compensation
+     * @return uint16_t error - 0 on success, error code on failure
+     */
+    uint16_t readScd40(uint16_t ambient_press_hpa = 0);
+};
+#endif /* SENSIRIONI2CSCD4X_H */
 
 #endif /* FH_SENSORS_H */

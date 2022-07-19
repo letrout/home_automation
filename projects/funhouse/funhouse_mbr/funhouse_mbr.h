@@ -1,10 +1,6 @@
 #ifndef FH_MBR_H
 #define FH_MBR_H
 
-#ifndef __SparkFun_SCD4x_ARDUINO_LIBARARY_H__
-#include <SensirionI2CScd4x.h>
-#endif
-
 #include "fh_globals.h"
 #include "fh_sensors.h"
 
@@ -16,6 +12,9 @@ extern FhSgp30 sgp30;
 #endif
 #ifdef ADAFRUIT_SHT4x_H
 extern FhSht40 sht4x;
+#endif
+#ifdef SENSIRIONI2CSCD4X_H
+extern FhScd40 scd4x;
 #endif
 
 /**

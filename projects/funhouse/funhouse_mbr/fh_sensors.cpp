@@ -9,6 +9,9 @@ FhSgp30 sgp30;
 #ifdef ADAFRUIT_SHT4x_H
 FhSht40 sht4x = FhSht40();
 #endif
+#ifdef SENSIRIONI2CSCD4X_H
+FhScd40 scd4x;
+#endif
 
 uint32_t getAbsoluteHumidity(float temp_c, float hum_pct) {
   // approximation formula from Sensirion SGP30 Driver Integration chapter 3.15
@@ -95,6 +98,7 @@ uint8_t FhSgp30::setupSgp30(void) {
   return retval;
 }
 
+// FIXME: defaults need to be in the prototype, not here
 uint8_t FhSgp30::readSgp30(float temp_c = -1000, float hum_pct = -1) {
   uint8_t retval = 0;
   if ((hum_pct > 0) && (temp_c > -100)) {
@@ -149,3 +153,62 @@ uint8_t FhSht40::readSht40(void) {
   }
 }
 #endif /* ADAFRUIT_SHT4x_H */
+
+#ifdef SENSIRIONI2CSCD4X_H
+FhScd40::FhScd40(void) {
+}
+
+uint16_t FhScd40::setupScd40(uint16_t altitude_m) {
+  uint16_t error;
+  char errorMessage[256];
+  begin(Wire);
+  // stop potentially previously started measurement
+  error = stopPeriodicMeasurement();
+  if (error) {
+    Serial.print("Error trying to execute SCD40 stopPeriodicMeasurement(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+  }
+  // Set altitude
+  if (altitude_m > 0) {
+    altitude_m_ = altitude_m;
+    error = setSensorAltitude(altitude_m);
+    if (error) {
+      Serial.print("Error trying to execute SCD40 setSensorAltitude(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
+    }
+  }
+  // Start Measurement
+  error = startPeriodicMeasurement();
+  if (error) {
+    Serial.print("Error trying to execute SCD40 startPeriodicMeasurement(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+  }
+  return error;
+}
+
+uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
+  float t, h;
+  uint16_t c = 0;
+  uint16_t error;
+  if (ambient_press_hpa > 0) {
+    if (setAmbientPressure(ambient_press_hpa)) {
+      Serial.println("Error setting SCD40 ambient pressure compensation");
+    } else if (altitude_m_ > 0) {
+      // if we fail to set pressure comp, try to re-set via altitude
+      setSensorAltitude(altitude_m_);
+    }
+    
+  }
+  error = readMeasurement(c, t, h);
+  if (! error && (c != 0)) {
+    last_read_ms_ = millis();
+    last_co2_ppm_ = c;
+    last_temp_f_ = TEMP_F(t);
+    last_hum_pct_ = h;
+  }
+  return error;
+}
+#endif /* SENSIRIONI2CSCD4X_H */
