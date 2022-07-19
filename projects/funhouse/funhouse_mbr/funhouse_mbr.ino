@@ -140,8 +140,8 @@ void setup() {
   }
   #endif /* SENSIRIONI2CSCD4X_H */
 
-  // check SGP30!
   #ifdef ADAFRUIT_SGP30_H
+  // check SGP30!
   tft.setCursor(0, cursor_y);
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
@@ -205,7 +205,6 @@ void setup() {
 
 
 void loop() {
-  uint16_t scd4x_error;
   uint8_t cursor_y = 0;
 
   // timers
@@ -224,7 +223,7 @@ void loop() {
   #ifdef SENSIRIONI2CSCD4X_H
   // Update SCD40
   if ((now - scd4x.last_read_ms()) > scd4x_ms) {
-    scd4x_error = scd4x.readScd40();
+    uint16_t scd4x_error = scd4x.readScd40();
     if (scd4x_error) {
       // tft.print("error ");
       // tft.print(scd4x_error, 0);
@@ -568,23 +567,23 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
     tft.println("              ");
   #endif
 
+  #ifdef SENSIRIONI2CSCD4X_H
   // SCD40
-  if (has_scd4x) {
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    tft.print("SCD4x: ");
-    tft.print(scd4x.last_co2_ppm(), 0);
-    tft.print(" ppm ");
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.print("SCD4x: ");
-    tft.print(scd4x.last_temp_f(), 0);
-    tft.print(" F ");
-    tft.print(scd4x.last_hum_pct(), 0);
-    tft.print(" %");
-    tft.println("              ");
-  }
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print("SCD4x: ");
+  tft.print(scd4x.last_co2_ppm(), 0);
+  tft.print(" ppm ");
+  tft.setCursor(0, cursor_y);
+  cursor_y += tft_line_step;
+  tft.print("SCD4x: ");
+  tft.print(scd4x.last_temp_f(), 0);
+  tft.print(" F ");
+  tft.print(scd4x.last_hum_pct(), 0);
+  tft.print(" %");
+  tft.println("              ");
+  #endif
 
   // SGP30
   #ifdef ADAFRUIT_SGP30_H
