@@ -6,7 +6,6 @@
 #include <Adafruit_SGP30.h>
 #include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
-#include "fh_globals.h"
 
 #define TEMP_F(c) (c * 9 / 5) + 32
 #define TEMP_C(f) (f - 32) * 5 / 9

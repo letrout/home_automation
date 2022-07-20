@@ -1,7 +1,6 @@
 #ifndef FH_MBR_H
 #define FH_MBR_H
 
-#include "fh_globals.h"
 #include "fh_sensors.h"
 
 // sensors objects
