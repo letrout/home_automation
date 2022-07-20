@@ -11,6 +11,7 @@ FhSht40 sht4x = FhSht40();
 #endif
 #ifdef SENSIRIONI2CSCD4X_H
 FhScd40 scd4x;
+#define SCD4X_OFFSET_C 3.4  // Stock is 4C(?), testing shows 3.4 better matches my SHT40
 #endif
 
 uint32_t getAbsoluteHumidity(float temp_c, float hum_pct) {
@@ -177,6 +178,10 @@ uint16_t FhScd40::setupScd40(uint16_t altitude_m) {
       errorToString(error, errorMessage, 256);
       Serial.println(errorMessage);
     }
+  }
+  // Set the temperature offset
+  if (setTemperatureOffset(SCD4X_OFFSET_C)) {
+    Serial.printf("Error setting temp offset to %0.2f C\n", SCD4X_OFFSET_C);
   }
   // Start Measurement
   error = startPeriodicMeasurement();
