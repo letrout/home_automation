@@ -3,7 +3,6 @@
  * @author Joel Luth (joel.luth@gmail.com)
  * @brief Classes to manage sensors used on Adafruit Funhouse
  * @version 1.0
- * @date 2022-07-24
  * 
  * @copyright Copyright (c) 2022
  * 

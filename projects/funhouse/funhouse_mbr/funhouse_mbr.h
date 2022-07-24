@@ -2,6 +2,7 @@
 #define FH_MBR_H
 
 #include "fh_sensors.h"
+#include "fh_tft.h"
 
 // sensors objects
 extern FhDps310 dps;
@@ -15,6 +16,9 @@ extern FhSht40 sht4x;
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
 #endif
+
+// display!
+extern Adafruit_ST7789 tft;
 
 /**
  * @brief Read the sensors

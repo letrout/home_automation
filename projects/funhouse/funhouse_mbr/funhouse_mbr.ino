@@ -1,8 +1,6 @@
 // Adafruit FunHouse in MBR
 
 #include <Adafruit_DotStar.h>
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Wire.h>
@@ -14,8 +12,6 @@
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
 #define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
-// display!
-Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
 // LEDs!
 Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
 
