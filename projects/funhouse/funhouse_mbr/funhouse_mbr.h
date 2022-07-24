@@ -1,5 +1,19 @@
-#ifndef __SparkFun_SCD4x_ARDUINO_LIBARARY_H__
-#include <SensirionI2CScd4x.h>
+#ifndef FH_MBR_H
+#define FH_MBR_H
+
+#include "fh_sensors.h"
+
+// sensors objects
+extern FhDps310 dps;
+extern FhAht20 aht;
+#ifdef ADAFRUIT_SGP30_H
+extern FhSgp30 sgp30;
+#endif
+#ifdef ADAFRUIT_SHT4x_H
+extern FhSht40 sht4x;
+#endif
+#ifdef SENSIRIONI2CSCD4X_H
+extern FhScd40 scd4x;
 #endif
 
 /**
@@ -56,16 +70,6 @@ void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2);
 
 
 /**
- * @brief return absolute humidity [mg/m^3] with approximation formula
- * 
- * @param temperature temperature [°C]
- * @param humidity humidity [%RH]
- * @return uint32_t humidity in mg/m^3
- */
-uint32_t getAbsoluteHumidity(float temperature, float humidity);
-
-
-/**
  * @brief MQTT subscribe callback function
  * 
  * @param topic the topic of the message
@@ -108,3 +112,5 @@ int8_t get_pepper_mqtt(const byte* payload, const int length);
  * 
  */
 void mqtt_reconnect(void);
+
+#endif // FH_MBR_H
