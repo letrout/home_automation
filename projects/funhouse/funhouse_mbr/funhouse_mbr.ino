@@ -62,9 +62,8 @@ void setup() {
   // Initialize the display
   tft.setup();
 
+  tft.setDisplayMode(DISPLAY_MODE_ALL_SENSORS);
   // check DPS!
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("DP310? ");
 
@@ -77,8 +76,6 @@ void setup() {
   tft.println("OK!");
 
   // check AHT!
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("AHT20? ");
   
@@ -92,8 +89,6 @@ void setup() {
 
   // check SHT4x!
   #ifdef ADAFRUIT_SHT4x_H
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SHT4x? ");
   if (sht4x.setupSht40()) {
@@ -108,8 +103,6 @@ void setup() {
 
   #ifdef SENSIRIONI2CSCD4X_H
   // check SCD-4X!
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SCD-4X? ");
   retries = 5, i = 0;
@@ -131,8 +124,6 @@ void setup() {
 
   #ifdef ADAFRUIT_SGP30_H
   // check SGP30!
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SGP30? ");
   if (sgp30.setupSgp30()) {
