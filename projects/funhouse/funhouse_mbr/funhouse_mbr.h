@@ -18,7 +18,7 @@ extern FhScd40 scd4x;
 #endif
 
 // display!
-extern Adafruit_ST7789 tft;
+extern FhTft tft;
 
 /**
  * @brief Read the sensors

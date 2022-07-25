@@ -11,4 +11,17 @@
 #include "fh_tft.h"
 
 // display!
-Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
+Adafruit_ST7789 tft = FhTft(TFT_CS, TFT_DC, TFT_RESET);
+
+// Funhouse ST7789 TFT display
+void FhTft::setup(void) {
+    init(240, 240);                // Initialize ST7789 screen
+    pinMode(TFT_BACKLIGHT, OUTPUT);
+    digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
+
+    fillScreen(BG_COLOR);
+    setTextSize(2);
+    setTextColor(ST77XX_YELLOW);
+    setTextWrap(false);
+    return;
+}

@@ -8,7 +8,6 @@
 #include "secrets.h"
 
 #define NUM_DOTSTAR 5
-#define BG_COLOR ST77XX_BLACK
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
 #define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
@@ -60,14 +59,8 @@ void setup() {
 
   //analogReadResolution(13);
   
-  tft.init(240, 240);                // Initialize ST7789 screen
-  pinMode(TFT_BACKLIGHT, OUTPUT);
-  digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
-
-  tft.fillScreen(BG_COLOR);
-  tft.setTextSize(2);
-  tft.setTextColor(ST77XX_YELLOW);
-  tft.setTextWrap(false);
+  // Initialize the display
+  tft.setup();
 
   // check DPS!
   tft.setCursor(0, cursor_y);
