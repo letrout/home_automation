@@ -20,7 +20,7 @@ void FhTft::setup(void) {
     return;
 }
 
-uint8_t FhTft::setDisplayMode(byte mode) {
+uint8_t FhTft::setDisplayMode(byte mode, bool fill) {
     uint8_t retval = 0;
     display_mode_ = mode;
     switch(display_mode_) {
@@ -32,7 +32,7 @@ uint8_t FhTft::setDisplayMode(byte mode) {
             text_size_ = 2;
             cursor_y_ = 0;
             digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
-            fillScreen(BG_COLOR);
+            if (fill) { fillScreen(BG_COLOR); }
             setTextSize(text_size_);
             setTextColor(ST77XX_YELLOW);
             setTextWrap(false);

@@ -46,11 +46,12 @@ class FhTft : public Adafruit_ST7789 {
      * 
      * @return uint8_t 
      */
-    uint8_t setDisplayMode(byte mode);
+    uint8_t setDisplayMode(byte mode, bool fill = false);
     /**
      * @brief override printlin to also increment the cursor y position
      * 
      * @param t text to print
+     * @param fill - If true, fill the display background
      * @return size_t return from println
      */
     size_t println(const char* t);
