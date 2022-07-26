@@ -225,7 +225,7 @@ void loop() {
     up_pressed_ms = now;
   }
   if ((now - up_pressed_ms) < display_ms) {
-    display_sensors();
+    display_environment();
   } else {
     tft.setDisplayMode(DISPLAY_MODE_SLEEP);
   }
@@ -587,6 +587,38 @@ void display_sensors(bool fill) {
   //tft.println("");
 
   return;
+}
+
+
+void display_environment(bool fill) {
+  tft.setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
+  // Temp and humidity
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print(prim_temp_f, 0);
+  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
+  tft.print(" F  ");
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print(prim_hum, 0);
+  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
+  tft.println(" %");
+  // Pressure
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print(dps.last_press_hpa(), 0);
+  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
+  tft.println(" hPa");
+#ifdef SENSIRIONI2CSCD4X_H
+  // CO2
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print(scd4x.last_co2_ppm());
+  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
+  tft.println(" ppm CO2");
+#endif
+#ifdef ADAFRUIT_SGP30_H
+  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
+  tft.print(sgp30.last_tvoc());
+  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
+  tft.println(" ppb TVOC");
+#endif
 }
 
 

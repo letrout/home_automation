@@ -86,10 +86,18 @@ void callback(char *topic, byte *payload, unsigned int length);
 /**
  * @brief display sensor values on the TFT
  * 
- * @param fill - passthru to FhTft::setDsiplayMode
+ * @param fill - if true fill background (passthru to FhTft::setDsiplayMode)
  * 
  */
 void display_sensors(bool fill = false);
+
+
+/**
+ * @brief display environment information
+ * 
+ * @param fill - if true fill background (passthru to FhTft::setDsiplayMode)
+ */
+void display_environment(bool fill = false);
 
 
 /**

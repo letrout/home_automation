@@ -28,11 +28,20 @@ uint8_t FhTft::setDisplayMode(byte mode, bool fill) {
         case DISPLAY_MODE_SLEEP :
             digitalWrite(TFT_BACKLIGHT, LOW); // Backlight off
             break;
+        case DISPLAY_MODE_ENVIRONMENTAL :
+            text_size_ = 2;
+            cursor_y_ = 0;
+            digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
+            if (fill) { fillScreen(BG_COLOR); }
+            setTextSize(text_size_);
+            setTextColor(ST77XX_YELLOW);
+            setTextWrap(false);
         case DISPLAY_MODE_ALL_SENSORS :
             text_size_ = 2;
             cursor_y_ = 0;
             digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
             if (fill) { fillScreen(BG_COLOR); }
+            setCursor(0, cursor_y_);
             setTextSize(text_size_);
             setTextColor(ST77XX_YELLOW);
             setTextWrap(false);
