@@ -86,10 +86,10 @@ void callback(char *topic, byte *payload, unsigned int length);
 /**
  * @brief display sensor values on the TFT
  * 
- * @param uint8_t starting cursor position
- * @return uint8_t the final cursor value
+ * @param fill - passthru to FhTft::setDsiplayMode
+ * 
  */
-uint8_t display_sensors(const uint8_t cursor_y_start = 0);
+void display_sensors(bool fill = false);
 
 
 /**

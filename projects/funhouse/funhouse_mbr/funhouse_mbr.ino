@@ -185,8 +185,6 @@ void setup() {
 
 
 void loop() {
-  uint8_t cursor_y = 0;
-
   // timers
   unsigned long now = millis();
   bool sensors_update = false;
@@ -227,10 +225,9 @@ void loop() {
     up_pressed_ms = now;
   }
   if ((now - up_pressed_ms) < display_ms) {
-    digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
-    cursor_y = display_sensors(cursor_y);
+    display_sensors();
   } else {
-    digitalWrite(TFT_BACKLIGHT, LOW); // Backlight off
+    tft.setDisplayMode(DISPLAY_MODE_SLEEP);
   }
 
   // MQTT publish interval expired?
@@ -508,13 +505,10 @@ void callback(char *topic, byte *payload, unsigned int length) {
 }
 
 
-uint8_t display_sensors(const uint8_t cursor_y_start) {
-  uint8_t cursor_y = cursor_y_start;
-  const uint8_t tft_line_step = 20;
+void display_sensors(bool fill) {
+  tft.setDisplayMode(DISPLAY_MODE_ALL_SENSORS, fill);
 
   // DPS310
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("DP310: ");
   tft.print(dps.last_temp_f(), 0);
@@ -524,8 +518,6 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   tft.println("              ");
 
   // AHT20
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("AHT20: ");
   tft.print(aht.last_temp_f(), 0);
@@ -536,8 +528,6 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
 
   // SHT40
   #ifdef ADAFRUIT_SHT4x_H
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
     tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
     tft.print("SHT40: ");
     tft.print(sht4x.last_temp_f(), 0);
@@ -549,14 +539,10 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
 
   #ifdef SENSIRIONI2CSCD4X_H
   // SCD40
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("SCD4x: ");
   tft.print(scd4x.last_co2_ppm(), 0);
-  tft.print(" ppm ");
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
+  tft.println(" ppm ");
   tft.print("SCD4x: ");
   tft.print(scd4x.last_temp_f(), 0);
   tft.print(" F ");
@@ -567,31 +553,24 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
 
   // SGP30
   #ifdef ADAFRUIT_SGP30_H
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("SGP30: ");
   tft.print("TVOC ");
   tft.print(sgp30.last_tvoc(), 0);
-  tft.print(" ppb ");
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
+  tft.println(" ppb ");
   tft.print("eCO2 ");
   tft.print(sgp30.last_eco2(), 0);
-  tft.print(" ppm");
+  tft.println(" ppm");
 
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("H2 ");
   tft.print(sgp30.last_raw_h2(), 0);
   tft.print(" Eth ");
-  tft.print(sgp30.last_raw_ethanol(), 0);
+  tft.print(sgp30.last_raw_ethanol());
+  tft.println("");
   #endif
 
   // Light sensor
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Light: ");
   tft.setTextColor(ST77XX_WHITE, BG_COLOR);
@@ -599,8 +578,6 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   tft.println("    ");
 
   // Pepper plant soil moisture (from MQTT)
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Pepper:");
   for (int i=0; i < PEPPER_PLANTS; i++) {
@@ -609,7 +586,7 @@ uint8_t display_sensors(const uint8_t cursor_y_start) {
   }
   //tft.println("");
 
-  return cursor_y;
+  return;
 }
 
 
