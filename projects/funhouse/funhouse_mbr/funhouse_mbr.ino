@@ -12,6 +12,22 @@
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
 #define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
+// sensors objects
+extern FhDps310 dps;
+extern FhAht20 aht;
+#ifdef ADAFRUIT_SGP30_H
+extern FhSgp30 sgp30;
+#endif
+#ifdef ADAFRUIT_SHT4x_H
+extern FhSht40 sht4x;
+#endif
+#ifdef SENSIRIONI2CSCD4X_H
+extern FhScd40 scd4x;
+#endif
+
+// display!
+extern FhTft tft;
+
 // LEDs!
 Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
 

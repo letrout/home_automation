@@ -4,22 +4,6 @@
 #include "fh_sensors.h"
 #include "fh_tft.h"
 
-// sensors objects
-extern FhDps310 dps;
-extern FhAht20 aht;
-#ifdef ADAFRUIT_SGP30_H
-extern FhSgp30 sgp30;
-#endif
-#ifdef ADAFRUIT_SHT4x_H
-extern FhSht40 sht4x;
-#endif
-#ifdef SENSIRIONI2CSCD4X_H
-extern FhScd40 scd4x;
-#endif
-
-// display!
-extern FhTft tft;
-
 /**
  * @brief Read the sensors
  * store results in global variables
