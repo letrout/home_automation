@@ -8,6 +8,7 @@
 #include "secrets.h"
 
 #define NUM_DOTSTAR 5
+#define NUM_BUTTONS 3
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
 #define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
@@ -20,7 +21,7 @@ float prim_temp_f, prim_hum;  // primary temp and humidity measurements
 
 // timers
 const unsigned long display_ms = 10000; // display on for x ms after UP button push
-unsigned long up_pressed_ms = 0;  // last time UP button pressed
+unsigned long button_pressed_ms[NUM_BUTTONS] = {0};  // last time buttons pressed {UP, SELECT, DOWN} TODO: map?
 const unsigned long mqtt_ms = 60000;  // publish to mqtt every x ms
 unsigned long mqtt_last_ms = 0;
 const unsigned long sensor_ms = 1000;  // read sensors every x ms
@@ -62,7 +63,7 @@ void setup() {
   // Initialize the display
   tft.setup();
 
-  tft.setDisplayMode(DISPLAY_MODE_ALL_SENSORS);
+  tft.setDisplayMode(DISPLAY_MODE_ALL_SENSORS, true);
   // check DPS!
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("DP310? ");
@@ -216,16 +217,54 @@ void loop() {
   }
   #endif /* SENSIRIONI2CSCD4X_H */
 
-  // If UP pressed, display for display_ms ms
+  // Record button press times
+  // TODO: move the fillscreen() to the display_() in the switch below?
   if (digitalRead(BUTTON_UP)) {
     Serial.println("UP pressed");
     // tone(SPEAKER, 1319, 200); // tone1 - E6
     // tone(SPEAKER, 988, 100);  // tone2 - B5
     // delay(100);
-    up_pressed_ms = now;
+    tft.fillScreen(BG_COLOR);
+    button_pressed_ms[0] = now;
   }
-  if ((now - up_pressed_ms) < display_ms) {
-    display_environment();
+  if (digitalRead(BUTTON_SELECT)) {
+    // tft.fillScreen(BG_COLOR);
+    button_pressed_ms[1] = now;
+  }
+  if (digitalRead(BUTTON_DOWN)) {
+    tft.fillScreen(BG_COLOR);
+    button_pressed_ms[2] = now;
+  }
+
+  // Get the last button push
+  uint8_t last_button = 0;
+  unsigned long max_ms = button_pressed_ms[0];
+  // last_button = distance(button_pressed_ms, max_element(button_pressed_ms, button_pressed_ms + NUM_BUTTONS));
+  for (uint8_t i=0; i < (sizeof(button_pressed_ms) / sizeof(button_pressed_ms[0])); i++) {
+    if (button_pressed_ms[i] > max_ms) {
+      max_ms = button_pressed_ms[i];
+      last_button = i;
+    }
+  }
+  Serial.print("last button pressed: ");
+  Serial.println(last_button);
+  // Set the display based on button pushed
+  // FIXME: need to add dotstar mode here, as well as TFT mode
+  if ((now - button_pressed_ms[last_button]) < display_ms) {
+    switch (last_button) {
+      case 0:
+        // BUTTON_UP - display environmental data
+        display_environment();
+        break;
+      case 1:
+        // BUTTON_SELECT TBD
+        break;
+      case 2:
+        // BUTTON_DOWN - display all sensor data
+        display_sensors();
+        break;
+      // default:
+    }
   } else {
     tft.setDisplayMode(DISPLAY_MODE_SLEEP);
   }
