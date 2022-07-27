@@ -11,6 +11,7 @@
 #include "fh_sensors.h"
 
 // sensors objects
+FhAmbientLight ambientLight;
 FhDps310 dps;
 FhAht20 aht;
 #ifdef ADAFRUIT_SGP30_H
@@ -30,6 +31,17 @@ uint32_t getAbsoluteHumidity(float temp_c, float hum_pct) {
   const uint32_t absoluteHumidityScaled = static_cast<uint32_t>(1000.0f * absoluteHumidity); // [mg/m^3]
   return absoluteHumidityScaled;
 }
+
+// Ambient light sensor
+FhAmbientLight::FhAmbientLight(void) {
+}
+
+void FhAmbientLight::read(void) {
+  last_ambient_light_ = analogRead(A3);
+  last_read_ms_ = millis();
+  return;
+}
+// End ambient light sensor
 
 // DPS310
 FhDps310::FhDps310(void) {

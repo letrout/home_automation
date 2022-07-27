@@ -13,6 +13,7 @@
 #define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
 // sensors objects
+extern FhAmbientLight ambientLight;
 extern FhDps310 dps;
 extern FhAht20 aht;
 #ifdef ADAFRUIT_SGP30_H
@@ -32,7 +33,6 @@ extern FhTft tft;
 Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
 
 // Sensors
-uint16_t ambient_light;
 float prim_temp_f, prim_hum;  // primary temp and humidity measurements
 
 // timers
@@ -440,7 +440,7 @@ void loop() {
   
   // rainbow dotstars
   // dim dotstars as ambient light decreases
-  pixel_bright = map(ambient_light, 0, 8192, 0, 255);
+  pixel_bright = map(ambientLight.last_ambient_light(), 0, 8192, 0, 255);
   /*
   for (int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
       if (has_scd4x && (i == 2)) { // third pixel will use CO2 for hue
@@ -499,8 +499,8 @@ void read_sensors() {
  }
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", aht.last_temp_f(), aht.last_hum_pct());
   // Light sensor
-  ambient_light = analogRead(A3);
-  Serial.printf("Light sensor reading: %d\n", ambient_light);
+  ambientLight.read();
+  Serial.printf("Light sensor reading: %d\n", ambientLight.last_ambient_light());
   // SHT40
   #ifdef ADAFRUIT_SHT4x_H
   sht4x.readSht40();
@@ -629,7 +629,7 @@ void display_sensors(bool fill) {
   tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
   tft.print("Light: ");
   tft.setTextColor(ST77XX_WHITE, BG_COLOR);
-  tft.print(ambient_light);
+  tft.print(ambientLight.last_ambient_light());
   tft.println("    ");
 
   // Pepper plant soil moisture (from MQTT)
@@ -692,7 +692,7 @@ void mqtt_pub_sensors() {
   client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // Ambient light
-  sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambient_light);
+  sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambientLight.last_ambient_light());
   client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // SHT40

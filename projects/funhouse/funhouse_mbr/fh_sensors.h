@@ -182,4 +182,20 @@ class FhScd40 : public SensirionI2CScd4x {
 };
 #endif /* SENSIRIONI2CSCD4X_H */
 
+class FhAmbientLight {
+  private:
+    uint16_t last_ambient_light_;
+    unsigned long last_read_ms_;
+
+  public:
+    FhAmbientLight();
+    uint16_t last_ambient_light() const { return last_ambient_light_; }
+    unsigned long last_read_ms() const { return last_read_ms_; }
+    /**
+     * @brief read the ambient light sensor
+     * 
+     */
+    void read();
+};
+
 #endif /* FH_SENSORS_H */
