@@ -623,7 +623,7 @@ void display_sensors(bool fill) {
     tft.print(" ");
     tft.print(peppers[i]);
   }
-  //tft.println("");
+  tft.println("");
 
   return;
 }

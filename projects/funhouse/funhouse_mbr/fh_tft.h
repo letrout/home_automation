@@ -17,8 +17,6 @@
 class FhTft : public Adafruit_ST7789 {
   private:
     byte display_mode_;
-    uint16_t cursor_y_ = 0; // Y-axis position of cursor
-    uint8_t text_size_ = 2;   // text size setting (setTextSize())
     /**
      * @brief print display of sensors as they are discovered
      * 
@@ -32,8 +30,8 @@ class FhTft : public Adafruit_ST7789 {
     {
     }
     byte getDisplayMode() { return display_mode_; }
-    uint8_t getCursorY() const { return cursor_y_; }
-    uint8_t getTextSize() const { return text_size_; }
+    uint8_t getCursorY() const { return cursor_y; }
+    uint8_t getTextSize() const { return textsize_y; }
     /**
      * @brief set up the TFT display
      * 

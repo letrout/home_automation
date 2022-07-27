@@ -11,7 +11,7 @@
 #include "fh_tft.h"
 
 // display!
-Adafruit_ST7789 tft = FhTft(TFT_CS, TFT_DC, TFT_RESET);
+FhTft tft = FhTft(TFT_CS, TFT_DC, TFT_RESET);
 
 // Funhouse ST7789 TFT display
 void FhTft::setup(void) {
@@ -29,20 +29,18 @@ uint8_t FhTft::setDisplayMode(byte mode, bool fill) {
             digitalWrite(TFT_BACKLIGHT, LOW); // Backlight off
             break;
         case DISPLAY_MODE_ENVIRONMENTAL :
-            text_size_ = 2;
-            cursor_y_ = 0;
             digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
             if (fill) { fillScreen(BG_COLOR); }
-            setTextSize(text_size_);
+            setCursor(0, 0);
+            setTextSize(3);
             setTextColor(ST77XX_YELLOW);
             setTextWrap(false);
+            break;
         case DISPLAY_MODE_ALL_SENSORS :
-            text_size_ = 2;
-            cursor_y_ = 0;
             digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
             if (fill) { fillScreen(BG_COLOR); }
-            setCursor(0, cursor_y_);
-            setTextSize(text_size_);
+            setCursor(0, 0);
+            setTextSize(2);
             setTextColor(ST77XX_YELLOW);
             setTextWrap(false);
             break;
@@ -55,7 +53,7 @@ uint8_t FhTft::setDisplayMode(byte mode, bool fill) {
 size_t FhTft::println(const char* t) {
     size_t retval;
     retval = Adafruit_ST7789::println(t);
-    cursor_y_ += TEXT_LINE_PXL(text_size_);
-    setCursor(0, cursor_y_);
+    //cursor_y_ = cursor_y + TEXT_LINE_PXL(textsize_y);
+    // setCursor(0, cursor_y + TEXT_LINE_PXL(textsize_y));
     return retval;
 }
