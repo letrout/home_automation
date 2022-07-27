@@ -49,11 +49,3 @@ uint8_t FhTft::setDisplayMode(byte mode, bool fill) {
     }
     return retval;
 }
-
-size_t FhTft::println(const char* t) {
-    size_t retval;
-    retval = Adafruit_ST7789::println(t);
-    //cursor_y_ = cursor_y + TEXT_LINE_PXL(textsize_y);
-    // setCursor(0, cursor_y + TEXT_LINE_PXL(textsize_y));
-    return retval;
-}
