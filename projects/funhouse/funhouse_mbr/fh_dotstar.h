@@ -5,23 +5,43 @@
 
 #define NUM_DOTSTAR 5
 #define DOTSTAR_MODE_SLEEP 0
+#define DOTSTAR_MODE_RAINBOW 1
+#define DOTSTAR_MODE_PLANTS 2
 
 class FhDotstar : public Adafruit_DotStar {
   private:
-    byte display_mode_;
+    byte mode_;
+    uint8_t brightness_ = 128;
+    uint16_t first_pixel_hue_ = 0;
+    /**
+     * @brief Return a LED brightness adjusted for the ambient light
+     * 
+     * @return uint8_t adjusted pixel brightness
+     */
+    uint8_t ambientAdjusted();
 
   public:
     FhDotstar(uint16_t n, uint8_t d, uint8_t c, uint8_t o = (uint8_t) 9U)
     : Adafruit_DotStar{n, d, c, o}
     {
     }
-    byte getDisplayMode() { return display_mode_; }
+    byte getMode() { return mode_; }
+    uint8_t getBrightness() { return brightness_; }
+    /**
+     * @brief Set the dotstar mode
+     * 
+     * @param mode - the mode to set
+     * @param ambient_adjust - if true, use ambient light to adjust LED brightness
+     * 
+     * @return uint8_t 
+     */
+    uint8_t setMode(byte mode, bool ambient_adjust = false);
     /**
      * @brief setup the dotstars
      * 
      * @return nothing
      */
-    void setup();
+    void setup(uint8_t brightness = 255);
 };
 
 #endif /* FH_DOTSTAR_H */

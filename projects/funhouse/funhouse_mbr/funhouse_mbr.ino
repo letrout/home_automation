@@ -269,6 +269,7 @@ void loop() {
       case 0:
         // BUTTON_UP - display environmental data
         tft.displayEnvironment();
+        pixels.setMode(DOTSTAR_MODE_PLANTS);
         break;
       case 1:
         // BUTTON_SELECT TBD
@@ -276,11 +277,13 @@ void loop() {
       case 2:
         // BUTTON_DOWN - display all sensor data
         tft.displaySensors();
+        pixels.setMode(DOTSTAR_MODE_RAINBOW);
         break;
       // default:
     }
   } else {
     tft.setDisplayMode(DISPLAY_MODE_SLEEP);
+    pixels.setMode(DOTSTAR_MODE_SLEEP);
   }
 
   // MQTT publish interval expired?
