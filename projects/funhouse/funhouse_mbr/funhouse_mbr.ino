@@ -5,6 +5,8 @@
 #include <WiFi.h>
 #include <Wire.h>
 #include "funhouse_mbr.h"
+#include "fh_dotstar.h"
+#include "fh_tft.h"
 #include "secrets.h"
 
 #define NUM_DOTSTAR 5
