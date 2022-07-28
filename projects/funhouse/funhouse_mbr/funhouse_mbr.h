@@ -2,19 +2,9 @@
 #define FH_MBR_H
 
 #include "fh_sensors.h"
+#include "fh_tft.h"
 
-// sensors objects
-extern FhDps310 dps;
-extern FhAht20 aht;
-#ifdef ADAFRUIT_SGP30_H
-extern FhSgp30 sgp30;
-#endif
-#ifdef ADAFRUIT_SHT4x_H
-extern FhSht40 sht4x;
-#endif
-#ifdef SENSIRIONI2CSCD4X_H
-extern FhScd40 scd4x;
-#endif
+#define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
 /**
  * @brief Read the sensors
@@ -77,15 +67,6 @@ void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2);
  * @param length length of the message payload
  */
 void callback(char *topic, byte *payload, unsigned int length);
-
-
-/**
- * @brief display sensor values on the TFT
- * 
- * @param uint8_t starting cursor position
- * @return uint8_t the final cursor value
- */
-uint8_t display_sensors(const uint8_t cursor_y_start = 0);
 
 
 /**

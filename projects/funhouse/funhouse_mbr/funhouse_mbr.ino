@@ -1,8 +1,6 @@
 // Adafruit FunHouse in MBR
 
 #include <Adafruit_DotStar.h>
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Wire.h>
@@ -10,22 +8,35 @@
 #include "secrets.h"
 
 #define NUM_DOTSTAR 5
-#define BG_COLOR ST77XX_BLACK
+#define NUM_BUTTONS 3
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
-#define PEPPER_PLANTS 4 // number of pepper plants to monitor
+
+// sensors objects
+extern FhAmbientLight ambientLight;
+extern FhDps310 dps;
+extern FhAht20 aht;
+#ifdef ADAFRUIT_SGP30_H
+extern FhSgp30 sgp30;
+#endif
+#ifdef ADAFRUIT_SHT4x_H
+extern FhSht40 sht4x;
+#endif
+#ifdef SENSIRIONI2CSCD4X_H
+extern FhScd40 scd4x;
+#endif
 
 // display!
-Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RESET);
+extern FhTft tft;
+
 // LEDs!
 Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
 
 // Sensors
-uint16_t ambient_light;
 float prim_temp_f, prim_hum;  // primary temp and humidity measurements
 
 // timers
 const unsigned long display_ms = 10000; // display on for x ms after UP button push
-unsigned long up_pressed_ms = 0;  // last time UP button pressed
+unsigned long button_pressed_ms[NUM_BUTTONS] = {0};  // last time buttons pressed {UP, SELECT, DOWN} TODO: map?
 const unsigned long mqtt_ms = 60000;  // publish to mqtt every x ms
 unsigned long mqtt_last_ms = 0;
 const unsigned long sensor_ms = 1000;  // read sensors every x ms
@@ -64,18 +75,11 @@ void setup() {
 
   //analogReadResolution(13);
   
-  tft.init(240, 240);                // Initialize ST7789 screen
-  pinMode(TFT_BACKLIGHT, OUTPUT);
-  digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
+  // Initialize the display
+  tft.setup();
 
-  tft.fillScreen(BG_COLOR);
-  tft.setTextSize(2);
-  tft.setTextColor(ST77XX_YELLOW);
-  tft.setTextWrap(false);
-
+  tft.setDisplayMode(DISPLAY_MODE_ALL_SENSORS, true);
   // check DPS!
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("DP310? ");
 
@@ -88,8 +92,6 @@ void setup() {
   tft.println("OK!");
 
   // check AHT!
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("AHT20? ");
   
@@ -103,8 +105,6 @@ void setup() {
 
   // check SHT4x!
   #ifdef ADAFRUIT_SHT4x_H
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SHT4x? ");
   if (sht4x.setupSht40()) {
@@ -119,8 +119,6 @@ void setup() {
 
   #ifdef SENSIRIONI2CSCD4X_H
   // check SCD-4X!
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SCD-4X? ");
   retries = 5, i = 0;
@@ -142,8 +140,6 @@ void setup() {
 
   #ifdef ADAFRUIT_SGP30_H
   // check SGP30!
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SGP30? ");
   if (sgp30.setupSgp30()) {
@@ -205,8 +201,6 @@ void setup() {
 
 
 void loop() {
-  uint8_t cursor_y = 0;
-
   // timers
   unsigned long now = millis();
   bool sensors_update = false;
@@ -238,19 +232,56 @@ void loop() {
   }
   #endif /* SENSIRIONI2CSCD4X_H */
 
-  // If UP pressed, display for display_ms ms
+  // Record button press times
+  // TODO: move the fillscreen() to the display_() in the switch below?
   if (digitalRead(BUTTON_UP)) {
     Serial.println("UP pressed");
     // tone(SPEAKER, 1319, 200); // tone1 - E6
     // tone(SPEAKER, 988, 100);  // tone2 - B5
     // delay(100);
-    up_pressed_ms = now;
+    tft.fillScreen(BG_COLOR);
+    button_pressed_ms[0] = now;
   }
-  if ((now - up_pressed_ms) < display_ms) {
-    digitalWrite(TFT_BACKLIGHT, HIGH); // Backlight on
-    cursor_y = display_sensors(cursor_y);
+  if (digitalRead(BUTTON_SELECT)) {
+    // tft.fillScreen(BG_COLOR);
+    button_pressed_ms[1] = now;
+  }
+  if (digitalRead(BUTTON_DOWN)) {
+    tft.fillScreen(BG_COLOR);
+    button_pressed_ms[2] = now;
+  }
+
+  // Get the last button push
+  uint8_t last_button = 0;
+  unsigned long max_ms = button_pressed_ms[0];
+  // last_button = distance(button_pressed_ms, max_element(button_pressed_ms, button_pressed_ms + NUM_BUTTONS));
+  for (uint8_t i=0; i < (sizeof(button_pressed_ms) / sizeof(button_pressed_ms[0])); i++) {
+    if (button_pressed_ms[i] > max_ms) {
+      max_ms = button_pressed_ms[i];
+      last_button = i;
+    }
+  }
+  Serial.print("last button pressed: ");
+  Serial.println(last_button);
+  // Set the display based on button pushed
+  // FIXME: need to add dotstar mode here, as well as TFT mode
+  if ((now - button_pressed_ms[last_button]) < display_ms) {
+    switch (last_button) {
+      case 0:
+        // BUTTON_UP - display environmental data
+        tft.displayEnvironment();
+        break;
+      case 1:
+        // BUTTON_SELECT TBD
+        break;
+      case 2:
+        // BUTTON_DOWN - display all sensor data
+        tft.displaySensors();
+        break;
+      // default:
+    }
   } else {
-    digitalWrite(TFT_BACKLIGHT, LOW); // Backlight off
+    tft.setDisplayMode(DISPLAY_MODE_SLEEP);
   }
 
   // MQTT publish interval expired?
@@ -408,7 +439,7 @@ void loop() {
   
   // rainbow dotstars
   // dim dotstars as ambient light decreases
-  pixel_bright = map(ambient_light, 0, 8192, 0, 255);
+  pixel_bright = map(ambientLight.last_ambient_light(), 0, 8192, 0, 255);
   /*
   for (int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
       if (has_scd4x && (i == 2)) { // third pixel will use CO2 for hue
@@ -467,8 +498,8 @@ void read_sensors() {
  }
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", aht.last_temp_f(), aht.last_hum_pct());
   // Light sensor
-  ambient_light = analogRead(A3);
-  Serial.printf("Light sensor reading: %d\n", ambient_light);
+  ambientLight.read();
+  Serial.printf("Light sensor reading: %d\n", ambientLight.last_ambient_light());
   // SHT40
   #ifdef ADAFRUIT_SHT4x_H
   sht4x.readSht40();
@@ -528,111 +559,6 @@ void callback(char *topic, byte *payload, unsigned int length) {
 }
 
 
-uint8_t display_sensors(const uint8_t cursor_y_start) {
-  uint8_t cursor_y = cursor_y_start;
-  const uint8_t tft_line_step = 20;
-
-  // DPS310
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("DP310: ");
-  tft.print(dps.last_temp_f(), 0);
-  tft.print(" F ");
-  tft.print(dps.last_press_hpa(), 0);
-  tft.print(" hPa");
-  tft.println("              ");
-
-  // AHT20
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("AHT20: ");
-  tft.print(aht.last_temp_f(), 0);
-  tft.print(" F ");
-  tft.print(aht.last_hum_pct(), 0);
-  tft.print(" %");
-  tft.println("              ");
-
-  // SHT40
-  #ifdef ADAFRUIT_SHT4x_H
-    tft.setCursor(0, cursor_y);
-    cursor_y += tft_line_step;
-    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    tft.print("SHT40: ");
-    tft.print(sht4x.last_temp_f(), 0);
-    tft.print(" F ");
-    tft.print(sht4x.last_hum_pct(), 0);
-    tft.print(" %");
-    tft.println("              ");
-  #endif
-
-  #ifdef SENSIRIONI2CSCD4X_H
-  // SCD40
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("SCD4x: ");
-  tft.print(scd4x.last_co2_ppm(), 0);
-  tft.print(" ppm ");
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.print("SCD4x: ");
-  tft.print(scd4x.last_temp_f(), 0);
-  tft.print(" F ");
-  tft.print(scd4x.last_hum_pct(), 0);
-  tft.print(" %");
-  tft.println("              ");
-  #endif
-
-  // SGP30
-  #ifdef ADAFRUIT_SGP30_H
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("SGP30: ");
-  tft.print("TVOC ");
-  tft.print(sgp30.last_tvoc(), 0);
-  tft.print(" ppb ");
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.print("eCO2 ");
-  tft.print(sgp30.last_eco2(), 0);
-  tft.print(" ppm");
-
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("H2 ");
-  tft.print(sgp30.last_raw_h2(), 0);
-  tft.print(" Eth ");
-  tft.print(sgp30.last_raw_ethanol(), 0);
-  #endif
-
-  // Light sensor
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("Light: ");
-  tft.setTextColor(ST77XX_WHITE, BG_COLOR);
-  tft.print(ambient_light);
-  tft.println("    ");
-
-  // Pepper plant soil moisture (from MQTT)
-  tft.setCursor(0, cursor_y);
-  cursor_y += tft_line_step;
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("Pepper:");
-  for (int i=0; i < PEPPER_PLANTS; i++) {
-    tft.print(" ");
-    tft.print(peppers[i]);
-  }
-  //tft.println("");
-
-  return cursor_y;
-}
-
-
 void mqtt_pub_sensors() {
   char mqtt_msg [128];
 
@@ -648,7 +574,7 @@ void mqtt_pub_sensors() {
   client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // Ambient light
-  sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambient_light);
+  sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambientLight.last_ambient_light());
   client.publish(topic, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // SHT40
