@@ -438,46 +438,6 @@ void loop() {
   // pulse red LED
   ledcWrite(0, LED_dutycycle);
   LED_dutycycle += 32;
-  
-  // rainbow dotstars
-  // dim dotstars as ambient light decreases
-  pixel_bright = map(ambientLight.last_ambient_light(), 0, 8192, 0, 255);
-  /*
-  for (int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
-      if (has_scd4x && (i == 2)) { // third pixel will use CO2 for hue
-        continue;
-      }
-      int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
-      pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue)));
-  }
-  */
-  // Set dotstars to pepper plant moisture (from MQTT)
-  /* ********************************************************************
-  uint16_t pepper_hues[PEPPER_PLANTS];
-  for (int i=0; i < PEPPER_PLANTS; i++) {
-    pepper_hues[i] = map(peppers[i], 0, 100, 26000, 0); // 0=red, 100=blue
-    Serial.print("wet_pct: ");
-    Serial.print(peppers[i]);
-    Serial.print(", hue: ");
-    Serial.println(pepper_hues[i]);
-  }
-  pixels.setPixelColor(0, pixels.gamma32(pixels.ColorHSV(pepper_hues[3], 255, pixel_bright)));
-  pixels.setPixelColor(1, pixels.gamma32(pixels.ColorHSV(pepper_hues[2], 255, pixel_bright)));
-  pixels.setPixelColor(3, pixels.gamma32(pixels.ColorHSV(pepper_hues[1], 255, pixel_bright)));
-  pixels.setPixelColor(4, pixels.gamma32(pixels.ColorHSV(pepper_hues[0], 255, pixel_bright)));
-
-#ifdef SENSIRIONI2CSCD4X_H
-  // Set middle dotstar hue by CO2 level
-    uint16_t co2_hue;
-    co2_hue = map(scd4x.last_co2_ppm(), 400, 4000, 0, 26000);  // 400ppm=green, 4000ppm=red
-    pixels.setPixelColor(2, pixels.gamma32(pixels.ColorHSV(co2_hue, 255, pixel_bright)));
-    Serial.print("CO2 pixel hue ");
-    Serial.println(co2_hue);
-#endif
-  // pixels.setBrightness(pixel_bright);
-  pixels.show(); // Update strip with new contents
-  firstPixelHue += 256;
-  *********************************************************************** */
 
   delay(1000);
 } // loop()
