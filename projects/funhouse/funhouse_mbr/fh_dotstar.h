@@ -3,6 +3,9 @@
 
 #include <Adafruit_DotStar.h>
 
+// FIXME: funhouse_mbr.h only used for PEPPER_PLANTS, change when that define is moved
+#include "funhouse_mbr.h"
+
 #define NUM_DOTSTAR 5
 #define DOTSTAR_MODE_SLEEP 0
 #define DOTSTAR_MODE_RAINBOW 1
@@ -14,11 +17,11 @@ class FhDotstar : public Adafruit_DotStar {
     uint8_t brightness_ = 128;
     uint16_t first_pixel_hue_ = 0;
     /**
-     * @brief Return a LED brightness adjusted for the ambient light
+     * @brief Set LED brightness adjusted for the ambient light
      * 
-     * @return uint8_t adjusted pixel brightness
+     * @return nothing
      */
-    uint8_t ambientAdjusted();
+    void ambientAdjust();
 
   public:
     FhDotstar(uint16_t n, uint8_t d, uint8_t c, uint8_t o = (uint8_t) 9U)
@@ -35,7 +38,7 @@ class FhDotstar : public Adafruit_DotStar {
      * 
      * @return uint8_t 
      */
-    uint8_t setMode(byte mode, bool ambient_adjust = false);
+    uint8_t setMode(byte mode, bool ambient_adjust = true);
     /**
      * @brief setup the dotstars
      * 

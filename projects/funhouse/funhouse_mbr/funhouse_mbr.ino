@@ -452,6 +452,7 @@ void loop() {
   }
   */
   // Set dotstars to pepper plant moisture (from MQTT)
+  /* ********************************************************************
   uint16_t pepper_hues[PEPPER_PLANTS];
   for (int i=0; i < PEPPER_PLANTS; i++) {
     pepper_hues[i] = map(peppers[i], 0, 100, 26000, 0); // 0=red, 100=blue
@@ -464,12 +465,6 @@ void loop() {
   pixels.setPixelColor(1, pixels.gamma32(pixels.ColorHSV(pepper_hues[2], 255, pixel_bright)));
   pixels.setPixelColor(3, pixels.gamma32(pixels.ColorHSV(pepper_hues[1], 255, pixel_bright)));
   pixels.setPixelColor(4, pixels.gamma32(pixels.ColorHSV(pepper_hues[0], 255, pixel_bright)));
-  /*
-  pixels.setPixelColor(0, pixels.ColorHSV(pepper_hues[3]));
-  pixels.setPixelColor(1, pixels.ColorHSV(pepper_hues[2]));
-  pixels.setPixelColor(3, pixels.ColorHSV(pepper_hues[1]));
-  pixels.setPixelColor(4, pixels.ColorHSV(pepper_hues[0]));
-  */
 
 #ifdef SENSIRIONI2CSCD4X_H
   // Set middle dotstar hue by CO2 level
@@ -482,6 +477,7 @@ void loop() {
   // pixels.setBrightness(pixel_bright);
   pixels.show(); // Update strip with new contents
   firstPixelHue += 256;
+  *********************************************************************** */
 
   delay(1000);
 } // loop()
