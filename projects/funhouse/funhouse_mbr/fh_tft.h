@@ -45,6 +45,19 @@ class FhTft : public Adafruit_ST7789 {
      * @return uint8_t 
      */
     uint8_t setDisplayMode(byte mode, bool fill = false);
+    /**
+    * @brief display sensor values on the TFT
+     * 
+     * @param fill - if true fill background (passthru to FhTft::setDsiplayMode)
+     * 
+     */
+    void displaySensors(bool fill = false);
+    /**
+     * @brief display environment information
+     * 
+     * @param fill - if true fill background (passthru to FhTft::setDsiplayMode)
+     */
+    void displayEnvironment(bool fill = false);
 };
 
 #endif /* FH_TFT_H */

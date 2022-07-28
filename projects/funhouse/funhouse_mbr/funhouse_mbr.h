@@ -4,6 +4,8 @@
 #include "fh_sensors.h"
 #include "fh_tft.h"
 
+#define PEPPER_PLANTS 4 // number of pepper plants to monitor
+
 /**
  * @brief Read the sensors
  * store results in global variables
@@ -65,23 +67,6 @@ void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2);
  * @param length length of the message payload
  */
 void callback(char *topic, byte *payload, unsigned int length);
-
-
-/**
- * @brief display sensor values on the TFT
- * 
- * @param fill - if true fill background (passthru to FhTft::setDsiplayMode)
- * 
- */
-void display_sensors(bool fill = false);
-
-
-/**
- * @brief display environment information
- * 
- * @param fill - if true fill background (passthru to FhTft::setDsiplayMode)
- */
-void display_environment(bool fill = false);
 
 
 /**

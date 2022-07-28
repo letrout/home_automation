@@ -10,7 +10,6 @@
 #define NUM_DOTSTAR 5
 #define NUM_BUTTONS 3
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
-#define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
 // sensors objects
 extern FhAmbientLight ambientLight;
@@ -270,14 +269,14 @@ void loop() {
     switch (last_button) {
       case 0:
         // BUTTON_UP - display environmental data
-        display_environment();
+        tft.displayEnvironment();
         break;
       case 1:
         // BUTTON_SELECT TBD
         break;
       case 2:
         // BUTTON_DOWN - display all sensor data
-        display_sensors();
+        tft.displaySensors();
         break;
       // default:
     }
@@ -557,123 +556,6 @@ void callback(char *topic, byte *payload, unsigned int length) {
   if (pch = strstr(topic, plants_topic)) {
     get_pepper_mqtt(payload, length);
   }
-}
-
-
-void display_sensors(bool fill) {
-  tft.setDisplayMode(DISPLAY_MODE_ALL_SENSORS, fill);
-
-  // DPS310
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("DP310: ");
-  tft.print(dps.last_temp_f(), 0);
-  tft.print(" F ");
-  tft.print(dps.last_press_hpa(), 0);
-  tft.print(" hPa");
-  tft.println("              ");
-
-  // AHT20
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("AHT20: ");
-  tft.print(aht.last_temp_f(), 0);
-  tft.print(" F ");
-  tft.print(aht.last_hum_pct(), 0);
-  tft.print(" %");
-  tft.println("              ");
-
-  // SHT40
-  #ifdef ADAFRUIT_SHT4x_H
-    tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-    tft.print("SHT40: ");
-    tft.print(sht4x.last_temp_f(), 0);
-    tft.print(" F ");
-    tft.print(sht4x.last_hum_pct(), 0);
-    tft.print(" %");
-    tft.println("              ");
-  #endif
-
-  #ifdef SENSIRIONI2CSCD4X_H
-  // SCD40
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("SCD4x: ");
-  tft.print(scd4x.last_co2_ppm(), 0);
-  tft.println(" ppm ");
-  tft.print("SCD4x: ");
-  tft.print(scd4x.last_temp_f(), 0);
-  tft.print(" F ");
-  tft.print(scd4x.last_hum_pct(), 0);
-  tft.print(" %");
-  tft.println("              ");
-  #endif
-
-  // SGP30
-  #ifdef ADAFRUIT_SGP30_H
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("SGP30: ");
-  tft.print("TVOC ");
-  tft.print(sgp30.last_tvoc(), 0);
-  tft.println(" ppb ");
-  tft.print("eCO2 ");
-  tft.print(sgp30.last_eco2(), 0);
-  tft.println(" ppm");
-
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("H2 ");
-  tft.print(sgp30.last_raw_h2(), 0);
-  tft.print(" Eth ");
-  tft.print(sgp30.last_raw_ethanol());
-  tft.println("");
-  #endif
-
-  // Light sensor
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("Light: ");
-  tft.setTextColor(ST77XX_WHITE, BG_COLOR);
-  tft.print(ambientLight.last_ambient_light());
-  tft.println("    ");
-
-  // Pepper plant soil moisture (from MQTT)
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print("Pepper:");
-  for (int i=0; i < PEPPER_PLANTS; i++) {
-    tft.print(" ");
-    tft.print(peppers[i]);
-  }
-  tft.println("");
-
-  return;
-}
-
-
-void display_environment(bool fill) {
-  tft.setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
-  // Temp and humidity
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print(prim_temp_f, 0);
-  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
-  tft.print(" F  ");
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print(prim_hum, 0);
-  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
-  tft.println(" %");
-  // Pressure
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print(dps.last_press_hpa(), 0);
-  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
-  tft.println(" hPa");
-#ifdef SENSIRIONI2CSCD4X_H
-  // CO2
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print(scd4x.last_co2_ppm());
-  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
-  tft.println(" ppm CO2");
-#endif
-#ifdef ADAFRUIT_SGP30_H
-  tft.setTextColor(ST77XX_YELLOW, BG_COLOR);
-  tft.print(sgp30.last_tvoc());
-  tft.setTextColor(ST77XX_GREEN, BG_COLOR);
-  tft.println(" ppb TVOC");
-#endif
 }
 
 
