@@ -1,6 +1,5 @@
 // Adafruit FunHouse in MBR
 
-#include <Adafruit_DotStar.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Wire.h>
@@ -9,7 +8,6 @@
 #include "fh_tft.h"
 #include "secrets.h"
 
-#define NUM_DOTSTAR 5
 #define NUM_BUTTONS 3
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
 
@@ -31,7 +29,7 @@ extern FhScd40 scd4x;
 extern FhTft tft;
 
 // LEDs!
-Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
+extern FhDotstar pixels;
 
 // Sensors
 float prim_temp_f, prim_hum;  // primary temp and humidity measurements
@@ -48,7 +46,7 @@ const unsigned long scd4x_ms = 5000; // read SCD4x sensors every x ms
 uint8_t LED_dutycycle = 0;
 uint16_t firstPixelHue = 0;
 uint8_t pixel_bright;
-const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
+// const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
 bool has_sht4x = false;
 bool has_scd4x = false;
 bool has_sgp30 = false;
@@ -67,9 +65,8 @@ void setup() {
   Serial.begin(115200);
   delay(100);
   
-  pixels.begin(); // Initialize pins for output
-  pixels.show();  // Turn all LEDs off ASAP
-  pixels.setBrightness(255);
+  // Initialize the dotstars
+  pixels.setup();
 
   pinMode(BUTTON_DOWN, INPUT_PULLDOWN);
   pinMode(BUTTON_SELECT, INPUT_PULLDOWN);

@@ -9,3 +9,12 @@
  * 
  */
 #include "fh_dotstar.h"
+
+FhDotstar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
+
+void FhDotstar::setup(void) {
+    begin(); // Initialize pins for output
+    show();  // Turn all LEDs off ASAP
+    setBrightness(255);
+    return;
+} 
