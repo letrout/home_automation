@@ -1,13 +1,13 @@
 // Adafruit FunHouse in MBR
 
-#include <Adafruit_DotStar.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Wire.h>
 #include "funhouse_mbr.h"
+#include "fh_dotstar.h"
+#include "fh_tft.h"
 #include "secrets.h"
 
-#define NUM_DOTSTAR 5
 #define NUM_BUTTONS 3
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
 
@@ -29,7 +29,7 @@ extern FhScd40 scd4x;
 extern FhTft tft;
 
 // LEDs!
-Adafruit_DotStar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
+extern FhDotstar pixels;
 
 // Sensors
 float prim_temp_f, prim_hum;  // primary temp and humidity measurements
@@ -44,9 +44,6 @@ unsigned long sensor_last_ms = 0;
 const unsigned long scd4x_ms = 5000; // read SCD4x sensors every x ms
 
 uint8_t LED_dutycycle = 0;
-uint16_t firstPixelHue = 0;
-uint8_t pixel_bright;
-const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
 bool has_sht4x = false;
 bool has_scd4x = false;
 bool has_sgp30 = false;
@@ -65,9 +62,8 @@ void setup() {
   Serial.begin(115200);
   delay(100);
   
-  pixels.begin(); // Initialize pins for output
-  pixels.show();  // Turn all LEDs off ASAP
-  pixels.setBrightness(255);
+  // Initialize the dotstars
+  pixels.setup();
 
   pinMode(BUTTON_DOWN, INPUT_PULLDOWN);
   pinMode(BUTTON_SELECT, INPUT_PULLDOWN);
@@ -270,6 +266,7 @@ void loop() {
       case 0:
         // BUTTON_UP - display environmental data
         tft.displayEnvironment();
+        pixels.setMode(DOTSTAR_MODE_PLANTS);
         break;
       case 1:
         // BUTTON_SELECT TBD
@@ -277,11 +274,13 @@ void loop() {
       case 2:
         // BUTTON_DOWN - display all sensor data
         tft.displaySensors();
+        pixels.setMode(DOTSTAR_MODE_RAINBOW);
         break;
       // default:
     }
   } else {
     tft.setDisplayMode(DISPLAY_MODE_SLEEP);
+    pixels.setMode(DOTSTAR_MODE_SLEEP);
   }
 
   // MQTT publish interval expired?
@@ -436,50 +435,6 @@ void loop() {
   // pulse red LED
   ledcWrite(0, LED_dutycycle);
   LED_dutycycle += 32;
-  
-  // rainbow dotstars
-  // dim dotstars as ambient light decreases
-  pixel_bright = map(ambientLight.last_ambient_light(), 0, 8192, 0, 255);
-  /*
-  for (int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
-      if (has_scd4x && (i == 2)) { // third pixel will use CO2 for hue
-        continue;
-      }
-      int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
-      pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue)));
-  }
-  */
-  // Set dotstars to pepper plant moisture (from MQTT)
-  uint16_t pepper_hues[PEPPER_PLANTS];
-  for (int i=0; i < PEPPER_PLANTS; i++) {
-    pepper_hues[i] = map(peppers[i], 0, 100, 26000, 0); // 0=red, 100=blue
-    Serial.print("wet_pct: ");
-    Serial.print(peppers[i]);
-    Serial.print(", hue: ");
-    Serial.println(pepper_hues[i]);
-  }
-  pixels.setPixelColor(0, pixels.gamma32(pixels.ColorHSV(pepper_hues[3], 255, pixel_bright)));
-  pixels.setPixelColor(1, pixels.gamma32(pixels.ColorHSV(pepper_hues[2], 255, pixel_bright)));
-  pixels.setPixelColor(3, pixels.gamma32(pixels.ColorHSV(pepper_hues[1], 255, pixel_bright)));
-  pixels.setPixelColor(4, pixels.gamma32(pixels.ColorHSV(pepper_hues[0], 255, pixel_bright)));
-  /*
-  pixels.setPixelColor(0, pixels.ColorHSV(pepper_hues[3]));
-  pixels.setPixelColor(1, pixels.ColorHSV(pepper_hues[2]));
-  pixels.setPixelColor(3, pixels.ColorHSV(pepper_hues[1]));
-  pixels.setPixelColor(4, pixels.ColorHSV(pepper_hues[0]));
-  */
-
-#ifdef SENSIRIONI2CSCD4X_H
-  // Set middle dotstar hue by CO2 level
-    uint16_t co2_hue;
-    co2_hue = map(scd4x.last_co2_ppm(), 400, 4000, 0, 26000);  // 400ppm=green, 4000ppm=red
-    pixels.setPixelColor(2, pixels.gamma32(pixels.ColorHSV(co2_hue, 255, pixel_bright)));
-    Serial.print("CO2 pixel hue ");
-    Serial.println(co2_hue);
-#endif
-  // pixels.setBrightness(pixel_bright);
-  pixels.show(); // Update strip with new contents
-  firstPixelHue += 256;
 
   delay(1000);
 } // loop()

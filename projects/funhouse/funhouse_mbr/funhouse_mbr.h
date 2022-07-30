@@ -2,7 +2,6 @@
 #define FH_MBR_H
 
 #include "fh_sensors.h"
-#include "fh_tft.h"
 
 #define PEPPER_PLANTS 4 // number of pepper plants to monitor
 
