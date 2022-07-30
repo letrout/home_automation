@@ -27,11 +27,15 @@ void FhDotstar::setup(uint8_t brightness) {
     return;
 }
 
-void FhDotstar::ambientAdjust(void) {
+uint8_t FhDotstar::ambientAdjust(bool set_brightness, uint8_t min, uint8_t max) {
+    uint8_t adjusted;
     // FIXME: this full-range linear mapping is unsatisfying (LEDs too dark in low ambient light)
-    brightness_ = map(ambientLight.last_ambient_light(), 0, 8192, 0, 255);
-    setBrightness(brightness_);
-    return;
+    adjusted = map(ambientLight.last_ambient_light(), 0, 8192, min, max);
+    if (set_brightness) {
+        brightness_ = adjusted;
+        setBrightness(brightness_);
+    }
+    return adjusted;
 }
 
 uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
@@ -43,7 +47,7 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
             break;
         case DOTSTAR_MODE_RAINBOW:
             if (ambient_adjust) {
-                ambientAdjust();
+                ambientAdjust(true, 10, 100);
             } else {
                 // need something here
             }
@@ -56,7 +60,7 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
             break;
         case DOTSTAR_MODE_PLANTS:
             if (ambient_adjust) {
-                ambientAdjust();
+                ambientAdjust(true, 5, 100);
             } else {
                 // need something here
             }
@@ -68,15 +72,22 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
                 Serial.print(", hue: ");
                 Serial.println(pepper_hues[i]);
             }
+            setPixelColor(0, gamma32(ColorHSV(pepper_hues[3])));
+            setPixelColor(1, gamma32(ColorHSV(pepper_hues[2])));
+            setPixelColor(3, gamma32(ColorHSV(pepper_hues[1])));
+            setPixelColor(4, gamma32(ColorHSV(pepper_hues[0])));
+            /*
             setPixelColor(0, gamma32(ColorHSV(pepper_hues[3], 255, brightness_)));
             setPixelColor(1, gamma32(ColorHSV(pepper_hues[2], 255, brightness_)));
             setPixelColor(3, gamma32(ColorHSV(pepper_hues[1], 255, brightness_)));
             setPixelColor(4, gamma32(ColorHSV(pepper_hues[0], 255, brightness_)));
+            */
 #ifdef SENSIRIONI2CSCD4X_H
             // Set middle dotstar hue by CO2 level
             uint16_t co2_hue;
             co2_hue = map(scd4x.last_co2_ppm(), 400, 4000, 0, 26000);  // 400ppm=green, 4000ppm=red
-            setPixelColor(2, gamma32(ColorHSV(co2_hue, 255, brightness_)));
+            // setPixelColor(2, gamma32(ColorHSV(co2_hue, 255, brightness_)));
+            setPixelColor(2, gamma32(ColorHSV(co2_hue)));
             Serial.print("CO2 pixel hue ");
             Serial.println(co2_hue);
 #endif

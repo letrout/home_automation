@@ -44,9 +44,6 @@ unsigned long sensor_last_ms = 0;
 const unsigned long scd4x_ms = 5000; // read SCD4x sensors every x ms
 
 uint8_t LED_dutycycle = 0;
-uint16_t firstPixelHue = 0;
-uint8_t pixel_bright;
-// const uint8_t tft_line_step = 20; // number of pixels in each tft line of text 
 bool has_sht4x = false;
 bool has_scd4x = false;
 bool has_sgp30 = false;

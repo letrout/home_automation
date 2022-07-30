@@ -19,9 +19,13 @@ class FhDotstar : public Adafruit_DotStar {
     /**
      * @brief Set LED brightness adjusted for the ambient light
      * 
-     * @return nothing
+     * @param set_brightness - if true, set the pixel brightness level
+     * @param uint8_t min - Optional, the minimum brightness, default 0
+     * @param uint8_t max - Optional, the maximum brightness, default 255
+     * 
+     * @return adjust pixel brightness
      */
-    void ambientAdjust();
+    uint8_t ambientAdjust(bool set_brightness = false, uint8_t min = 0, uint8_t max = 255);
 
   public:
     FhDotstar(uint16_t n, uint8_t d, uint8_t c, uint8_t o = (uint8_t) 9U)
