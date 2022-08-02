@@ -3,3 +3,4 @@ mqtt_conf.py
 .cache
 .vscode
 secrets.h
+secrets_wifi.h
