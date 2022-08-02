@@ -1,10 +1,10 @@
 // Adafruit FunHouse in MBR
 
 #include <PubSubClient.h>
-#include <WiFi.h>
 #include <Wire.h>
 #include "funhouse_mbr.h"
 #include "fh_dotstar.h"
+#include "fh_mqtt.h"
 #include "fh_tft.h"
 #include "secrets.h"
 
@@ -51,6 +51,7 @@ const char* measurement = "environment";
 const char* plants_topic = "influx/Owens/plants";
 uint8_t peppers[PEPPER_PLANTS] = {100, 75, 50, 0}; // store moisture content for four pepper plants
 
+extern FhWifi fh_wifi;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -58,7 +59,7 @@ void setup() {
   uint8_t cursor_y = 0;
   uint8_t retries = 5, i = 0;
 
-  //while (!Serial);
+  while (!Serial);
   Serial.begin(115200);
   delay(100);
   
@@ -164,24 +165,7 @@ void setup() {
   ledcWrite(1, 0);
 
   // Connect to WiFi
-  WiFi.begin(ssid, password);
-  retries = 10, i = 0;
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    i++;
-    if (i > retries) {
-      break;
-    }
-  }
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-  }
-  WiFi.setAutoReconnect(true);
-  WiFi.persistent(true);
+  fh_wifi.connect();
 
   // Connect to MQTT
   client.setServer(mqtt_broker, mqtt_port);
