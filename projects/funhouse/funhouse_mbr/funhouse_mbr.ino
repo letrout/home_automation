@@ -1,6 +1,5 @@
 // Adafruit FunHouse in MBR
 
-#include <PubSubClient.h>
 #include <Wire.h>
 #include "funhouse_mbr.h"
 #include "fh_dotstar.h"
@@ -52,8 +51,10 @@ const char* plants_topic = "influx/Owens/plants";
 uint8_t peppers[PEPPER_PLANTS] = {100, 75, 50, 0}; // store moisture content for four pepper plants
 
 extern FhWifi fh_wifi;
+//extern FhPubSubClient client;
 WiFiClient espClient;
-PubSubClient client(espClient);
+FhPubSubClient client;
+//PubSubClient client(espClient);
 
 void setup() {
   uint8_t cursor_y = 0;
@@ -168,6 +169,7 @@ void setup() {
   fh_wifi.connect();
 
   // Connect to MQTT
+  client.setClient(espClient);
   client.setServer(mqtt_broker, mqtt_port);
   client.setCallback(callback);
   mqtt_reconnect();
