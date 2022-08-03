@@ -5,7 +5,6 @@
 #include "fh_dotstar.h"
 #include "fh_mqtt.h"
 #include "fh_tft.h"
-#include "secrets.h"
 
 #define NUM_BUTTONS 3
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
@@ -168,9 +167,9 @@ void setup() {
 
   // Connect to MQTT
   client.setup();
-  client.setServer(mqtt_broker, mqtt_port);
+  client.setMqttServer();
   client.setCallback(callback);
-  mqtt_reconnect();
+  client.mqttReconnect();
  // get pepper plant data
  client.subscribe(plants_topic);
 
@@ -502,39 +501,39 @@ void mqtt_pub_sensors() {
   char mqtt_msg [128];
 
   // check/reconnect connection to broker
-  mqtt_reconnect();
+  client.mqttReconnect();
 
   // DPS310
   sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, dps.last_temp_f(), dps.last_press_hpa());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // AHT20
   sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, aht.last_temp_f(), aht.last_hum_pct());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // Ambient light
   sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambientLight.last_ambient_light());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // SHT40
   #ifdef ADAFRUIT_SHT4x_H
   sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, sht4x.last_temp_f(), sht4x.last_hum_pct());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   #endif
   // SCD40
   if (has_scd4x) {
     sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
-    client.publish(topic, mqtt_msg);
+    client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   // SGP30
   #ifdef ADAFRUIT_SGP30_H
   sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.last_tvoc(), sgp30.last_eco2());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp30.last_raw_h2(), sgp30.last_raw_ethanol());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   #endif
 
@@ -589,20 +588,4 @@ int8_t get_pepper_mqtt(const byte* payload, const int length) {
     Serial.println(peppers[pepper_number - 1]);
   }
   return ret;
-}
-
-
-void mqtt_reconnect() {
-  while (!client.connected()) {
-    String client_id = "esp32-client-";
-    client_id += String(WiFi.macAddress());
-    Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
-    if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
-      Serial.println("Public emqx mqtt broker connected");
-    } else {
-      Serial.print("failed with state ");
-      Serial.print(client.state());
-      delay(2000);
-    }
- }
 }

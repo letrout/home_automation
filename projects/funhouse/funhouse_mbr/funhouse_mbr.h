@@ -85,12 +85,4 @@ void mqtt_pub_sensors(void);
 int8_t get_pepper_mqtt(const byte* payload, const int length);
 
 
-/**
- * @brief check if connected to mqtt broker, reconnect loop if necessary
- * This is blocking. Right now this app only exists to publish to MQTT,
- * but if that changes this will need to change to something non-blocking
- * 
- */
-void mqtt_reconnect(void);
-
 #endif // FH_MBR_H

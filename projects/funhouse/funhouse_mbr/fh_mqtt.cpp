@@ -10,6 +10,7 @@
 
 #include "fh_mqtt.h"
 #include "secrets_wifi.h"
+#include "secrets.h"
 
 #define WIFI_RETRIES 10
 
@@ -58,4 +59,28 @@ FhPubSubClient::FhPubSubClient(void) {
 
 void FhPubSubClient::setup(void) {
     setClient(espClient);
+}
+
+void FhPubSubClient::setMqttServer(void) {
+    //setServer(mqtt_broker, mqtt_port);
+    setServer(mqtt_broker, mqtt_port);
+}
+
+int FhPubSubClient::publishTopic(const char *payload) {
+    return publish(topic, payload);
+}
+
+void FhPubSubClient::mqttReconnect(void) {
+    while (!connected()) {
+        String client_id = "esp32-client-";
+        client_id += String(WiFi.macAddress());
+        Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
+        if (connect(client_id.c_str(), mqtt_username, mqtt_password)) {
+            Serial.println("Public emqx mqtt broker connected");
+        } else {
+            Serial.print("failed with state ");
+            Serial.print(state());
+            delay(2000);
+        }
+    }
 }
