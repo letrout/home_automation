@@ -30,6 +30,12 @@ class FhPubSubClient : public PubSubClient {
         */
         FhPubSubClient();
         /**
+         * @brief Set up the MQTT client
+         * set the WiFi client
+         * 
+         */
+        void setup(void);
+        /**
          * @brief Set the MQTT server with domain/port from secrets.h
          * 
          */

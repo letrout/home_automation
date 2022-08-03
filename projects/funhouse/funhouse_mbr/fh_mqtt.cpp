@@ -14,8 +14,7 @@
 #define WIFI_RETRIES 10
 
 FhWifi fh_wifi;
-//WiFiClient espClient;
-//FhPubSubClient client(espClient);
+WiFiClient espClient;
 FhPubSubClient client;
 
 // Wifi
@@ -55,4 +54,8 @@ uint8_t FhWifi::connect(void) {
 // MQTT client
 FhPubSubClient::FhPubSubClient(void) {
     // connect();
+}
+
+void FhPubSubClient::setup(void) {
+    setClient(espClient);
 }
