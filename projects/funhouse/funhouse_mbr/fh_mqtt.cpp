@@ -16,7 +16,7 @@
 FhWifi fh_wifi;
 //WiFiClient espClient;
 //FhPubSubClient client(espClient);
-//FhPubSubClient client();
+FhPubSubClient client;
 
 // Wifi
 FhWifi::FhWifi(void) {
