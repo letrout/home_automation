@@ -9,7 +9,6 @@
  */
 
 #include "fh_mqtt.h"
-#include "secrets_wifi.h"
 #include "secrets.h"
 
 #define WIFI_RETRIES 10
@@ -26,7 +25,10 @@ FhWifi::FhWifi(void) {
 uint8_t FhWifi::connect(void) {
     uint8_t retval = 1;
     uint8_t i = 0;
-    begin(ssid, password);
+    mode(WIFI_STA);
+    // ssid, password, net_hostname from secrets.h
+    begin(wifi_ssid, wifi_password);
+    setHostname(net_hostname);
     while (status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
