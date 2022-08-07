@@ -203,7 +203,7 @@ void loop() {
     if (scd4x_error) {
       // tft.print("error ");
       // tft.print(scd4x_error, 0);
-      Serial.printf("SCD4x error %s\n", scd4x_error);
+      Serial.printf("SCD4x error %d\n", scd4x_error);
     } else {
       Serial.printf("SCD40: %d CO2 ppm %0.1f *F  %0.2f rH\n", scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
 #ifndef ADAFRUIT_SHT4x_H
@@ -225,10 +225,12 @@ void loop() {
     button_pressed_ms[0] = now;
   }
   if (digitalRead(BUTTON_SELECT)) {
+    Serial.println("SELECT pressed");
     // tft.fillScreen(BG_COLOR);
     button_pressed_ms[1] = now;
   }
   if (digitalRead(BUTTON_DOWN)) {
+    Serial.println("DOWN pressed");
     tft.fillScreen(BG_COLOR);
     button_pressed_ms[2] = now;
   }
@@ -237,6 +239,7 @@ void loop() {
   uint8_t last_button = 0;
   unsigned long max_ms = button_pressed_ms[0];
   // last_button = distance(button_pressed_ms, max_element(button_pressed_ms, button_pressed_ms + NUM_BUTTONS));
+  Serial.println("button press loop start...");
   for (uint8_t i=0; i < (sizeof(button_pressed_ms) / sizeof(button_pressed_ms[0])); i++) {
     if (button_pressed_ms[i] > max_ms) {
       max_ms = button_pressed_ms[i];
@@ -268,6 +271,7 @@ void loop() {
     tft.setDisplayMode(DISPLAY_MODE_SLEEP);
     pixels.setMode(DOTSTAR_MODE_SLEEP);
   }
+  Serial.println("done with button section");
 
   // MQTT publish interval expired?
   now = millis();
