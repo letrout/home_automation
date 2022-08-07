@@ -4,6 +4,9 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 
+#define FH_SUB_PEPPERS 1    // Subscribe to pepper plant messages
+#define PEPPER_PLANTS 4 // number of pepper plants to monitor
+
 class FhWifi : public WiFiClass {
     private:
     public:
@@ -56,5 +59,16 @@ class FhPubSubClient : public PubSubClient {
          */
         void mqttReconnect(void);
 };
+
+#ifdef FH_SUB_PEPPERS
+/**
+ * @brief Get the pepper plant moisture level from MQTT
+ * 
+ * @param payload MQTT payload
+ * @param length length of payload
+ * @return int8_t error code (0 on success)
+ */
+int8_t get_pepper_mqtt(const byte* payload, const int length);
+#endif
 
 #endif /* FH_MQTT_H */

@@ -3,8 +3,6 @@
 
 #include "fh_sensors.h"
 
-#define PEPPER_PLANTS 4 // number of pepper plants to monitor
-
 /**
  * @brief Read the sensors
  * store results in global variables
@@ -73,16 +71,5 @@ void callback(char *topic, byte *payload, unsigned int length);
  * 
  */
 void mqtt_pub_sensors(void);
-
-
-/**
- * @brief Get the pepper plant moisture level from MQTT
- * 
- * @param payload MQTT payload
- * @param length length of payload
- * @return int8_t error code (0 on success)
- */
-int8_t get_pepper_mqtt(const byte* payload, const int length);
-
 
 #endif // FH_MBR_H

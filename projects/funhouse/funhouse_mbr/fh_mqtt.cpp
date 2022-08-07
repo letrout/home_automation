@@ -17,6 +17,10 @@ FhWifi fh_wifi;
 WiFiClient espClient;
 FhPubSubClient client;
 
+#ifdef FH_SUB_PEPPERS
+uint8_t peppers[PEPPER_PLANTS] = {100, 75, 50, 0}; // store moisture content for four pepper plants
+#endif
+
 // Wifi
 FhWifi::FhWifi(void) {
     // connect();
@@ -86,3 +90,54 @@ void FhPubSubClient::mqttReconnect(void) {
         }
     }
 }
+
+#ifdef FH_SUB_PEPPERS
+int8_t get_pepper_mqtt(const byte* payload, const int length) {
+  int8_t ret = -1;
+  char msg[length];
+  char *pch;
+  uint8_t pepper_number;
+  //memccpy(msg, payload, sizeof(payload), sizeof(char));
+  for (int i = 0; i < length; i++) {
+    msg[i] = (char)payload[i];
+  }
+
+  // Get the pepper number
+  pch = strstr(msg, "plant"); // payload starting at "plant"
+  if (pch != NULL) {
+    pch = strtok(pch, "=, "); // split result on delimiters
+  }
+  if (pch != NULL) {
+    pch = strtok(NULL, "=pepper, ");  // get the second token after split
+  }
+  if ((pch == NULL) || (pch[0] =='\0')) {
+    return 1;
+  }
+  pepper_number = atoi(pch);
+  if (pepper_number > PEPPER_PLANTS) {
+    return 2;
+  }
+  // Get the wet %
+  for (int i = 0; i < length; i++) {
+    msg[i] = (char)payload[i];
+  }
+  pch = strstr(msg, "wet_pct"); // payload starting at value name
+  if (pch != NULL) {
+    pch = strtok(pch, "=, "); // split result on delimiters
+  }
+  if (pch != NULL) {
+    pch = strtok(NULL, "=, ");  // get the second token after split
+  }
+  if ((pch == NULL) || (pch[0] =='\0')) {
+    ret = 3;
+  } else {
+    peppers[pepper_number - 1] = atoi(pch);
+    ret = 0;
+    Serial.print("pepper ");
+    Serial.print(pepper_number);
+    Serial.print(": ");
+    Serial.println(peppers[pepper_number - 1]);
+  }
+  return ret;
+}
+#endif

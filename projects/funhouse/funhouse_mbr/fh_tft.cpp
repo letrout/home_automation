@@ -8,10 +8,9 @@
  * @copyright Copyright (c) 2022
  * 
  */
-// FIXME: funhouse_mbr.h only used for PEPPER_PLANTS, change when that define is moved
-#include "funhouse_mbr.h"
 #include "fh_tft.h"
 #include "fh_sensors.h"
+#include "fh_mqtt.h"
 
 // sensors objects
 extern FhAmbientLight ambientLight;
@@ -142,6 +141,7 @@ void FhTft::displaySensors(bool fill) {
   print(ambientLight.last_ambient_light());
   println("    ");
 
+#ifdef FH_SUB_PEPPERS
   // Pepper plant soil moisture (from MQTT)
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Pepper:");
@@ -150,6 +150,7 @@ void FhTft::displaySensors(bool fill) {
     print(peppers[i]);
   }
   println("");
+#endif
 
   return;
 }
