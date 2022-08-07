@@ -1,12 +1,10 @@
 // Adafruit FunHouse in MBR
 
-#include <PubSubClient.h>
-#include <WiFi.h>
 #include <Wire.h>
 #include "funhouse_mbr.h"
 #include "fh_dotstar.h"
+#include "fh_mqtt.h"
 #include "fh_tft.h"
-#include "secrets.h"
 
 #define NUM_BUTTONS 3
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
@@ -48,17 +46,19 @@ bool has_sht4x = false;
 bool has_scd4x = false;
 bool has_sgp30 = false;
 const char* measurement = "environment";
-const char* plants_topic = "influx/Owens/plants";
-uint8_t peppers[PEPPER_PLANTS] = {100, 75, 50, 0}; // store moisture content for four pepper plants
+#ifdef FH_SUB_PEPPERS
+extern const char* plants_topic;
+#endif
 
-WiFiClient espClient;
-PubSubClient client(espClient);
+extern FhWifi fh_wifi;
+// WiFiClient espClient;
+extern FhPubSubClient client;
 
 void setup() {
   uint8_t cursor_y = 0;
   uint8_t retries = 5, i = 0;
 
-  //while (!Serial);
+  while (!Serial);
   Serial.begin(115200);
   delay(100);
   
@@ -164,31 +164,17 @@ void setup() {
   ledcWrite(1, 0);
 
   // Connect to WiFi
-  WiFi.begin(ssid, password);
-  retries = 10, i = 0;
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    i++;
-    if (i > retries) {
-      break;
-    }
-  }
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-  }
-  WiFi.setAutoReconnect(true);
-  WiFi.persistent(true);
+  fh_wifi.connect();
 
   // Connect to MQTT
-  client.setServer(mqtt_broker, mqtt_port);
+  client.setup();
+  client.setMqttServer();
   client.setCallback(callback);
-  mqtt_reconnect();
+  client.mqttReconnect();
+#ifdef FH_SUB_PEPPERS
  // get pepper plant data
  client.subscribe(plants_topic);
+#endif
 
   // SCD40 needs a few seconds to be ready
   has_scd4x ? delay(5000) : delay(1000);
@@ -217,7 +203,7 @@ void loop() {
     if (scd4x_error) {
       // tft.print("error ");
       // tft.print(scd4x_error, 0);
-      Serial.printf("SCD4x error %s\n", scd4x_error);
+      Serial.printf("SCD4x error %d\n", scd4x_error);
     } else {
       Serial.printf("SCD40: %d CO2 ppm %0.1f *F  %0.2f rH\n", scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
 #ifndef ADAFRUIT_SHT4x_H
@@ -239,10 +225,12 @@ void loop() {
     button_pressed_ms[0] = now;
   }
   if (digitalRead(BUTTON_SELECT)) {
+    Serial.println("SELECT pressed");
     // tft.fillScreen(BG_COLOR);
     button_pressed_ms[1] = now;
   }
   if (digitalRead(BUTTON_DOWN)) {
+    Serial.println("DOWN pressed");
     tft.fillScreen(BG_COLOR);
     button_pressed_ms[2] = now;
   }
@@ -251,6 +239,7 @@ void loop() {
   uint8_t last_button = 0;
   unsigned long max_ms = button_pressed_ms[0];
   // last_button = distance(button_pressed_ms, max_element(button_pressed_ms, button_pressed_ms + NUM_BUTTONS));
+  Serial.println("button press loop start...");
   for (uint8_t i=0; i < (sizeof(button_pressed_ms) / sizeof(button_pressed_ms[0])); i++) {
     if (button_pressed_ms[i] > max_ms) {
       max_ms = button_pressed_ms[i];
@@ -282,6 +271,7 @@ void loop() {
     tft.setDisplayMode(DISPLAY_MODE_SLEEP);
     pixels.setMode(DOTSTAR_MODE_SLEEP);
   }
+  Serial.println("done with button section");
 
   // MQTT publish interval expired?
   now = millis();
@@ -518,107 +508,41 @@ void mqtt_pub_sensors() {
   char mqtt_msg [128];
 
   // check/reconnect connection to broker
-  mqtt_reconnect();
+  client.mqttReconnect();
 
   // DPS310
   sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, dps.last_temp_f(), dps.last_press_hpa());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // AHT20
   sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, aht.last_temp_f(), aht.last_hum_pct());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // Ambient light
   sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambientLight.last_ambient_light());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   // SHT40
   #ifdef ADAFRUIT_SHT4x_H
   sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, sht4x.last_temp_f(), sht4x.last_hum_pct());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   #endif
   // SCD40
   if (has_scd4x) {
     sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
-    client.publish(topic, mqtt_msg);
+    client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   // SGP30
   #ifdef ADAFRUIT_SGP30_H
   sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.last_tvoc(), sgp30.last_eco2());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp30.last_raw_h2(), sgp30.last_raw_ethanol());
-  client.publish(topic, mqtt_msg);
+  client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   #endif
 
   return;
-}
-
-
-int8_t get_pepper_mqtt(const byte* payload, const int length) {
-  int8_t ret = -1;
-  char msg[length];
-  char *pch;
-  uint8_t pepper_number;
-  //memccpy(msg, payload, sizeof(payload), sizeof(char));
-  for (int i = 0; i < length; i++) {
-    msg[i] = (char)payload[i];
-  }
-
-  // Get the pepper number
-  pch = strstr(msg, "plant"); // payload starting at "plant"
-  if (pch != NULL) {
-    pch = strtok(pch, "=, "); // split result on delimiters
-  }
-  if (pch != NULL) {
-    pch = strtok(NULL, "=pepper, ");  // get the second token after split
-  }
-  if ((pch == NULL) || (pch[0] =='\0')) {
-    return 1;
-  }
-  pepper_number = atoi(pch);
-  if (pepper_number > PEPPER_PLANTS) {
-    return 2;
-  }
-  // Get the wet %
-  for (int i = 0; i < length; i++) {
-    msg[i] = (char)payload[i];
-  }
-  pch = strstr(msg, "wet_pct"); // payload starting at value name
-  if (pch != NULL) {
-    pch = strtok(pch, "=, "); // split result on delimiters
-  }
-  if (pch != NULL) {
-    pch = strtok(NULL, "=, ");  // get the second token after split
-  }
-  if ((pch == NULL) || (pch[0] =='\0')) {
-    ret = 3;
-  } else {
-    peppers[pepper_number - 1] = atoi(pch);
-    ret = 0;
-    Serial.print("pepper ");
-    Serial.print(pepper_number);
-    Serial.print(": ");
-    Serial.println(peppers[pepper_number - 1]);
-  }
-  return ret;
-}
-
-
-void mqtt_reconnect() {
-  while (!client.connected()) {
-    String client_id = "esp32-client-";
-    client_id += String(WiFi.macAddress());
-    Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
-    if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
-      Serial.println("Public emqx mqtt broker connected");
-    } else {
-      Serial.print("failed with state ");
-      Serial.print(client.state());
-      delay(2000);
-    }
- }
 }

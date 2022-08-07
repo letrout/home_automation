@@ -10,9 +10,12 @@
  */
 #include "fh_dotstar.h"
 #include "fh_sensors.h"
+#include "fh_mqtt.h"
 
 extern FhAmbientLight ambientLight;
+#ifdef FH_SUB_PEPPERS
 extern uint8_t peppers[];
+#endif
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
 #endif
@@ -64,6 +67,7 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
             } else {
                 // need something here
             }
+#ifdef FH_SUB_PEPPERS
             uint16_t pepper_hues[PEPPER_PLANTS];
             for (int i=0; i < PEPPER_PLANTS; i++) {
                 pepper_hues[i] = map(peppers[i], 0, 100, 26000, 0); // 0=red, 100=blue
@@ -82,6 +86,7 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
             setPixelColor(3, gamma32(ColorHSV(pepper_hues[1], 255, brightness_)));
             setPixelColor(4, gamma32(ColorHSV(pepper_hues[0], 255, brightness_)));
             */
+#endif
 #ifdef SENSIRIONI2CSCD4X_H
             // Set middle dotstar hue by CO2 level
             uint16_t co2_hue;
