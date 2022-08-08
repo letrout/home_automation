@@ -155,6 +155,7 @@ class FhScd40 : public SensirionI2CScd4x {
     float last_hum_pct_;
     uint16_t last_co2_ppm_;
     unsigned long last_read_ms_;
+    unsigned long last_update_ms_;
 
   public:
     FhScd40();
@@ -162,7 +163,16 @@ class FhScd40 : public SensirionI2CScd4x {
     float last_temp_c() const { return TEMP_C(last_temp_f_); }
     float last_hum_pct() const { return last_hum_pct_; }
     uint16_t last_co2_ppm() const { return last_co2_ppm_; }
+    /**
+     * @brief Last time (millis()) sensors was attemtped to be read (successfully or not)
+     * 
+     */
     unsigned long last_read_ms() const { return last_read_ms_; }
+    /**
+     * @brief Last time (millis()) sensor was *successfully* read
+     * 
+     */
+    unsigned long last_update_ms() const { return last_update_ms_; }
 
     /**
      * @brief Initialize the SCD40 sensor

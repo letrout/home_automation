@@ -23,6 +23,7 @@ FhSht40 sht4x = FhSht40();
 #ifdef SENSIRIONI2CSCD4X_H
 FhScd40 scd4x;
 #define SCD4X_OFFSET_C 3.4  // Stock is 4C(?), testing shows 3.4 better matches my SHT40
+const unsigned long scd4x_min_read_ms = 5000;  // minimum interval between SCD4x reads, in ms
 #endif
 
 uint32_t getAbsoluteHumidity(float temp_c, float hum_pct) {
@@ -219,6 +220,11 @@ uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
   float t, h;
   uint16_t c = 0;
   uint16_t error;
+  // Protect against reading the SCD4x too quickly
+  if ((millis() - last_read_ms_) < scd4x_min_read_ms) {
+    Serial.printf("Error - trying to re-read SCD4x before %lu ms have elapsed\n", scd4x_min_read_ms);
+    return 1;
+  }
   if (ambient_press_hpa > 0) {
     if (setAmbientPressure(ambient_press_hpa)) {
       Serial.println("Error setting SCD40 ambient pressure compensation");
@@ -229,12 +235,14 @@ uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
     
   }
   error = readMeasurement(c, t, h);
+  last_read_ms_ = millis();
   if (! error && (c != 0)) {
-    last_read_ms_ = millis();
+    last_update_ms_ = last_read_ms_;
     last_co2_ppm_ = c;
     last_temp_f_ = TEMP_F(t);
     last_hum_pct_ = h;
   }
+  // TODO: if read error, try a stop/start to reset the sensor?
   return error;
 }
 #endif /* SENSIRIONI2CSCD4X_H */
