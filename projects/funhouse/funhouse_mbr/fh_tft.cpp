@@ -180,9 +180,15 @@ void FhTft::displayEnvironment(bool fill) {
   println(" ppm CO2");
 #endif
 #ifdef ADAFRUIT_SGP30_H
+//#ifndef SENSIRIONI2CSCD4X_H
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  print(sgp30.last_eco2());
+  setTextColor(ST77XX_GREEN, BG_COLOR);
+  println(" ppm eCO2");
+//#endif /* SENSIRIONI2CSCD4X_H */
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print(sgp30.last_tvoc());
   setTextColor(ST77XX_GREEN, BG_COLOR);
   println(" ppb TVOC");
-#endif
+#endif /* ADAFRUIT_SGP30_H */
 }
