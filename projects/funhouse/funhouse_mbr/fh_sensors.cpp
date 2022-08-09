@@ -222,6 +222,30 @@ uint16_t FhScd40::setupScd40(uint16_t altitude_m) {
   return error;
 }
 
+uint16_t FhScd40::reInitialize(void) {
+  uint16_t error = 0;
+  char errorMessage[256];
+  // stop potentially previously started measurement
+  Serial.println("Attempting to stop SCD40 periodic measurement");
+  error = stopPeriodicMeasurement();
+  if (error) {
+    Serial.print("Error trying to execute SCD40 stopPeriodicMeasurement(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+  } else {
+    // Start Measurement
+    delay(1000);
+    Serial.println("Attempting to start SCD40 periodic measurement");
+    error = startPeriodicMeasurement();
+    if (error) {
+      Serial.print("Error trying to execute SCD40 startPeriodicMeasurement(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
+    }
+  }
+  return error;
+}
+
 uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
   float t, h;
   uint16_t c = 0;
@@ -255,8 +279,14 @@ uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
     last_co2_ppm_ = c;
     last_temp_f_ = TEMP_F(t);
     last_hum_pct_ = h;
+  } else {
+    // typically fails with 526 from receiveFrame(), which is I think ReadError | NotEnoughDataError
+    // In my experience, when this fails it stays failed (at least until a power cycle)
+    // So, attempt to kick-start the sensor
+    reInitialize();
+    // TODO: check this return? retry on failure? re-read on success?
+
   }
-  // TODO: if read error, try a stop/start to reset the sensor?
   return error;
 }
 #endif /* SENSIRIONI2CSCD4X_H */
