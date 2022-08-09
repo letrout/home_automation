@@ -36,10 +36,11 @@ float prim_temp_f, prim_hum;  // primary temp and humidity measurements
 const unsigned long display_ms = 10000; // display on for x ms after UP button push
 unsigned long button_pressed_ms[NUM_BUTTONS] = {0};  // last time buttons pressed {UP, SELECT, DOWN} TODO: map?
 const unsigned long mqtt_ms = 60000;  // publish to mqtt every x ms
+const unsigned long max_mqtt_pub_delay_ms = mqtt_ms; // max age of a measurement to publish, ms (should be <= mqtt_ms)
 unsigned long mqtt_last_ms = 0;
 const unsigned long sensor_ms = 1000;  // read sensors every x ms
 unsigned long sensor_last_ms = 0;
-const unsigned long scd4x_ms = 5000; // read SCD4x sensors every x ms
+const unsigned long scd4x_ms = 5000; // read SCD4x sensors every x ms, min 5000
 
 uint8_t LED_dutycycle = 0;
 bool has_sht4x = false;
@@ -528,12 +529,14 @@ void mqtt_pub_sensors() {
   client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   #endif
+  #ifdef SENSIRIONI2CSCD4X_H
   // SCD40
-  if (has_scd4x) {
+  if (has_scd4x && ((millis() - scd4x.last_update_ms()) <= max_mqtt_pub_delay_ms)) {
     sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
     client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
+  #endif
   // SGP30
   #ifdef ADAFRUIT_SGP30_H
   sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.last_tvoc(), sgp30.last_eco2());

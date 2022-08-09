@@ -238,8 +238,16 @@ uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
       // if we fail to set pressure comp, try to re-set via altitude
       setSensorAltitude(altitude_m_);
     }
-    
   }
+  /* *** not sure how this should work; return val? dataReady?
+  uint16_t dataReady = 0;
+  getDataReadyStatus(dataReady);
+  if (dataReady) {
+    Serial.printf("SCD41x getDataReadyStatus() error: %d\n", dataReady);
+    // TODO: if read error, try a stop/start to reset the sensor?
+    return dataReady;
+  }
+  */
   error = readMeasurement(c, t, h);
   last_read_ms_ = millis();
   if (! error && (c != 0)) {
