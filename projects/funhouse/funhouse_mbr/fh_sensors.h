@@ -50,6 +50,12 @@ class FhDps310 : public Adafruit_DPS310 {
      * @return uint8_t 0 on success, 1 on failure, 2 if new values not available
      */
     uint8_t readDps310();
+    /**
+     * @brief Return pressure adjusted for altitude, inches Hg
+     * 
+     * @return float adjusted air pressure, in Hg
+     */
+    float inHgAdjusted(void);
 };
 
 /**

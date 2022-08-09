@@ -10,6 +10,8 @@
 
 #include "fh_sensors.h"
 
+#define HPA_ALT_ADJUST 34 // add this to hPa air pressue to adjust for (our specific) altitude
+
 // sensors objects
 FhAmbientLight ambientLight;
 FhDps310 dps;
@@ -83,6 +85,10 @@ uint8_t FhDps310::readDps310(void) {
     Serial.println("DPS310 temp or pressure not available");
     return 2;
   }
+}
+
+float FhDps310::inHgAdjusted(void) {
+  return (float(last_press_hpa()) + HPA_ALT_ADJUST) * 0.02953;
 }
 // End DPS310
 

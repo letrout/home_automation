@@ -169,9 +169,11 @@ void FhTft::displayEnvironment(bool fill) {
   println(" %");
   // Pressure
   setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print(dps.last_press_hpa(), 0);
+  //print(dps.last_press_hpa(), 0);
+  Adafruit_ST7789::printf("%.2f", dps.inHgAdjusted(), 0);
   setTextColor(ST77XX_GREEN, BG_COLOR);
-  println(" hPa");
+  //println(" hPa");
+  println(" inHg");
 #ifdef SENSIRIONI2CSCD4X_H
   // CO2
   setTextColor(ST77XX_YELLOW, BG_COLOR);
