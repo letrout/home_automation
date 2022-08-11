@@ -260,7 +260,8 @@ uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
       Serial.println("Error setting SCD40 ambient pressure compensation");
     } else if (altitude_m_ > 0) {
       // if we fail to set pressure comp, try to re-set via altitude
-      setSensorAltitude(altitude_m_);
+      // Note - this cannot be run while periodic measurements are active, so don't try
+      // setSensorAltitude(altitude_m_);
     }
   }
   /* *** not sure how this should work; return val? dataReady?

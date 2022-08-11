@@ -40,7 +40,7 @@ const unsigned long max_mqtt_pub_delay_ms = mqtt_ms; // max age of a measurement
 unsigned long mqtt_last_ms = 0;
 const unsigned long sensor_ms = 1000;  // read sensors every x ms
 unsigned long sensor_last_ms = 0;
-const unsigned long scd4x_ms = 5000; // read SCD4x sensors every x ms, min 5000
+const unsigned long scd4x_ms = 10000; // read SCD4x sensors every x ms, min 5000
 
 uint8_t LED_dutycycle = 0;
 bool has_sht4x = false;
@@ -121,7 +121,7 @@ void setup() {
   retries = 5, i = 0;
   Wire.begin();
   while (i < retries) {
-    if (scd4x.setupScd40(ALT_M)) {  
+    if (scd4x.setupScd40(ALT_M)) {
       tft.setTextColor(ST77XX_RED);
       tft.println("FAIL!");
       delay(100);
@@ -196,11 +196,12 @@ void loop() {
     read_sensors();
   } else {
     sensors_update = false;
-  }
+  } 
   #ifdef SENSIRIONI2CSCD4X_H
   // Update SCD40
   if ((now - scd4x.last_read_ms()) > scd4x_ms) {
-    uint16_t scd4x_error = scd4x.readScd40();
+    //uint16_t scd4x_error = scd4x.readScd40();
+    uint16_t scd4x_error = scd4x.readScd40(static_cast<uint16_t>(dps.last_press_hpa()));
     if (scd4x_error) {
       // tft.print("error ");
       // tft.print(scd4x_error, 0);
