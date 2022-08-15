@@ -10,6 +10,8 @@
 
 #include "fh_sensors.h"
 
+#define HPA_ALT_ADJUST 34 // add this to hPa air pressue to adjust for (our specific) altitude
+
 // sensors objects
 FhAmbientLight ambientLight;
 FhDps310 dps;
@@ -23,6 +25,7 @@ FhSht40 sht4x = FhSht40();
 #ifdef SENSIRIONI2CSCD4X_H
 FhScd40 scd4x;
 #define SCD4X_OFFSET_C 3.4  // Stock is 4C(?), testing shows 3.4 better matches my SHT40
+const unsigned long scd4x_min_read_ms = 5000;  // minimum interval between SCD4x reads, in ms
 #endif
 
 uint32_t getAbsoluteHumidity(float temp_c, float hum_pct) {
@@ -82,6 +85,10 @@ uint8_t FhDps310::readDps310(void) {
     Serial.println("DPS310 temp or pressure not available");
     return 2;
   }
+}
+
+float FhDps310::inHgAdjusted(void) {
+  return (float(last_press_hpa()) + HPA_ALT_ADJUST) * 0.02953;
 }
 // End DPS310
 
@@ -215,25 +222,71 @@ uint16_t FhScd40::setupScd40(uint16_t altitude_m) {
   return error;
 }
 
+uint16_t FhScd40::reInitialize(void) {
+  uint16_t error = 0;
+  char errorMessage[256];
+  // stop potentially previously started measurement
+  Serial.println("Attempting to stop SCD40 periodic measurement");
+  error = stopPeriodicMeasurement();
+  if (error) {
+    Serial.print("Error trying to execute SCD40 stopPeriodicMeasurement(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+  } else {
+    // Start Measurement
+    delay(1000);
+    Serial.println("Attempting to start SCD40 periodic measurement");
+    error = startPeriodicMeasurement();
+    if (error) {
+      Serial.print("Error trying to execute SCD40 startPeriodicMeasurement(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
+    }
+  }
+  return error;
+}
+
 uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
   float t, h;
   uint16_t c = 0;
   uint16_t error;
+  // Protect against reading the SCD4x too quickly
+  if ((millis() - last_read_ms_) < scd4x_min_read_ms) {
+    Serial.printf("Error - trying to re-read SCD4x before %lu ms have elapsed\n", scd4x_min_read_ms);
+    return 1;
+  }
   if (ambient_press_hpa > 0) {
     if (setAmbientPressure(ambient_press_hpa)) {
       Serial.println("Error setting SCD40 ambient pressure compensation");
     } else if (altitude_m_ > 0) {
       // if we fail to set pressure comp, try to re-set via altitude
-      setSensorAltitude(altitude_m_);
+      // Note - this cannot be run while periodic measurements are active, so don't try
+      // setSensorAltitude(altitude_m_);
     }
-    
   }
+  /* *** not sure how this should work; return val? dataReady?
+  uint16_t dataReady = 0;
+  getDataReadyStatus(dataReady);
+  if (dataReady) {
+    Serial.printf("SCD41x getDataReadyStatus() error: %d\n", dataReady);
+    // TODO: if read error, try a stop/start to reset the sensor?
+    return dataReady;
+  }
+  */
   error = readMeasurement(c, t, h);
+  last_read_ms_ = millis();
   if (! error && (c != 0)) {
-    last_read_ms_ = millis();
+    last_update_ms_ = last_read_ms_;
     last_co2_ppm_ = c;
     last_temp_f_ = TEMP_F(t);
     last_hum_pct_ = h;
+  } else {
+    // typically fails with 526 from receiveFrame(), which is I think ReadError | NotEnoughDataError
+    // In my experience, when this fails it stays failed (at least until a power cycle)
+    // So, attempt to kick-start the sensor
+    reInitialize();
+    // TODO: check this return? retry on failure? re-read on success?
+
   }
   return error;
 }

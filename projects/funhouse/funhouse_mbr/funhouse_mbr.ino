@@ -36,10 +36,11 @@ float prim_temp_f, prim_hum;  // primary temp and humidity measurements
 const unsigned long display_ms = 10000; // display on for x ms after UP button push
 unsigned long button_pressed_ms[NUM_BUTTONS] = {0};  // last time buttons pressed {UP, SELECT, DOWN} TODO: map?
 const unsigned long mqtt_ms = 60000;  // publish to mqtt every x ms
+const unsigned long max_mqtt_pub_delay_ms = mqtt_ms; // max age of a measurement to publish, ms (should be <= mqtt_ms)
 unsigned long mqtt_last_ms = 0;
 const unsigned long sensor_ms = 1000;  // read sensors every x ms
 unsigned long sensor_last_ms = 0;
-const unsigned long scd4x_ms = 5000; // read SCD4x sensors every x ms
+const unsigned long scd4x_ms = 10000; // read SCD4x sensors every x ms, min 5000
 
 uint8_t LED_dutycycle = 0;
 bool has_sht4x = false;
@@ -58,7 +59,7 @@ void setup() {
   uint8_t cursor_y = 0;
   uint8_t retries = 5, i = 0;
 
-  while (!Serial);
+  // while (!Serial);
   Serial.begin(115200);
   delay(100);
   
@@ -120,7 +121,7 @@ void setup() {
   retries = 5, i = 0;
   Wire.begin();
   while (i < retries) {
-    if (scd4x.setupScd40(ALT_M)) {  
+    if (scd4x.setupScd40(ALT_M)) {
       tft.setTextColor(ST77XX_RED);
       tft.println("FAIL!");
       delay(100);
@@ -195,11 +196,12 @@ void loop() {
     read_sensors();
   } else {
     sensors_update = false;
-  }
+  } 
   #ifdef SENSIRIONI2CSCD4X_H
   // Update SCD40
   if ((now - scd4x.last_read_ms()) > scd4x_ms) {
-    uint16_t scd4x_error = scd4x.readScd40();
+    //uint16_t scd4x_error = scd4x.readScd40();
+    uint16_t scd4x_error = scd4x.readScd40(static_cast<uint16_t>(dps.last_press_hpa()));
     if (scd4x_error) {
       // tft.print("error ");
       // tft.print(scd4x_error, 0);
@@ -511,37 +513,49 @@ void mqtt_pub_sensors() {
   client.mqttReconnect();
 
   // DPS310
-  sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, dps.last_temp_f(), dps.last_press_hpa());
-  client.publishTopic(mqtt_msg);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  if ((millis() - dps.last_read_ms()) <= max_mqtt_pub_delay_ms) {
+    sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, dps.last_temp_f(), dps.last_press_hpa());
+    client.publishTopic(mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
   // AHT20
-  sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, aht.last_temp_f(), aht.last_hum_pct());
-  client.publishTopic(mqtt_msg);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  if ((millis() - aht.last_read_ms()) <= max_mqtt_pub_delay_ms) {
+    sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, aht.last_temp_f(), aht.last_hum_pct());
+    client.publishTopic(mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
   // Ambient light
-  sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambientLight.last_ambient_light());
-  client.publishTopic(mqtt_msg);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  if ((millis() - ambientLight.last_read_ms()) <= max_mqtt_pub_delay_ms) {
+    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambientLight.last_ambient_light());
+    client.publishTopic(mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
   // SHT40
   #ifdef ADAFRUIT_SHT4x_H
-  sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, sht4x.last_temp_f(), sht4x.last_hum_pct());
-  client.publishTopic(mqtt_msg);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  if ((millis() - sht4x.last_read_ms()) <= max_mqtt_pub_delay_ms) {
+    sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, sht4x.last_temp_f(), sht4x.last_hum_pct());
+    client.publishTopic(mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
   #endif
+  #ifdef SENSIRIONI2CSCD4X_H
   // SCD40
-  if (has_scd4x) {
+  if (has_scd4x && ((millis() - scd4x.last_update_ms()) <= max_mqtt_pub_delay_ms)) {
     sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
     client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
+  #endif
   // SGP30
   #ifdef ADAFRUIT_SGP30_H
-  sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.last_tvoc(), sgp30.last_eco2());
-  client.publishTopic(mqtt_msg);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
-  sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp30.last_raw_h2(), sgp30.last_raw_ethanol());
-  client.publishTopic(mqtt_msg);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
+  if ((millis() - sgp30.last_read_ms()) <= max_mqtt_pub_delay_ms) {
+    sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.last_tvoc(), sgp30.last_eco2());
+    client.publishTopic(mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+    sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp30.last_raw_h2(), sgp30.last_raw_ethanol());
+    client.publishTopic(mqtt_msg);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
   #endif
 
   return;

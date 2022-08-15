@@ -169,9 +169,11 @@ void FhTft::displayEnvironment(bool fill) {
   println(" %");
   // Pressure
   setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print(dps.last_press_hpa(), 0);
+  //print(dps.last_press_hpa(), 0);
+  this->printf("%.2f", dps.inHgAdjusted(), 0);
   setTextColor(ST77XX_GREEN, BG_COLOR);
-  println(" hPa");
+  //println(" hPa");
+  println(" inHg");
 #ifdef SENSIRIONI2CSCD4X_H
   // CO2
   setTextColor(ST77XX_YELLOW, BG_COLOR);
@@ -180,9 +182,15 @@ void FhTft::displayEnvironment(bool fill) {
   println(" ppm CO2");
 #endif
 #ifdef ADAFRUIT_SGP30_H
+//#ifndef SENSIRIONI2CSCD4X_H
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  print(sgp30.last_eco2());
+  setTextColor(ST77XX_GREEN, BG_COLOR);
+  println(" ppm eCO2");
+//#endif /* SENSIRIONI2CSCD4X_H */
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print(sgp30.last_tvoc());
   setTextColor(ST77XX_GREEN, BG_COLOR);
   println(" ppb TVOC");
-#endif
+#endif /* ADAFRUIT_SGP30_H */
 }
