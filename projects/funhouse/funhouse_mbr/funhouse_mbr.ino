@@ -43,8 +43,6 @@ unsigned long sensor_last_ms = 0;
 const unsigned long scd4x_ms = 10000; // read SCD4x sensors every x ms, min 5000
 
 uint8_t LED_dutycycle = 0;
-bool has_sht4x = false;
-bool has_sgp30 = false;
 const char* measurement = "environment";
 #ifdef FH_SUB_PEPPERS
 extern const char* plants_topic;
@@ -107,7 +105,6 @@ void setup() {
     tft.setTextColor(ST77XX_RED);
     tft.println("FAIL!");
   } else {
-    has_sht4x = true;
     tft.setTextColor(ST77XX_GREEN);
     tft.println("OK!");
   }
@@ -141,7 +138,6 @@ void setup() {
     tft.setTextColor(ST77XX_RED);
     tft.println("FAIL!");
   } else {
-    has_sgp30 = true;
     tft.setTextColor(ST77XX_GREEN);
     tft.println("OK!");
     // FIXME: move to FhSgp30 class
