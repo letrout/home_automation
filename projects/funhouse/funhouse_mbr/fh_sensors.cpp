@@ -52,17 +52,17 @@ FhDps310::FhDps310(void) {
 
 uint8_t FhDps310::setupDps310(void) {
   uint8_t i;
-  uint8_t retval = 1;
+  uint8_t retval = E_SENSOR_FAIL;
   for (i = 1; i++; i <= 5 ) {
     if (begin_I2C()) {
-      retval = 0;
+      retval = E_SENSOR_SUCCESS;
       break;
     } else {
       Serial.println("Connect to DPS310 FAILED!");
       delay(100);
     }
   }
-  if (retval == 0) {
+  if (retval == E_SENSOR_SUCCESS) {
     configurePressure(DPS310_64HZ, DPS310_64SAMPLES);
     configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
   }
@@ -76,14 +76,14 @@ uint8_t FhDps310::readDps310(void) {
       last_read_ms_ = millis();
       last_temp_f_ = TEMP_F(t.temperature);
       last_press_hpa_ = p.pressure;
-      return 0;
+      return E_SENSOR_SUCCESS;
     } else {
       Serial.println("DPS310 read failed!");
-      return 1;
+      return E_SENSOR_FAIL;
     }
   } else {
     Serial.println("DPS310 temp or pressure not available");
-    return 2;
+    return E_SENSOR_FAIL + 1;
   }
 }
 
@@ -102,9 +102,9 @@ uint8_t FhAht20::readAht20(void) {
     last_read_ms_ = millis();
     last_temp_f_ = TEMP_F(t.temperature);
     last_hum_pct_ = h.relative_humidity;
-    return 0;
+    return E_SENSOR_SUCCESS;
   } else {
-    return 1;
+    return E_SENSOR_FAIL;
   }
 }
 // End AHT20
@@ -115,7 +115,7 @@ FhSgp30::FhSgp30(void) {
 
 uint8_t FhSgp30::setupSgp30(void) {
   uint8_t i;
-  uint8_t retval = 1;
+  uint8_t retval = E_SENSOR_FAIL;
   for (i = 1; i++; i <= 5 ) {
     if (begin()) {
       retval = E_SENSOR_SUCCESS;
@@ -161,7 +161,7 @@ FhSht40::FhSht40(void) {
 
 uint8_t FhSht40::setupSht40(void) {
   uint8_t i;
-  uint8_t retval = 1;
+  uint8_t retval = E_SENSOR_FAIL;
   for (i = 1; i++; i <= 5 ) {
     if (begin()) {
       retval = E_SENSOR_SUCCESS;
@@ -236,7 +236,7 @@ uint16_t FhScd40::setupScd40(uint16_t altitude_m) {
 }
 
 uint16_t FhScd40::reInitialize(void) {
-  uint16_t error = 0;
+  uint16_t error = E_SENSOR_SUCCESS;
   char errorMessage[256];
   // stop potentially previously started measurement
   Serial.println("Attempting to stop SCD40 periodic measurement");
@@ -274,7 +274,7 @@ uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
   // Protect against reading the SCD4x too quickly
   if ((millis() - last_read_ms_) < scd4x_min_read_ms) {
     Serial.printf("Error - trying to re-read SCD4x before %lu ms have elapsed\n", scd4x_min_read_ms);
-    return 1;
+    return E_SENSOR_FAIL;
   }
   if (ambient_press_hpa > 0) {
     if (setAmbientPressure(ambient_press_hpa)) {

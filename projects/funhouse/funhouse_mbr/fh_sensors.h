@@ -8,6 +8,7 @@
 #include <SensirionI2CScd4x.h>
 
 #define E_SENSOR_SUCCESS 0  // standard success return value
+#define E_SENSOR_FAIL 1  // standard read failure return value
 #define E_SENSOR_NOT_PRESENT 8  // standard return value for "sensor not found"
 
 #define TEMP_F(c) (c * 9 / 5) + 32
@@ -121,7 +122,7 @@ class FhSgp30 : public Adafruit_SGP30 {
      * @param hum_pct optional relative humidity
      * @return uint8_t 0 on success, 1 on failure
      */
-    uint8_t readSgp30(float temp_c= -1000, float hum_pct = -1);
+    uint8_t readSgp30(float temp_c = -1000, float hum_pct = -1);
 };
 #endif /* ADAFRUIT_SGP30_H */
 
