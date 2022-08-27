@@ -7,6 +7,9 @@
 #include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
 
+#define E_SENSOR_SUCCESS 0  // standard success return value
+#define E_SENSOR_NOT_PRESENT 8  // standard return value for "sensor not found"
+
 #define TEMP_F(c) (c * 9 / 5) + 32
 #define TEMP_C(f) (f - 32) * 5 / 9
 
@@ -85,6 +88,7 @@ class FhAht20 : public Adafruit_AHTX0 {
  */
 class FhSgp30 : public Adafruit_SGP30 {
   private:
+    bool present_ = false;
     uint16_t last_tvoc_;
     uint16_t last_eco2_;
     uint16_t last_raw_h2_;
@@ -94,6 +98,7 @@ class FhSgp30 : public Adafruit_SGP30 {
 
   public:
     FhSgp30();
+    uint16_t present() const { return present_; }
     uint16_t last_tvoc() const { return last_tvoc_; }
     uint16_t last_eco2() const { return last_eco2_; }
     uint16_t last_raw_h2() const { return last_raw_h2_; }

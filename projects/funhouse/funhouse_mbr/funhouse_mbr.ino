@@ -433,6 +433,7 @@ void loop() {
 
 
 void read_sensors() {
+  uint8_t sensor_return;
   // DPS310
   if (!dps.readDps310()) {
     prim_temp_f = dps.last_temp_f();
@@ -455,9 +456,13 @@ void read_sensors() {
   Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", sht4x.last_temp_f(), sht4x.last_hum_pct());
   #endif
   #ifdef ADAFRUIT_SGP30_H
-  sgp30.readSgp30(TEMP_C(prim_temp_f), prim_hum);
-  Serial.printf("SGP30: %d eCO2 ppm  %d tvoc ppb \n", sgp30.last_eco2(), sgp30.last_tvoc());
-  Serial.printf("SGP30: %d ethanol ppm  %d H2 ppm \n", sgp30.last_raw_ethanol(), sgp30.last_raw_h2());
+  sensor_return = sgp30.readSgp30(TEMP_C(prim_temp_f), prim_hum);
+  if (sensor_return == E_SENSOR_SUCCESS) {
+    Serial.printf("SGP30: %d eCO2 ppm  %d tvoc ppb \n", sgp30.last_eco2(), sgp30.last_tvoc());
+    Serial.printf("SGP30: %d ethanol ppm  %d H2 ppm \n", sgp30.last_raw_ethanol(), sgp30.last_raw_h2());
+  } else {
+    Serial.printf("ERROR - SGP30 read returned: %d\n", sensor_return);
+  }
   #endif
 
   return;
@@ -548,7 +553,7 @@ void mqtt_pub_sensors() {
   #endif
   // SGP30
   #ifdef ADAFRUIT_SGP30_H
-  if ((millis() - sgp30.last_read_ms()) <= max_mqtt_pub_delay_ms) {
+  if (sgp30.present() & (millis() - sgp30.last_read_ms()) <= max_mqtt_pub_delay_ms) {
     sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.last_tvoc(), sgp30.last_eco2());
     client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
