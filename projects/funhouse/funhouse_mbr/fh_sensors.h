@@ -98,7 +98,7 @@ class FhSgp30 : public Adafruit_SGP30 {
 
   public:
     FhSgp30();
-    uint16_t present() const { return present_; }
+    bool present() const { return present_; }
     uint16_t last_tvoc() const { return last_tvoc_; }
     uint16_t last_eco2() const { return last_eco2_; }
     uint16_t last_raw_h2() const { return last_raw_h2_; }
@@ -139,7 +139,7 @@ class FhSht40 : public Adafruit_SHT4x {
 
   public:
     FhSht40();
-    uint16_t present() const { return present_; }
+    bool present() const { return present_; }
     float last_temp_f() const { return last_temp_f_; }
     float last_temp_c() const { return TEMP_C(last_temp_f_); }
     float last_hum_pct() const { return last_hum_pct_; }
@@ -163,6 +163,7 @@ class FhSht40 : public Adafruit_SHT4x {
  */
 class FhScd40 : public SensirionI2CScd4x {
   private:
+    bool present_ = false;
     uint16_t altitude_m_ = 0;
     float last_temp_f_;
     float last_hum_pct_;
@@ -172,6 +173,7 @@ class FhScd40 : public SensirionI2CScd4x {
 
   public:
     FhScd40();
+    bool present() const { return present_; }
     float last_temp_f() const { return last_temp_f_; }
     float last_temp_c() const { return TEMP_C(last_temp_f_); }
     float last_hum_pct() const { return last_hum_pct_; }

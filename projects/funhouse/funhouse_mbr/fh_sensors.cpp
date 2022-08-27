@@ -196,7 +196,7 @@ FhScd40::FhScd40(void) {
 }
 
 uint16_t FhScd40::setupScd40(uint16_t altitude_m) {
-  uint16_t error;
+  uint16_t error = E_SENSOR_SUCCESS;
   char errorMessage[256];
   begin(Wire);
   // stop potentially previously started measurement
@@ -227,6 +227,11 @@ uint16_t FhScd40::setupScd40(uint16_t altitude_m) {
     errorToString(error, errorMessage, 256);
     Serial.println(errorMessage);
   }
+  if (error) {
+    present_ = false;
+  } else {
+    present_ = true;
+  }
   return error;
 }
 
@@ -251,10 +256,18 @@ uint16_t FhScd40::reInitialize(void) {
       Serial.println(errorMessage);
     }
   }
+  if (error) {
+    present_ = false;
+  } else {
+    present_ = true;
+  }
   return error;
 }
 
 uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
+  if (!present_) {
+    return E_SENSOR_NOT_PRESENT;
+  }
   float t, h;
   uint16_t c = 0;
   uint16_t error;

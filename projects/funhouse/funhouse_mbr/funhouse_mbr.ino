@@ -44,7 +44,6 @@ const unsigned long scd4x_ms = 10000; // read SCD4x sensors every x ms, min 5000
 
 uint8_t LED_dutycycle = 0;
 bool has_sht4x = false;
-bool has_scd4x = false;
 bool has_sgp30 = false;
 const char* measurement = "environment";
 #ifdef FH_SUB_PEPPERS
@@ -127,7 +126,6 @@ void setup() {
       delay(100);
       i++;
     } else {
-      has_scd4x = true;
       tft.setTextColor(ST77XX_GREEN);
       tft.println("OK!");
       break;
@@ -177,8 +175,10 @@ void setup() {
  client.subscribe(plants_topic);
 #endif
 
+#ifdef SENSIRIONI2CSCD4X_H
   // SCD40 needs a few seconds to be ready
-  has_scd4x ? delay(5000) : delay(1000);
+  scd4x.present() ? delay(5000) : delay(1000);
+#endif
   tft.fillScreen(BG_COLOR);
 } // setup()
 
@@ -558,7 +558,7 @@ void mqtt_pub_sensors() {
   #endif
   #ifdef SENSIRIONI2CSCD4X_H
   // SCD40
-  if (has_scd4x && ((millis() - scd4x.last_update_ms()) <= max_mqtt_pub_delay_ms)) {
+  if (scd4x.present() && ((millis() - scd4x.last_update_ms()) <= max_mqtt_pub_delay_ms)) {
     sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
     client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
