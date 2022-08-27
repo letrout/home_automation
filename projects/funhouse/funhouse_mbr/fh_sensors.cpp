@@ -133,7 +133,7 @@ uint8_t FhSgp30::readSgp30(float temp_c, float hum_pct) {
   if (!present_) {
     return E_SENSOR_NOT_PRESENT;
   }
-  uint8_t retval = 0;
+  uint8_t retval = E_SENSOR_SUCCESS;
   if ((hum_pct > 0) && (temp_c > -100)) {
     setHumidity(getAbsoluteHumidity(temp_c, hum_pct));
   }
@@ -164,7 +164,8 @@ uint8_t FhSht40::setupSht40(void) {
   uint8_t retval = 1;
   for (i = 1; i++; i <= 5 ) {
     if (begin()) {
-      retval = 0;
+      retval = E_SENSOR_SUCCESS;
+      present_ = true;
       break;
     } else {
       Serial.println("Connect to SGP30 FAILED!");
@@ -175,6 +176,9 @@ uint8_t FhSht40::setupSht40(void) {
 }
 
 uint8_t FhSht40::readSht40(void) {
+  if (!present_) {
+    return E_SENSOR_NOT_PRESENT;
+  }
   sensors_event_t t, h;
   if (getEvent(&h, &t)) {
     last_read_ms_ = millis();

@@ -208,7 +208,12 @@ void loop() {
       Serial.printf("SCD4x error %d\n", scd4x_error);
     } else {
       Serial.printf("SCD40: %d CO2 ppm %0.1f *F  %0.2f rH\n", scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
-#ifndef ADAFRUIT_SHT4x_H
+#ifdef ADAFRUIT_SHT4x_H
+      if (!sht4x.present()) {
+        prim_temp_f = scd4x.last_temp_f();
+        prim_hum = scd4x.last_hum_pct();
+      }
+#else
       prim_temp_f = scd4x.last_temp_f();
       prim_hum = scd4x.last_hum_pct();
 #endif
@@ -436,13 +441,17 @@ void read_sensors() {
   uint8_t sensor_return;
   // DPS310
   if (!dps.readDps310()) {
+#if !defined(ADAFRUIT_SHT4x_H) && !defined(SENSIRIONI2CSCD4X_H)
     prim_temp_f = dps.last_temp_f();
+#endif
     Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", dps.last_temp_f(), dps.last_press_hpa());
   }
   // AHT20
  if (!aht.readAht20()) {
+#if !defined(ADAFRUIT_SHT4x_H) && !defined(SENSIRIONI2CSCD4X_H)
    prim_temp_f = aht.last_temp_f();
    prim_hum = aht.last_hum_pct();
+#endif
  }
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", aht.last_temp_f(), aht.last_hum_pct());
   // Light sensor
@@ -450,10 +459,14 @@ void read_sensors() {
   Serial.printf("Light sensor reading: %d\n", ambientLight.last_ambient_light());
   // SHT40
   #ifdef ADAFRUIT_SHT4x_H
-  sht4x.readSht40();
-  prim_temp_f = sht4x.last_temp_f();
-  prim_hum = sht4x.last_hum_pct();
-  Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", sht4x.last_temp_f(), sht4x.last_hum_pct());
+  sensor_return = sht4x.readSht40();
+  if (sensor_return == E_SENSOR_SUCCESS) {
+    prim_temp_f = sht4x.last_temp_f();
+    prim_hum = sht4x.last_hum_pct();
+    Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", sht4x.last_temp_f(), sht4x.last_hum_pct());
+  } else {
+    Serial.printf("ERROR - SHT40 read returned: %d\n", sensor_return);
+  }
   #endif
   #ifdef ADAFRUIT_SGP30_H
   sensor_return = sgp30.readSgp30(TEMP_C(prim_temp_f), prim_hum);

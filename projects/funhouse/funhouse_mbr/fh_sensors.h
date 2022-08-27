@@ -132,12 +132,14 @@ class FhSgp30 : public Adafruit_SGP30 {
  */
 class FhSht40 : public Adafruit_SHT4x {
   private:
+    bool present_ = false;
     float last_temp_f_;
     float last_hum_pct_;
     unsigned long last_read_ms_;
 
   public:
     FhSht40();
+    uint16_t present() const { return present_; }
     float last_temp_f() const { return last_temp_f_; }
     float last_temp_c() const { return TEMP_C(last_temp_f_); }
     float last_hum_pct() const { return last_hum_pct_; }
