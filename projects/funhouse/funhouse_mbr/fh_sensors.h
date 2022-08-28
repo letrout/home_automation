@@ -198,7 +198,7 @@ class FhScd40 : public SensirionI2CScd4x {
      * @param altitude_m optional - altitude in meters
      * @return uint16_t error code, 0 on success
      */
-    uint16_t setupScd40(uint16_t altitude_m = 0);
+    uint16_t setupScd40(uint8_t retries = 5, uint16_t altitude_m = 0);
     /**
      * @brief re-initialize the SCD40 for periodic measurements
      * 

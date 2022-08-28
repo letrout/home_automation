@@ -53,7 +53,7 @@ FhDps310::FhDps310(void) {
 uint8_t FhDps310::setupDps310(void) {
   uint8_t i;
   uint8_t retval = E_SENSOR_FAIL;
-  for (i = 1; i++; i <= 5 ) {
+  for (i = 0; i <= 5; i++ ) {
     if (begin_I2C()) {
       retval = E_SENSOR_SUCCESS;
       break;
@@ -116,7 +116,7 @@ FhSgp30::FhSgp30(void) {
 uint8_t FhSgp30::setupSgp30(uint8_t retries) {
   uint8_t i;
   uint8_t retval = E_SENSOR_FAIL;
-  for (i = 1; i++; i <= retries ) {
+  for (i = 0; i <= retries; i++ ) {
     if (begin()) {
       retval = E_SENSOR_SUCCESS;
       present_ = true;
@@ -162,13 +162,13 @@ FhSht40::FhSht40(void) {
 uint8_t FhSht40::setupSht40(uint8_t retries) {
   uint8_t i;
   uint8_t retval = E_SENSOR_FAIL;
-  for (i = 1; i++; i <= retries ) {
+  for (i = 0; i <= retries; i++ ) {
     if (begin()) {
       retval = E_SENSOR_SUCCESS;
       present_ = true;
       break;
     } else {
-      Serial.println("Connect to SGP30 FAILED!");
+      Serial.println("Connect to SHT4x FAILED!");
       delay(100);
     }
   }
@@ -195,37 +195,49 @@ uint8_t FhSht40::readSht40(void) {
 FhScd40::FhScd40(void) {
 }
 
-uint16_t FhScd40::setupScd40(uint16_t altitude_m) {
+uint16_t FhScd40::setupScd40(uint8_t retries, uint16_t altitude_m) {
+  uint8_t i;
   uint16_t error = E_SENSOR_SUCCESS;
   char errorMessage[256];
+  Serial.println("Setting up SCD-40...");
   begin(Wire);
-  // stop potentially previously started measurement
-  error = stopPeriodicMeasurement();
-  if (error) {
-    Serial.print("Error trying to execute SCD40 stopPeriodicMeasurement(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-  }
-  // Set altitude
-  if (altitude_m > 0) {
-    altitude_m_ = altitude_m;
-    error = setSensorAltitude(altitude_m);
+  for (i = 0; i <= retries; i++ ) {
+    Serial.printf("SCD4x setup retry %d\n", i);
+    // stop potentially previously started measurement
+    error = stopPeriodicMeasurement();
     if (error) {
-      Serial.print("Error trying to execute SCD40 setSensorAltitude(): ");
+      Serial.print("Error trying to execute SCD40 stopPeriodicMeasurement(): ");
       errorToString(error, errorMessage, 256);
       Serial.println(errorMessage);
+      continue;
     }
-  }
-  // Set the temperature offset
-  if (setTemperatureOffset(SCD4X_OFFSET_C)) {
-    Serial.printf("Error setting temp offset to %0.2f C\n", SCD4X_OFFSET_C);
-  }
-  // Start Measurement
-  error = startPeriodicMeasurement();
-  if (error) {
-    Serial.print("Error trying to execute SCD40 startPeriodicMeasurement(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
+    // Set altitude
+    if (altitude_m > 0) {
+      altitude_m_ = altitude_m;
+      error = setSensorAltitude(altitude_m);
+      if (error) {
+        Serial.print("Error trying to execute SCD40 setSensorAltitude(): ");
+        errorToString(error, errorMessage, 256);
+        Serial.println(errorMessage);
+        continue;
+      }
+      if (!error) {
+        Serial.println("Inital SCD-4x setup complete");
+        break;
+      }
+    }
+    // Set the temperature offset
+    if (setTemperatureOffset(SCD4X_OFFSET_C)) {
+      Serial.printf("Error setting temp offset to %0.2f C\n", SCD4X_OFFSET_C);
+    }
+    // Start Measurement
+    error = startPeriodicMeasurement();
+    if (error) {
+      Serial.print("Error trying to execute SCD40 startPeriodicMeasurement(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
+      continue;
+    }
   }
   if (error) {
     present_ = false;

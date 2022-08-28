@@ -114,19 +114,13 @@ void setup() {
   // check SCD-4X!
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SCD-4X? ");
-  retries = 5, i = 0;
   Wire.begin();
-  while (i < retries) {
-    if (scd4x.setupScd40(ALT_M)) {
-      tft.setTextColor(ST77XX_RED);
-      tft.println("FAIL!");
-      delay(100);
-      i++;
-    } else {
-      tft.setTextColor(ST77XX_GREEN);
-      tft.println("OK!");
-      break;
-    }
+  if (scd4x.setupScd40(5, ALT_M)) {
+    tft.setTextColor(ST77XX_RED);
+    tft.println("FAIL!");
+  } else {
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println("OK!");
   }
   #endif /* SENSIRIONI2CSCD4X_H */
 
