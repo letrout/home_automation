@@ -113,10 +113,10 @@ uint8_t FhAht20::readAht20(void) {
 FhSgp30::FhSgp30(void) {
 }
 
-uint8_t FhSgp30::setupSgp30(void) {
+uint8_t FhSgp30::setupSgp30(uint8_t retries) {
   uint8_t i;
   uint8_t retval = E_SENSOR_FAIL;
-  for (i = 1; i++; i <= 5 ) {
+  for (i = 1; i++; i <= retries ) {
     if (begin()) {
       retval = E_SENSOR_SUCCESS;
       present_ = true;
@@ -159,10 +159,10 @@ uint8_t FhSgp30::readSgp30(float temp_c, float hum_pct) {
 FhSht40::FhSht40(void) {
 }
 
-uint8_t FhSht40::setupSht40(void) {
+uint8_t FhSht40::setupSht40(uint8_t retries) {
   uint8_t i;
   uint8_t retval = E_SENSOR_FAIL;
-  for (i = 1; i++; i <= 5 ) {
+  for (i = 1; i++; i <= retries ) {
     if (begin()) {
       retval = E_SENSOR_SUCCESS;
       present_ = true;

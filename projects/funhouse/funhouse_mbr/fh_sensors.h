@@ -110,9 +110,10 @@ class FhSgp30 : public Adafruit_SGP30 {
     /**
      * @brief Initialize the sgp30 object
      * 
+     * @param retries number of retries to attempt
      * @return uint8_t 0 on success
      */
-    uint8_t setupSgp30();
+    uint8_t setupSgp30(uint8_t retries = 5);
 
     /**
      * @brief Read the SGP30 sensor
@@ -149,9 +150,10 @@ class FhSht40 : public Adafruit_SHT4x {
     /**
      * @brief Initialize the sht40 object
      * 
+     * @param retries number of retries to attempt
      * @return uint8_t 0 on success
      */
-    uint8_t setupSht40();
+    uint8_t setupSht40(uint8_t retries = 5);
 
     uint8_t readSht40();
 };
