@@ -43,9 +43,6 @@ unsigned long sensor_last_ms = 0;
 const unsigned long scd4x_ms = 10000; // read SCD4x sensors every x ms, min 5000
 
 uint8_t LED_dutycycle = 0;
-bool has_sht4x = false;
-bool has_scd4x = false;
-bool has_sgp30 = false;
 const char* measurement = "environment";
 #ifdef FH_SUB_PEPPERS
 extern const char* plants_topic;
@@ -108,7 +105,6 @@ void setup() {
     tft.setTextColor(ST77XX_RED);
     tft.println("FAIL!");
   } else {
-    has_sht4x = true;
     tft.setTextColor(ST77XX_GREEN);
     tft.println("OK!");
   }
@@ -118,20 +114,13 @@ void setup() {
   // check SCD-4X!
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("SCD-4X? ");
-  retries = 5, i = 0;
   Wire.begin();
-  while (i < retries) {
-    if (scd4x.setupScd40(ALT_M)) {
-      tft.setTextColor(ST77XX_RED);
-      tft.println("FAIL!");
-      delay(100);
-      i++;
-    } else {
-      has_scd4x = true;
-      tft.setTextColor(ST77XX_GREEN);
-      tft.println("OK!");
-      break;
-    }
+  if (scd4x.setupScd40(5, ALT_M)) {
+    tft.setTextColor(ST77XX_RED);
+    tft.println("FAIL!");
+  } else {
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println("OK!");
   }
   #endif /* SENSIRIONI2CSCD4X_H */
 
@@ -143,7 +132,6 @@ void setup() {
     tft.setTextColor(ST77XX_RED);
     tft.println("FAIL!");
   } else {
-    has_sgp30 = true;
     tft.setTextColor(ST77XX_GREEN);
     tft.println("OK!");
     // FIXME: move to FhSgp30 class
@@ -177,8 +165,10 @@ void setup() {
  client.subscribe(plants_topic);
 #endif
 
+#ifdef SENSIRIONI2CSCD4X_H
   // SCD40 needs a few seconds to be ready
-  has_scd4x ? delay(5000) : delay(1000);
+  scd4x.present() ? delay(5000) : delay(1000);
+#endif
   tft.fillScreen(BG_COLOR);
 } // setup()
 
@@ -208,7 +198,12 @@ void loop() {
       Serial.printf("SCD4x error %d\n", scd4x_error);
     } else {
       Serial.printf("SCD40: %d CO2 ppm %0.1f *F  %0.2f rH\n", scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
-#ifndef ADAFRUIT_SHT4x_H
+#ifdef ADAFRUIT_SHT4x_H
+      if (!sht4x.present()) {
+        prim_temp_f = scd4x.last_temp_f();
+        prim_hum = scd4x.last_hum_pct();
+      }
+#else
       prim_temp_f = scd4x.last_temp_f();
       prim_hum = scd4x.last_hum_pct();
 #endif
@@ -433,15 +428,20 @@ void loop() {
 
 
 void read_sensors() {
+  uint8_t sensor_return;
   // DPS310
   if (!dps.readDps310()) {
+#if !defined(ADAFRUIT_SHT4x_H) && !defined(SENSIRIONI2CSCD4X_H)
     prim_temp_f = dps.last_temp_f();
+#endif
     Serial.printf("DPS310: %0.1f *F  %0.2f hPa\n", dps.last_temp_f(), dps.last_press_hpa());
   }
   // AHT20
  if (!aht.readAht20()) {
+#if !defined(ADAFRUIT_SHT4x_H) && !defined(SENSIRIONI2CSCD4X_H)
    prim_temp_f = aht.last_temp_f();
    prim_hum = aht.last_hum_pct();
+#endif
  }
   Serial.printf("AHT20: %0.1f *F  %0.2f rH\n", aht.last_temp_f(), aht.last_hum_pct());
   // Light sensor
@@ -449,15 +449,23 @@ void read_sensors() {
   Serial.printf("Light sensor reading: %d\n", ambientLight.last_ambient_light());
   // SHT40
   #ifdef ADAFRUIT_SHT4x_H
-  sht4x.readSht40();
-  prim_temp_f = sht4x.last_temp_f();
-  prim_hum = sht4x.last_hum_pct();
-  Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", sht4x.last_temp_f(), sht4x.last_hum_pct());
+  sensor_return = sht4x.readSht40();
+  if (sensor_return == E_SENSOR_SUCCESS) {
+    prim_temp_f = sht4x.last_temp_f();
+    prim_hum = sht4x.last_hum_pct();
+    Serial.printf("SHT40: %0.1f *F  %0.2f rH\n", sht4x.last_temp_f(), sht4x.last_hum_pct());
+  } else {
+    Serial.printf("ERROR - SHT40 read returned: %d\n", sensor_return);
+  }
   #endif
   #ifdef ADAFRUIT_SGP30_H
-  sgp30.readSgp30(TEMP_C(prim_temp_f), prim_hum);
-  Serial.printf("SGP30: %d eCO2 ppm  %d tvoc ppb \n", sgp30.last_eco2(), sgp30.last_tvoc());
-  Serial.printf("SGP30: %d ethanol ppm  %d H2 ppm \n", sgp30.last_raw_ethanol(), sgp30.last_raw_h2());
+  sensor_return = sgp30.readSgp30(TEMP_C(prim_temp_f), prim_hum);
+  if (sensor_return == E_SENSOR_SUCCESS) {
+    Serial.printf("SGP30: %d eCO2 ppm  %d tvoc ppb \n", sgp30.last_eco2(), sgp30.last_tvoc());
+    Serial.printf("SGP30: %d ethanol ppm  %d H2 ppm \n", sgp30.last_raw_ethanol(), sgp30.last_raw_h2());
+  } else {
+    Serial.printf("ERROR - SGP30 read returned: %d\n", sensor_return);
+  }
   #endif
 
   return;
@@ -540,7 +548,7 @@ void mqtt_pub_sensors() {
   #endif
   #ifdef SENSIRIONI2CSCD4X_H
   // SCD40
-  if (has_scd4x && ((millis() - scd4x.last_update_ms()) <= max_mqtt_pub_delay_ms)) {
+  if (scd4x.present() && ((millis() - scd4x.last_update_ms()) <= max_mqtt_pub_delay_ms)) {
     sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
     client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
@@ -548,7 +556,7 @@ void mqtt_pub_sensors() {
   #endif
   // SGP30
   #ifdef ADAFRUIT_SGP30_H
-  if ((millis() - sgp30.last_read_ms()) <= max_mqtt_pub_delay_ms) {
+  if (sgp30.present() & (millis() - sgp30.last_read_ms()) <= max_mqtt_pub_delay_ms) {
     sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.last_tvoc(), sgp30.last_eco2());
     client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);

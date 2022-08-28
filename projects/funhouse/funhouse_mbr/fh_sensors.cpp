@@ -50,19 +50,19 @@ void FhAmbientLight::read(void) {
 FhDps310::FhDps310(void) {
 }
 
-uint8_t FhDps310::setupDps310(void) {
-  uint8_t i;
-  uint8_t retval = 1;
-  for (i = 1; i++; i <= 5 ) {
+uint8_t FhDps310::setupDps310(uint8_t retries) {
+  uint8_t retval = E_SENSOR_FAIL;
+  for (uint8_t i = 0; i <= retries; i++ ) {
     if (begin_I2C()) {
-      retval = 0;
+      present_ = true;
+      retval = E_SENSOR_SUCCESS;
       break;
     } else {
       Serial.println("Connect to DPS310 FAILED!");
       delay(100);
     }
   }
-  if (retval == 0) {
+  if (retval == E_SENSOR_SUCCESS) {
     configurePressure(DPS310_64HZ, DPS310_64SAMPLES);
     configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
   }
@@ -70,20 +70,23 @@ uint8_t FhDps310::setupDps310(void) {
 }
 
 uint8_t FhDps310::readDps310(void) {
+  if (!present_) {
+    return E_SENSOR_NOT_PRESENT;
+  }
   sensors_event_t t, p;
   if (pressureAvailable() && temperatureAvailable()) {
     if (getEvents(&t, &p)) {
       last_read_ms_ = millis();
       last_temp_f_ = TEMP_F(t.temperature);
       last_press_hpa_ = p.pressure;
-      return 0;
+      return E_SENSOR_SUCCESS;
     } else {
       Serial.println("DPS310 read failed!");
-      return 1;
+      return E_SENSOR_FAIL;
     }
   } else {
     Serial.println("DPS310 temp or pressure not available");
-    return 2;
+    return E_SENSOR_FAIL + 1;
   }
 }
 
@@ -102,9 +105,9 @@ uint8_t FhAht20::readAht20(void) {
     last_read_ms_ = millis();
     last_temp_f_ = TEMP_F(t.temperature);
     last_hum_pct_ = h.relative_humidity;
-    return 0;
+    return E_SENSOR_SUCCESS;
   } else {
-    return 1;
+    return E_SENSOR_FAIL;
   }
 }
 // End AHT20
@@ -113,12 +116,12 @@ uint8_t FhAht20::readAht20(void) {
 FhSgp30::FhSgp30(void) {
 }
 
-uint8_t FhSgp30::setupSgp30(void) {
-  uint8_t i;
-  uint8_t retval = 1;
-  for (i = 1; i++; i <= 5 ) {
+uint8_t FhSgp30::setupSgp30(uint8_t retries) {
+  uint8_t retval = E_SENSOR_FAIL;
+  for (uint8_t i = 0; i <= retries; i++ ) {
     if (begin()) {
-      retval = 0;
+      retval = E_SENSOR_SUCCESS;
+      present_ = true;
       break;
     } else {
       Serial.println("Connect to SGP30 FAILED!");
@@ -129,7 +132,10 @@ uint8_t FhSgp30::setupSgp30(void) {
 }
 
 uint8_t FhSgp30::readSgp30(float temp_c, float hum_pct) {
-  uint8_t retval = 0;
+  if (!present_) {
+    return E_SENSOR_NOT_PRESENT;
+  }
+  uint8_t retval = E_SENSOR_SUCCESS;
   if ((hum_pct > 0) && (temp_c > -100)) {
     setHumidity(getAbsoluteHumidity(temp_c, hum_pct));
   }
@@ -155,15 +161,15 @@ uint8_t FhSgp30::readSgp30(float temp_c, float hum_pct) {
 FhSht40::FhSht40(void) {
 }
 
-uint8_t FhSht40::setupSht40(void) {
-  uint8_t i;
-  uint8_t retval = 1;
-  for (i = 1; i++; i <= 5 ) {
+uint8_t FhSht40::setupSht40(uint8_t retries) {
+  uint8_t retval = E_SENSOR_FAIL;
+  for (uint8_t i = 0; i <= retries; i++ ) {
     if (begin()) {
-      retval = 0;
+      retval = E_SENSOR_SUCCESS;
+      present_ = true;
       break;
     } else {
-      Serial.println("Connect to SGP30 FAILED!");
+      Serial.println("Connect to SHT4x FAILED!");
       delay(100);
     }
   }
@@ -171,6 +177,9 @@ uint8_t FhSht40::setupSht40(void) {
 }
 
 uint8_t FhSht40::readSht40(void) {
+  if (!present_) {
+    return E_SENSOR_NOT_PRESENT;
+  }
   sensors_event_t t, h;
   if (getEvent(&h, &t)) {
     last_read_ms_ = millis();
@@ -187,43 +196,59 @@ uint8_t FhSht40::readSht40(void) {
 FhScd40::FhScd40(void) {
 }
 
-uint16_t FhScd40::setupScd40(uint16_t altitude_m) {
-  uint16_t error;
+uint16_t FhScd40::setupScd40(uint8_t retries, uint16_t altitude_m) {
+  uint16_t error = E_SENSOR_SUCCESS;
   char errorMessage[256];
+  Serial.println("Setting up SCD-40...");
   begin(Wire);
-  // stop potentially previously started measurement
-  error = stopPeriodicMeasurement();
-  if (error) {
-    Serial.print("Error trying to execute SCD40 stopPeriodicMeasurement(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-  }
-  // Set altitude
-  if (altitude_m > 0) {
-    altitude_m_ = altitude_m;
-    error = setSensorAltitude(altitude_m);
+  for (uint8_t i = 0; i <= retries; i++ ) {
+    Serial.printf("SCD4x setup retry %d\n", i);
+    // stop potentially previously started measurement
+    error = stopPeriodicMeasurement();
     if (error) {
-      Serial.print("Error trying to execute SCD40 setSensorAltitude(): ");
+      Serial.print("Error trying to execute SCD40 stopPeriodicMeasurement(): ");
       errorToString(error, errorMessage, 256);
       Serial.println(errorMessage);
+      continue;
+    }
+    // Set altitude
+    if (altitude_m > 0) {
+      altitude_m_ = altitude_m;
+      error = setSensorAltitude(altitude_m);
+      if (error) {
+        Serial.print("Error trying to execute SCD40 setSensorAltitude(): ");
+        errorToString(error, errorMessage, 256);
+        Serial.println(errorMessage);
+        continue;
+      }
+      if (!error) {
+        Serial.println("Inital SCD-4x setup complete");
+        break;
+      }
+    }
+    // Set the temperature offset
+    if (setTemperatureOffset(SCD4X_OFFSET_C)) {
+      Serial.printf("Error setting temp offset to %0.2f C\n", SCD4X_OFFSET_C);
+    }
+    // Start Measurement
+    error = startPeriodicMeasurement();
+    if (error) {
+      Serial.print("Error trying to execute SCD40 startPeriodicMeasurement(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
+      continue;
     }
   }
-  // Set the temperature offset
-  if (setTemperatureOffset(SCD4X_OFFSET_C)) {
-    Serial.printf("Error setting temp offset to %0.2f C\n", SCD4X_OFFSET_C);
-  }
-  // Start Measurement
-  error = startPeriodicMeasurement();
   if (error) {
-    Serial.print("Error trying to execute SCD40 startPeriodicMeasurement(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
+    present_ = false;
+  } else {
+    present_ = true;
   }
   return error;
 }
 
 uint16_t FhScd40::reInitialize(void) {
-  uint16_t error = 0;
+  uint16_t error = E_SENSOR_SUCCESS;
   char errorMessage[256];
   // stop potentially previously started measurement
   Serial.println("Attempting to stop SCD40 periodic measurement");
@@ -243,17 +268,25 @@ uint16_t FhScd40::reInitialize(void) {
       Serial.println(errorMessage);
     }
   }
+  if (error) {
+    present_ = false;
+  } else {
+    present_ = true;
+  }
   return error;
 }
 
 uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
+  if (!present_) {
+    return E_SENSOR_NOT_PRESENT;
+  }
   float t, h;
   uint16_t c = 0;
   uint16_t error;
   // Protect against reading the SCD4x too quickly
   if ((millis() - last_read_ms_) < scd4x_min_read_ms) {
     Serial.printf("Error - trying to re-read SCD4x before %lu ms have elapsed\n", scd4x_min_read_ms);
-    return 1;
+    return E_SENSOR_FAIL;
   }
   if (ambient_press_hpa > 0) {
     if (setAmbientPressure(ambient_press_hpa)) {

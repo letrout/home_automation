@@ -7,6 +7,10 @@
 #include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
 
+#define E_SENSOR_SUCCESS 0  // standard success return value
+#define E_SENSOR_FAIL 1  // standard read failure return value
+#define E_SENSOR_NOT_PRESENT 8  // standard return value for "sensor not found"
+
 #define TEMP_F(c) (c * 9 / 5) + 32
 #define TEMP_C(f) (f - 32) * 5 / 9
 
@@ -26,12 +30,14 @@ uint32_t getAbsoluteHumidity(float temp_c, float hum_pct);
  */
 class FhDps310 : public Adafruit_DPS310 {
   private:
+    bool present_;
     float last_temp_f_;
     float last_press_hpa_;
     unsigned long last_read_ms_;
 
   public:
     FhDps310();
+    bool present() const { return present_; }
     float last_temp_f() const { return last_temp_f_; }
     float last_temp_c() const { return TEMP_C(last_temp_f_); }
     float last_press_hpa() const { return last_press_hpa_; }
@@ -40,9 +46,10 @@ class FhDps310 : public Adafruit_DPS310 {
     /**
      * @brief Initialize the dps310 object
      * 
+     * @param retries number of retries to attempt
      * @return uint8_t 0 on success
      */
-    uint8_t setupDps310();
+    uint8_t setupDps310(uint8_t retries = 5);
 
     /**
      * @brief Read values from the DPS310
@@ -85,6 +92,7 @@ class FhAht20 : public Adafruit_AHTX0 {
  */
 class FhSgp30 : public Adafruit_SGP30 {
   private:
+    bool present_ = false;
     uint16_t last_tvoc_;
     uint16_t last_eco2_;
     uint16_t last_raw_h2_;
@@ -94,6 +102,7 @@ class FhSgp30 : public Adafruit_SGP30 {
 
   public:
     FhSgp30();
+    bool present() const { return present_; }
     uint16_t last_tvoc() const { return last_tvoc_; }
     uint16_t last_eco2() const { return last_eco2_; }
     uint16_t last_raw_h2() const { return last_raw_h2_; }
@@ -104,9 +113,10 @@ class FhSgp30 : public Adafruit_SGP30 {
     /**
      * @brief Initialize the sgp30 object
      * 
+     * @param retries number of retries to attempt
      * @return uint8_t 0 on success
      */
-    uint8_t setupSgp30();
+    uint8_t setupSgp30(uint8_t retries = 5);
 
     /**
      * @brief Read the SGP30 sensor
@@ -116,7 +126,7 @@ class FhSgp30 : public Adafruit_SGP30 {
      * @param hum_pct optional relative humidity
      * @return uint8_t 0 on success, 1 on failure
      */
-    uint8_t readSgp30(float temp_c= -1000, float hum_pct = -1);
+    uint8_t readSgp30(float temp_c = -1000, float hum_pct = -1);
 };
 #endif /* ADAFRUIT_SGP30_H */
 
@@ -127,12 +137,14 @@ class FhSgp30 : public Adafruit_SGP30 {
  */
 class FhSht40 : public Adafruit_SHT4x {
   private:
+    bool present_ = false;
     float last_temp_f_;
     float last_hum_pct_;
     unsigned long last_read_ms_;
 
   public:
     FhSht40();
+    bool present() const { return present_; }
     float last_temp_f() const { return last_temp_f_; }
     float last_temp_c() const { return TEMP_C(last_temp_f_); }
     float last_hum_pct() const { return last_hum_pct_; }
@@ -141,9 +153,10 @@ class FhSht40 : public Adafruit_SHT4x {
     /**
      * @brief Initialize the sht40 object
      * 
+     * @param retries number of retries to attempt
      * @return uint8_t 0 on success
      */
-    uint8_t setupSht40();
+    uint8_t setupSht40(uint8_t retries = 5);
 
     uint8_t readSht40();
 };
@@ -156,6 +169,7 @@ class FhSht40 : public Adafruit_SHT4x {
  */
 class FhScd40 : public SensirionI2CScd4x {
   private:
+    bool present_ = false;
     uint16_t altitude_m_ = 0;
     float last_temp_f_;
     float last_hum_pct_;
@@ -165,6 +179,7 @@ class FhScd40 : public SensirionI2CScd4x {
 
   public:
     FhScd40();
+    bool present() const { return present_; }
     float last_temp_f() const { return last_temp_f_; }
     float last_temp_c() const { return TEMP_C(last_temp_f_); }
     float last_hum_pct() const { return last_hum_pct_; }
@@ -186,7 +201,7 @@ class FhScd40 : public SensirionI2CScd4x {
      * @param altitude_m optional - altitude in meters
      * @return uint16_t error code, 0 on success
      */
-    uint16_t setupScd40(uint16_t altitude_m = 0);
+    uint16_t setupScd40(uint8_t retries = 5, uint16_t altitude_m = 0);
     /**
      * @brief re-initialize the SCD40 for periodic measurements
      * 
