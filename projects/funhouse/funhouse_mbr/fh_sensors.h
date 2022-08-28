@@ -30,12 +30,14 @@ uint32_t getAbsoluteHumidity(float temp_c, float hum_pct);
  */
 class FhDps310 : public Adafruit_DPS310 {
   private:
+    bool present_;
     float last_temp_f_;
     float last_press_hpa_;
     unsigned long last_read_ms_;
 
   public:
     FhDps310();
+    bool present() const { return present_; }
     float last_temp_f() const { return last_temp_f_; }
     float last_temp_c() const { return TEMP_C(last_temp_f_); }
     float last_press_hpa() const { return last_press_hpa_; }
@@ -44,9 +46,10 @@ class FhDps310 : public Adafruit_DPS310 {
     /**
      * @brief Initialize the dps310 object
      * 
+     * @param retries number of retries to attempt
      * @return uint8_t 0 on success
      */
-    uint8_t setupDps310();
+    uint8_t setupDps310(uint8_t retries = 5);
 
     /**
      * @brief Read values from the DPS310

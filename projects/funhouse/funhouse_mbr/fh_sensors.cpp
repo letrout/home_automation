@@ -50,10 +50,11 @@ void FhAmbientLight::read(void) {
 FhDps310::FhDps310(void) {
 }
 
-uint8_t FhDps310::setupDps310(void) {
+uint8_t FhDps310::setupDps310(uint8_t retries) {
   uint8_t retval = E_SENSOR_FAIL;
-  for (uint8_t i = 0; i <= 5; i++ ) {
+  for (uint8_t i = 0; i <= retries; i++ ) {
     if (begin_I2C()) {
+      present_ = true;
       retval = E_SENSOR_SUCCESS;
       break;
     } else {
@@ -69,6 +70,9 @@ uint8_t FhDps310::setupDps310(void) {
 }
 
 uint8_t FhDps310::readDps310(void) {
+  if (!present_) {
+    return E_SENSOR_NOT_PRESENT;
+  }
   sensors_event_t t, p;
   if (pressureAvailable() && temperatureAvailable()) {
     if (getEvents(&t, &p)) {
