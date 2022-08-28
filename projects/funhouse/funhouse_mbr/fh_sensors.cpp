@@ -51,9 +51,8 @@ FhDps310::FhDps310(void) {
 }
 
 uint8_t FhDps310::setupDps310(void) {
-  uint8_t i;
   uint8_t retval = E_SENSOR_FAIL;
-  for (i = 0; i <= 5; i++ ) {
+  for (uint8_t i = 0; i <= 5; i++ ) {
     if (begin_I2C()) {
       retval = E_SENSOR_SUCCESS;
       break;
@@ -114,9 +113,8 @@ FhSgp30::FhSgp30(void) {
 }
 
 uint8_t FhSgp30::setupSgp30(uint8_t retries) {
-  uint8_t i;
   uint8_t retval = E_SENSOR_FAIL;
-  for (i = 0; i <= retries; i++ ) {
+  for (uint8_t i = 0; i <= retries; i++ ) {
     if (begin()) {
       retval = E_SENSOR_SUCCESS;
       present_ = true;
@@ -160,9 +158,8 @@ FhSht40::FhSht40(void) {
 }
 
 uint8_t FhSht40::setupSht40(uint8_t retries) {
-  uint8_t i;
   uint8_t retval = E_SENSOR_FAIL;
-  for (i = 0; i <= retries; i++ ) {
+  for (uint8_t i = 0; i <= retries; i++ ) {
     if (begin()) {
       retval = E_SENSOR_SUCCESS;
       present_ = true;
@@ -196,12 +193,11 @@ FhScd40::FhScd40(void) {
 }
 
 uint16_t FhScd40::setupScd40(uint8_t retries, uint16_t altitude_m) {
-  uint8_t i;
   uint16_t error = E_SENSOR_SUCCESS;
   char errorMessage[256];
   Serial.println("Setting up SCD-40...");
   begin(Wire);
-  for (i = 0; i <= retries; i++ ) {
+  for (uint8_t i = 0; i <= retries; i++ ) {
     Serial.printf("SCD4x setup retry %d\n", i);
     // stop potentially previously started measurement
     error = stopPeriodicMeasurement();
