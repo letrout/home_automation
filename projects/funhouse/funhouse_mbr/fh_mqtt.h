@@ -23,7 +23,13 @@ class FhWifi : public WiFiClass {
 class FhNtpClient : NTPClient {
     private:
     public:
-        FhNtpClient();
+        /**
+         * @brief Construct a new Fh Ntp Client object
+         * uses const char* ntp_server, long utcOffsetInSeconds from secrets.h
+         * 
+         * @param udp WiFiUDP object
+         */
+        FhNtpClient(UDP& udp);
 };
 
 class FhPubSubClient : public PubSubClient {

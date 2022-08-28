@@ -50,6 +50,7 @@ extern const char* plants_topic;
 
 extern FhWifi fh_wifi;
 // WiFiClient espClient;
+extern FhNtpClient timeClient;
 extern FhPubSubClient client;
 
 void setup() {

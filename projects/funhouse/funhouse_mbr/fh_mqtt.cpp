@@ -15,6 +15,9 @@
 
 FhWifi fh_wifi;
 WiFiClient espClient;
+// Define NTP Client to get time
+WiFiUDP ntpUDP;
+FhNtpClient timeClient(ntpUDP);
 FhPubSubClient client;
 
 #ifdef FH_SUB_PEPPERS
@@ -56,6 +59,10 @@ uint8_t FhWifi::connect(void) {
     setAutoReconnect(true);
     persistent(true);
     return retval;
+}
+
+// NTP client
+FhNtpClient::FhNtpClient(UDP& udp) : NTPClient(udp, ntp_server, utcOffsetInSeconds) {
 }
 
 // MQTT client
