@@ -1,6 +1,7 @@
 #ifndef FH_MQTT_H
 #define FH_MQTT_H
 
+#include <NTPClient.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
 
@@ -17,6 +18,12 @@ class FhWifi : public WiFiClass {
          * @return uint8_t error code, 0 on success
          */
         uint8_t connect();
+};
+
+class FhNtpClient : NTPClient {
+    private:
+    public:
+        FhNtpClient();
 };
 
 class FhPubSubClient : public PubSubClient {
