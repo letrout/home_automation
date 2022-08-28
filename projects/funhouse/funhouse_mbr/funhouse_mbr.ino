@@ -156,6 +156,8 @@ void setup() {
 
   // Setup NTP
   timeClient.begin();
+  delay(1000);
+  timeClient.update();
 
   // Connect to MQTT
   client.setup();
