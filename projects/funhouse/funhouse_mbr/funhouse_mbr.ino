@@ -156,8 +156,6 @@ void setup() {
 
   // Setup NTP
   timeClient.begin();
-  delay(1000);
-  timeClient.update();
 
   // Connect to MQTT
   client.setup();
@@ -184,6 +182,7 @@ void loop() {
   bool mqtt_pubnow = false;
 
   // check timers
+  timeClient.update();
   if ((now - sensor_last_ms) > sensor_ms) {
     sensors_update = true;
     sensor_last_ms = now;
