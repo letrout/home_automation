@@ -54,8 +54,6 @@ extern FhNtpClient timeClient;
 extern FhPubSubClient client;
 
 void setup() {
-  uint8_t cursor_y = 0;
-  uint8_t retries = 5, i = 0;
 
   // while (!Serial);
   Serial.begin(115200);
