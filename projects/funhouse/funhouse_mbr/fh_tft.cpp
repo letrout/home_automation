@@ -12,6 +12,8 @@
 #include "fh_sensors.h"
 #include "fh_mqtt.h"
 
+extern NTPClient timeClient;
+
 // sensors objects
 extern FhAmbientLight ambientLight;
 extern float prim_temp_f, prim_hum;

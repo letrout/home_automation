@@ -154,6 +154,9 @@ void setup() {
   // Connect to WiFi
   fh_wifi.connect();
 
+  // Setup NTP
+  timeClient.begin();
+
   // Connect to MQTT
   client.setup();
   client.setMqttServer();

@@ -20,7 +20,7 @@ class FhWifi : public WiFiClass {
         uint8_t connect();
 };
 
-class FhNtpClient : NTPClient {
+class FhNtpClient : public NTPClient {
     private:
     public:
         /**
@@ -28,8 +28,10 @@ class FhNtpClient : NTPClient {
          * uses const char* ntp_server, long utcOffsetInSeconds from secrets.h
          * 
          * @param udp WiFiUDP object
+         * @param updateInterval Update interval in ms
          */
         FhNtpClient(UDP& udp);
+        FhNtpClient(UDP& udp, unsigned long updateInterval);
 };
 
 class FhPubSubClient : public PubSubClient {
