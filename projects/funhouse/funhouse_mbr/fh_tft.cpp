@@ -11,6 +11,7 @@
 #include "fh_tft.h"
 #include "fh_sensors.h"
 #include "fh_mqtt.h"
+#include "fh_time.h"
 
 extern NTPClient timeClient;
 

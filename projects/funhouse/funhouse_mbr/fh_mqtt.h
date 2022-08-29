@@ -1,7 +1,6 @@
 #ifndef FH_MQTT_H
 #define FH_MQTT_H
 
-#include <NTPClient.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
 
@@ -18,20 +17,6 @@ class FhWifi : public WiFiClass {
          * @return uint8_t error code, 0 on success
          */
         uint8_t connect();
-};
-
-class FhNtpClient : public NTPClient {
-    private:
-    public:
-        /**
-         * @brief Construct a new Fh Ntp Client object
-         * uses const char* ntp_server, long utcOffsetInSeconds from secrets.h
-         * 
-         * @param udp WiFiUDP object
-         * @param updateInterval Update interval in ms
-         */
-        FhNtpClient(UDP& udp);
-        FhNtpClient(UDP& udp, unsigned long updateInterval);
 };
 
 class FhPubSubClient : public PubSubClient {

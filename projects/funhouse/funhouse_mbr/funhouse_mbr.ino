@@ -3,8 +3,10 @@
 #include <Wire.h>
 #include "funhouse_mbr.h"
 #include "fh_dotstar.h"
+#include "fh_homesec.h"
 #include "fh_mqtt.h"
 #include "fh_tft.h"
+#include "fh_time.h"
 
 #define NUM_BUTTONS 3
 #define ALT_M 285 // altitude in meters, for SCD-4x calibration
