@@ -61,8 +61,7 @@ void setup() {
   Serial.begin(115200);
   delay(100);
 
-  //configTime("CST6CDT,M3.2.0,M11.1.0", "ntp.luth.bog");
-  ntp_client = FhNtpClient();
+  ntp_client = FhNtpClient(300);
   
   // Initialize the dotstars
   pixels.setup();

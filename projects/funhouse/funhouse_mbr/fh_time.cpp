@@ -1,5 +1,8 @@
-#include <WiFiUdp.h>
+#include "Arduino.h"
 #include "fh_time.h"
+#include "esp_sntp.h"
+
+#define MIN_NTP_UPDATE_SEC 15   // minimum NTP update interval, sec
 
 // Define NTP Client to get time
 const long utcOffsetInSeconds = 0;
@@ -11,7 +14,10 @@ FhNtpClient ntp_client;
 
 // NTP client
 // FIXME: add option to set update interval
-FhNtpClient::FhNtpClient() {
+FhNtpClient::FhNtpClient(uint16_t update_interval) {
+    if (update_interval > MIN_NTP_UPDATE_SEC) {
+        sntp_set_sync_interval(update_interval * 1000UL);
+    }
     configTime(utcOffsetInSeconds, 0, ntp_server);
     setenv("TZ", fh_tz, 1);
     tzset();
