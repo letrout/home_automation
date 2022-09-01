@@ -568,6 +568,9 @@ void mqtt_pub_sensors() {
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   #endif
+  sprintf(mqtt_msg, "%s,sensor=wifi rssi=%d", measurement, fh_wifi.RSSI());
+  client.publishTopic(mqtt_msg);
+  memset(mqtt_msg, 0, sizeof mqtt_msg);
 
   return;
 }
