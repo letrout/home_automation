@@ -95,46 +95,52 @@ void FhTft::displaySensors(bool fill) {
 
 #ifdef ADAFRUIT_SHT4x_H
   // SHT40
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("SHT40: ");
-  print(sht4x.last_temp_f(), 0);
-  print(" F ");
-  print(sht4x.last_hum_pct(), 0);
-  print(" %");
-  println("              ");
+  if (sht4x.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print("SHT40: ");
+    print(sht4x.last_temp_f(), 0);
+    print(" F ");
+    print(sht4x.last_hum_pct(), 0);
+    print(" %");
+    println("              ");
+  }
 #endif
 
 #ifdef SENSIRIONI2CSCD4X_H
   // SCD40
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("SCD4x: ");
-  print(scd4x.last_co2_ppm(), 0);
-  println(" ppm ");
-  print("SCD4x: ");
-  print(scd4x.last_temp_f(), 0);
-  print(" F ");
-  print(scd4x.last_hum_pct(), 0);
-  print(" %");
-  println("              ");
+  if (scd4x.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print("SCD4x: ");
+    print(scd4x.last_co2_ppm(), 0);
+    println(" ppm ");
+    print("SCD4x: ");
+    print(scd4x.last_temp_f(), 0);
+    print(" F ");
+    print(scd4x.last_hum_pct(), 0);
+    print(" %");
+    println("              ");
+  }
 #endif
 
 #ifdef ADAFRUIT_SGP30_H
   // SGP30
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("SGP30: ");
-  print("TVOC ");
-  print(sgp30.last_tvoc(), 0);
-  println(" ppb ");
-  print("eCO2 ");
-  print(sgp30.last_eco2(), 0);
-  println(" ppm");
+  if (sgp30.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print("SGP30: ");
+    print("TVOC ");
+    print(sgp30.last_tvoc(), 0);
+    println(" ppb ");
+    print("eCO2 ");
+    print(sgp30.last_eco2(), 0);
+    println(" ppm");
 
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("H2 ");
-  print(sgp30.last_raw_h2(), 0);
-  print(" Eth ");
-  print(sgp30.last_raw_ethanol());
-  println("");
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print("H2 ");
+    print(sgp30.last_raw_h2(), 0);
+    print(" Eth ");
+    print(sgp30.last_raw_ethanol());
+    println("");
+  }
 #endif
 
   // Light sensor
@@ -186,21 +192,25 @@ void FhTft::displayEnvironment(bool fill) {
   println(" inHg");
 #ifdef SENSIRIONI2CSCD4X_H
   // CO2
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print(scd4x.last_co2_ppm());
-  setTextColor(ST77XX_GREEN, BG_COLOR);
-  println(" ppm CO2");
+  if (scd4x.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print(scd4x.last_co2_ppm());
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+    println(" ppm CO2");
+  }
 #endif
 #ifdef ADAFRUIT_SGP30_H
 //#ifndef SENSIRIONI2CSCD4X_H
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print(sgp30.last_eco2());
-  setTextColor(ST77XX_GREEN, BG_COLOR);
-  println(" ppm eCO2");
-//#endif /* SENSIRIONI2CSCD4X_H */
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print(sgp30.last_tvoc());
-  setTextColor(ST77XX_GREEN, BG_COLOR);
-  println(" ppb TVOC");
+  if (sgp30.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print(sgp30.last_eco2());
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+    println(" ppm eCO2");
+  //#endif /* SENSIRIONI2CSCD4X_H */
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print(sgp30.last_tvoc());
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+    println(" ppb TVOC");
+  }
 #endif /* ADAFRUIT_SGP30_H */
 }
