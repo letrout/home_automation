@@ -18,7 +18,7 @@ class FhNtpClient {
          * 
          * @return String 
          */
-        String getFormattedTime();
+        void getFormattedTime(char* outStr);
 };
 
 #endif /* FH_TIME_H */

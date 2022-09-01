@@ -160,8 +160,10 @@ void FhTft::displaySensors(bool fill) {
 void FhTft::displayEnvironment(bool fill) {
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
   // Time
+  char timeStr[9];
+  ntp_client.getFormattedTime(timeStr);
   setTextColor(ST77XX_GREEN, BG_COLOR);
-  println(ntp_client.getFormattedTime());
+  println(timeStr);
   // Temp and humidity
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print(prim_temp_f, 0);

@@ -23,14 +23,13 @@ FhNtpClient::FhNtpClient(uint16_t update_interval) {
     tzset();
 }
 
-String FhNtpClient::getFormattedTime() {
+void FhNtpClient::getFormattedTime(char* outStr) {
+    char timeStr[9];
     time_t now;
     tm tm;
-    String hr, min, sec;
     time(&now);
     localtime_r(&now, &tm);
-    hr = tm.tm_hour < 10 ? "0" + String(tm.tm_hour) : String(tm.tm_hour);
-    min = tm.tm_min < 10 ? "0" + String(tm.tm_min) : String(tm.tm_min);
-    sec = tm.tm_sec < 10 ? "0" + String(tm.tm_sec) : String(tm.tm_sec);
-    return hr + ":" + min + ":" + sec;
+    sprintf(timeStr, "%02d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
+    // TODO: something to prevent possible overflow (outStr too small)
+    strncpy(outStr, timeStr, sizeof(timeStr));
 }
