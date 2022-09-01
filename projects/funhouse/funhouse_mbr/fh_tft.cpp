@@ -13,8 +13,6 @@
 #include "fh_mqtt.h"
 #include "fh_time.h"
 
-extern NTPClient timeClient;
-
 // sensors objects
 extern FhAmbientLight ambientLight;
 extern float prim_temp_f, prim_hum;
@@ -31,6 +29,7 @@ extern FhScd40 scd4x;
 #endif
 
 extern uint8_t peppers[];
+extern FhNtpClient ntp_client;
 
 // display!
 FhTft tft = FhTft(TFT_CS, TFT_DC, TFT_RESET);
@@ -158,14 +157,11 @@ void FhTft::displaySensors(bool fill) {
   return;
 }
 
-
 void FhTft::displayEnvironment(bool fill) {
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
   // Time
-  if(timeClient.isTimeSet()) {
-    setTextColor(ST77XX_GREEN, BG_COLOR);
-    println(timeClient.getFormattedTime());
-  }
+  setTextColor(ST77XX_GREEN, BG_COLOR);
+  println(ntp_client.getFormattedTime());
   // Temp and humidity
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print(prim_temp_f, 0);

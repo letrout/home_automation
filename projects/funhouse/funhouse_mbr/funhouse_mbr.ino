@@ -52,14 +52,17 @@ extern const char* plants_topic;
 
 extern FhWifi fh_wifi;
 // WiFiClient espClient;
-extern FhNtpClient timeClient;
 extern FhPubSubClient client;
+extern FhNtpClient ntp_client;
 
 void setup() {
 
   // while (!Serial);
   Serial.begin(115200);
   delay(100);
+
+  //configTime("CST6CDT,M3.2.0,M11.1.0", "ntp.luth.bog");
+  ntp_client = FhNtpClient();
   
   // Initialize the dotstars
   pixels.setup();
@@ -156,9 +159,6 @@ void setup() {
   // Connect to WiFi
   fh_wifi.connect();
 
-  // Setup NTP
-  timeClient.begin();
-
   // Connect to MQTT
   client.setup();
   client.setMqttServer();
@@ -184,7 +184,6 @@ void loop() {
   bool mqtt_pubnow = false;
 
   // check timers
-  timeClient.update();
   if ((now - sensor_last_ms) > sensor_ms) {
     sensors_update = true;
     sensor_last_ms = now;

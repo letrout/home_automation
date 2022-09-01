@@ -1,20 +1,22 @@
+#pragma once
 #ifndef FH_TIME_H
 #define FH_TIME_H
 
-#include <NTPClient.h>
+#include <time.h>
 
-class FhNtpClient : public NTPClient {
+class FhNtpClient {
     private:
     public:
         /**
          * @brief Construct a new Fh Ntp Client object
-         * uses const char* ntp_server, long utcOffsetInSeconds from secrets.h
-         * 
-         * @param udp WiFiUDP object
-         * @param updateInterval Update interval in ms
          */
-        FhNtpClient(UDP& udp);
-        FhNtpClient(UDP& udp, unsigned long updateInterval);
+        FhNtpClient();
+        /**
+         * @brief Get the time formatted as hh:mm:ss
+         * 
+         * @return String 
+         */
+        String getFormattedTime();
 };
 
 #endif /* FH_TIME_H */
