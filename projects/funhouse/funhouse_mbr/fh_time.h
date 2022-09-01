@@ -2,8 +2,6 @@
 #ifndef FH_TIME_H
 #define FH_TIME_H
 
-#include <time.h>
-
 class FhNtpClient {
     private:
     public:

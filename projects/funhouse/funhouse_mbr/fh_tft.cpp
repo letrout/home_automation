@@ -30,6 +30,7 @@ extern FhScd40 scd4x;
 
 extern uint8_t peppers[];
 extern FhNtpClient ntp_client;
+extern FhWifi fh_wifi;
 
 // display!
 FhTft tft = FhTft(TFT_CS, TFT_DC, TFT_RESET);
@@ -153,6 +154,9 @@ void FhTft::displaySensors(bool fill) {
   }
   println("");
 #endif
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  print("WiFi: ");
+  println(fh_wifi.RSSI());
 
   return;
 }
