@@ -8,4 +8,16 @@
  * 
  */
 
+#include <InfluxDbClient.h>
 #include "fh_homesec.h"
+
+OwensDoor owensDoors[] = {OwensDoor("garage", "main"),
+                            OwensDoor("garage", "side"),
+                            OwensDoor("mud", "back"),
+                            OwensDoor("kitchen", "deck"),
+                            OwensDoor("library", "front")};
+
+OwensDoor::OwensDoor(const char* room, const char* loc) {
+    strncpy(room_, room, ROOM_LOC_LEN);
+    strncpy(loc_, loc, ROOM_LOC_LEN);
+}

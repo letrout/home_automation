@@ -1,3 +1,4 @@
+#pragma once
 #ifndef FH_MQTT_H
 #define FH_MQTT_H
 
