@@ -9,17 +9,23 @@
 class OwensDoor {
     private:
         bool is_open_;
-        unsigned long last_update_;
-        unsigned long last_open_;
+        unsigned long last_update_ms_;
+        unsigned long last_open_ms_;
         char room_[ROOM_LOC_LEN] = {};
         char loc_[ROOM_LOC_LEN] = {};
     public:
         OwensDoor(const char* room, const char* loc);
         bool is_open() { return is_open_; }
-        unsigned long last_update() { return last_update_; }
-        unsigned long last_open() { return last_open_; }
+        unsigned long last_update_ms() { return last_update_ms_; }
+        unsigned long last_open_ms() { return last_open_ms_; }
         const char* room() const { return room_; }
         const char* loc() const { return loc_; }
+        /**
+         * @brief GUpdate the object with current door state
+         * 
+         * @return uint8_t error code - 0 on success
+         */
+        uint8_t getCurrentState();
 };
 
 /**
