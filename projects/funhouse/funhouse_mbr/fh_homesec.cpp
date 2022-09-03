@@ -12,7 +12,7 @@
 #include "fh_homesec.h"
 #include "secrets_homesec.h"
 
-InfluxDBClient client(influxdb_url, influxdb_org, bucket_events, token_events);
+InfluxDBClient influx_client(influxdb_url, influxdb_org, bucket_events, token_events);
 
 OwensDoor owensDoors[] = {OwensDoor("garage", "main"),
                             OwensDoor("garage", "side"),
@@ -26,14 +26,14 @@ OwensDoor::OwensDoor(const char* room, const char* loc) {
 }
 
 uint8_t OwensDoor::getCurrentState() {
-    if (!client.validateConnection()) {
+    if (!influx_client.validateConnection()) {
         return 1;
     }
     char query[512];
     bool state;
     unsigned long time_ms;
     sprintf(query, "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r[\"_measurement\"] == \"owens_events\") |> filter(fn: (r) => r[\"room\"] == \"%s\") |> filter(fn: (r) => r[\"room_loc\"] == \"%s\") |> filter(fn: (r) => r[\"_field\"] == \"state\") |> last()", bucket_events, room_, loc_);
-    FluxQueryResult result = client.query(query);
+    FluxQueryResult result = influx_client.query(query);
     if (result.getError()) {
         Serial.println(result.getError());
         return 2;
