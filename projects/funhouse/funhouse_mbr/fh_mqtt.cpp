@@ -15,7 +15,7 @@
 
 FhWifi fh_wifi;
 WiFiClient espClient;
-FhPubSubClient client;
+FhPubSubClient mqtt_client;
 
 #ifdef FH_SUB_PEPPERS
 uint8_t peppers[PEPPER_PLANTS] = {100, 75, 50, 0}; // store moisture content for four pepper plants
