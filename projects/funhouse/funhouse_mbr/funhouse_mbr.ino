@@ -53,6 +53,7 @@ extern const char* plants_topic;
 extern FhWifi fh_wifi;
 // WiFiClient espClient;
 extern FhPubSubClient mqtt_client;
+extern const char* doors_topic;
 extern FhNtpClient ntp_client;
 
 void setup() {
@@ -166,6 +167,9 @@ void setup() {
 #ifdef FH_SUB_PEPPERS
  // get pepper plant data
  mqtt_client.subscribe(plants_topic);
+#endif
+#ifdef FH_HOMESEC_H
+  mqtt_client.subscribe(doors_topic);
 #endif
 
 #ifdef SENSIRIONI2CSCD4X_H
@@ -514,7 +518,10 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.println("-----------------------");
   if (pch = strstr(topic, plants_topic)) {
     get_pepper_mqtt(payload, length);
+  } else if (pch = strstr(topic, doors_topic)) {
+    get_doors_mqtt(payload, length);
   }
+  
 }
 
 

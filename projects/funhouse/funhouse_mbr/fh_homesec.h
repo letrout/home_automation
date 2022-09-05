@@ -26,6 +26,7 @@ class OwensDoor {
          * @return uint8_t error code - 0 on success
          */
         uint8_t getCurrentState();
+        uint8_t getCurrentStateMqtt();
 };
 
 /**

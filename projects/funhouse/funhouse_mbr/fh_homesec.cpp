@@ -10,7 +10,10 @@
 
 #include <InfluxDbClient.h>
 #include "fh_homesec.h"
+#include "fh_mqtt.h"
 #include "secrets_homesec.h"
+
+extern FhPubSubClient mqtt_client;
 
 InfluxDBClient influx_client(influxdb_url, influxdb_org, bucket_events, token_events);
 
@@ -23,6 +26,10 @@ OwensDoor owensDoors[] = {OwensDoor("garage", "main"),
 OwensDoor::OwensDoor(const char* room, const char* loc) {
     strncpy(room_, room, ROOM_LOC_LEN);
     strncpy(loc_, loc, ROOM_LOC_LEN);
+}
+
+uint8_t OwensDoor::getCurrentStateMqtt() {
+    return 0;
 }
 
 uint8_t OwensDoor::getCurrentState() {
@@ -51,4 +58,58 @@ uint8_t OwensDoor::getCurrentState() {
     is_open_ = state;
     // Serial.printf("%s %s open %d, time %f\n", room_, loc_, state, time_ms);
     return 0;
+}
+
+int8_t get_doors_mqtt(const byte* payload, const int length) {
+    int8_t ret = 0;
+    bool state;
+    char msg[length];
+    char *pch, *room, *loc, *ptr;
+    unsigned long time_ns;
+    //memccpy(msg, payload, sizeof(payload), sizeof(char));
+    for (int i = 0; i < length; i++) {
+        msg[i] = (char)payload[i];
+    }
+    //Get the room
+    pch = strstr(msg, "room="); // payload starting at "room="
+    if (pch != NULL) {
+        pch = strtok(pch, "="); // split result on delimiters
+    }
+    if (pch != NULL) {
+        room = strtok(NULL, ",");  // get the second token after split
+    }
+    // Get the loc
+    for (int i = 0; i < length; i++) {
+        msg[i] = (char)payload[i];
+    }
+    pch = strstr(msg, "room_loc="); // payload starting at "room="
+    if (pch != NULL) {
+        pch = strtok(pch, "="); // split result on delimiters
+    }
+    if (pch != NULL) {
+        loc = strtok(NULL, ",");  // get the second token after split
+    }
+    // Get the door state
+    for (int i = 0; i < length; i++) {
+        msg[i] = (char)payload[i];
+    }
+    pch = strstr(msg, "state="); // payload starting at "room="
+    if (pch != NULL) {
+        pch = strtok(pch, "="); // split result on delimiters
+    }
+    if (pch != NULL) {
+        state = atoi(strtok(NULL, ","));  // get the second token after split
+    }
+    // Get the time
+    for (int i = 0; i < sizeof(payload); i++) {
+        msg[i] = (char)payload[i];
+    }
+    pch = strstr(msg, "state=");
+    if (pch != NULL) {
+        pch = strtok(pch, " ");
+        if (pch != NULL ) {
+            time_ns = strtoul(strtok(NULL, " "), &ptr, 10);
+        }
+    }
+    return ret;
 }
