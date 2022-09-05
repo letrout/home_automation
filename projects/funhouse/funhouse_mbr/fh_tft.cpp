@@ -12,6 +12,7 @@
 #include "fh_sensors.h"
 #include "fh_mqtt.h"
 #include "fh_time.h"
+#include "fh_homesec.h"
 
 // sensors objects
 extern FhAmbientLight ambientLight;
@@ -26,6 +27,9 @@ extern FhSht40 sht4x;
 #endif
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
+#endif
+#ifdef FH_HOMESEC_H
+extern OwensDoor owensDoors[];
 #endif
 
 extern uint8_t peppers[];
@@ -213,4 +217,54 @@ void FhTft::displayEnvironment(bool fill) {
     println(" ppb TVOC");
   }
 #endif /* ADAFRUIT_SGP30_H */
+}
+
+void FhTft::displayDoors(bool fill) {
+#ifdef FH_HOMESEC_H
+  setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
+  for (int i = 0; i < 5; i++) {
+    Serial.printf("get state door %d...\n", i);
+    owensDoors[i].getCurrentState();
+  }
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  print("Back: ");
+  if (owensDoors[2].is_open()) {
+    setTextColor(ST77XX_RED, BG_COLOR);
+  } else {
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+  }
+  println(owensDoors[2].is_open());
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  print("Deck: ");
+  if (owensDoors[3].is_open()) {
+    setTextColor(ST77XX_RED, BG_COLOR);
+  } else {
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+  }
+  println(owensDoors[3].is_open());
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  print("Front: ");
+  if (owensDoors[4].is_open()) {
+    setTextColor(ST77XX_RED, BG_COLOR);
+  } else {
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+  }
+  println(owensDoors[4].is_open());
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  print("GMain: ");
+  if (owensDoors[0].is_open()) {
+    setTextColor(ST77XX_RED, BG_COLOR);
+  } else {
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+  }
+  println(owensDoors[0].is_open());
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  print("GSide: ");
+  if (owensDoors[1].is_open()) {
+    setTextColor(ST77XX_RED, BG_COLOR);
+  } else {
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+  }
+  println(owensDoors[1].is_open());
+#endif
 }

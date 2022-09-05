@@ -58,6 +58,12 @@ class FhTft : public Adafruit_ST7789 {
      * @param fill - if true fill background (passthru to FhTft::setDsiplayMode)
      */
     void displayEnvironment(bool fill = false);
+    /**
+     * @brief display door state information
+     * 
+     * @param fill 
+     */
+    void displayDoors(bool fill = false);
 };
 
 #endif /* FH_TFT_H */
