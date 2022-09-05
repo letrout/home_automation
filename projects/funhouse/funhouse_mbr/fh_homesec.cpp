@@ -32,19 +32,44 @@ uint8_t OwensDoor::getCurrentState() {
     char query[512];
     bool state;
     unsigned long time_ms;
+    String error;
     sprintf(query, "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r[\"_measurement\"] == \"owens_events\") |> filter(fn: (r) => r[\"room\"] == \"%s\") |> filter(fn: (r) => r[\"room_loc\"] == \"%s\") |> filter(fn: (r) => r[\"_field\"] == \"state\") |> last()", bucket_events, room_, loc_);
+    Serial.println(query);
     FluxQueryResult result = influx_client.query(query);
-    if (result.getError()) {
-        Serial.println(result.getError());
+    error = result.getError();
+    if (error != "") {
+        Serial.printf("Error getting door %s %s\n", room_, loc_);
+        Serial.println(error);
+        Serial.println(query);
         return 2;
     }
     while (result.next()) {
-        state = result.getValueByName("_value").getBool();
-        FluxDateTime time = result.getValueByName("_time").getDateTime();
-        time_ms = time.microseconds / 1000;
+        std::vector<String> ele = result.getColumnsDatatype();
+        for (int i=0; i<ele.size(); i++) {
+            Serial.printf("type: %s\n", ele.at(i));
+        }
+        std::vector<FluxValue> values = result.getValues();
+        for (int i=0; i<values.size(); i++) {
+            Serial.printf("value: %s\n", values.at(i).getRawValue());
+        }
+        if (result.getValueByName("_value").isNull()) {
+            Serial.println("_value is Null");
+        } else {
+            Serial.printf("_value: %s\n", result.getValueByName("_value").getRawValue());
+            state = result.getValueByName("_value").getDouble();
+        }
+        if (result.getValueByName("_time").isNull()) {
+            Serial.println("_time is Null");
+        } else {
+            Serial.printf("_time: %s", result.getValueByName("_time").getRawValue());
+            FluxDateTime time = result.getValueByName("_time").getDateTime();
+            time_ms = time.microseconds;
+        }
+        Serial.printf("%s %s open %d, time %f\n", room_, loc_, state, time_ms);
     }
     result.close();
     last_update_ms_ = time_ms;
     is_open_ = state;
+    Serial.printf("%s %s open %d, time %f\n", room_, loc_, state, time_ms);
     return 0;
 }
