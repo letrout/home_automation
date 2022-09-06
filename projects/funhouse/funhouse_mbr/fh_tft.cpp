@@ -222,9 +222,9 @@ void FhTft::displayEnvironment(bool fill) {
 void FhTft::displayDoors(bool fill) {
 #ifdef FH_HOMESEC_H
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
-  for (int i = 0; i < owensDoors.size(); i++) {
-    Serial.printf("get state door %d...\n", i);
-    owensDoors[i].getCurrentState();
+  for (auto &door: owensDoors) {
+    //Serial.printf("get state door %d...\n", i);
+    door.getCurrentState();
   }
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Back: ");
