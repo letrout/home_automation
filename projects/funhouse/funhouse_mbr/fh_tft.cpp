@@ -29,7 +29,7 @@ extern FhSht40 sht4x;
 extern FhScd40 scd4x;
 #endif
 #ifdef FH_HOMESEC_H
-extern OwensDoor owensDoors[];
+extern std::array<OwensDoor, 5> owensDoors;
 #endif
 
 extern uint8_t peppers[];
@@ -222,7 +222,7 @@ void FhTft::displayEnvironment(bool fill) {
 void FhTft::displayDoors(bool fill) {
 #ifdef FH_HOMESEC_H
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < owensDoors.size(); i++) {
     Serial.printf("get state door %d...\n", i);
     owensDoors[i].getCurrentState();
   }

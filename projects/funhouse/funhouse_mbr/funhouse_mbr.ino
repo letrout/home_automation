@@ -49,11 +49,14 @@ const char* measurement = "environment";
 #ifdef FH_SUB_PEPPERS
 extern const char* plants_topic;
 #endif
+#ifdef FH_HOMESEC_H
+extern const char* doors_topic;
+extern std::array<OwensDoor, 5> owensDoors;
+#endif
 
 extern FhWifi fh_wifi;
 // WiFiClient espClient;
 extern FhPubSubClient mqtt_client;
-extern const char* doors_topic;
 extern FhNtpClient ntp_client;
 
 void setup() {
@@ -519,7 +522,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
   if (pch = strstr(topic, plants_topic)) {
     get_pepper_mqtt(payload, length);
   } else if (pch = strstr(topic, doors_topic)) {
-    get_doors_mqtt(payload, length);
+    //get_doors_mqtt(payload, length);
   }
   
 }

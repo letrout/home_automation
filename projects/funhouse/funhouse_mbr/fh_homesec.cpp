@@ -17,7 +17,7 @@ extern FhPubSubClient mqtt_client;
 
 InfluxDBClient influx_client(influxdb_url, influxdb_org, bucket_events, token_events);
 
-OwensDoor owensDoors[] = {OwensDoor("garage", "main"),
+std::array<OwensDoor, 5> owensDoors = {OwensDoor("garage", "main"),
                             OwensDoor("garage", "side"),
                             OwensDoor("mud", "back"),
                             OwensDoor("kitchen", "deck"),
