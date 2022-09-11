@@ -2,6 +2,15 @@
 #ifndef FH_TIME_H
 #define FH_TIME_H
 
+/**
+ * @brief Convert a string to epoch time, seconds
+ * 
+ * @param time_str String containing epoch timestamp; in sec, ms, us, or ns
+ * 
+ * @return uint32_t 
+ */
+uint32_t get_epoch_sec(const char* time_str);
+
 class FhNtpClient {
     private:
     public:

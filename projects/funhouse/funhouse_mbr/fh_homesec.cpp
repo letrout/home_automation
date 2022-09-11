@@ -11,6 +11,7 @@
 #include <InfluxDbClient.h>
 #include "fh_homesec.h"
 #include "fh_mqtt.h"
+#include "fh_time.h"
 #include "secrets_homesec.h"
 
 extern FhPubSubClient mqtt_client;
@@ -65,7 +66,7 @@ int8_t get_doors_mqtt(const byte* payload, const int length) {
     bool state;
     char msg[length];
     char *pch, *room, *loc, *ptr;
-    unsigned long time_ns;
+    uint32_t epoch_s;
     //memccpy(msg, payload, sizeof(payload), sizeof(char));
     for (int i = 0; i < length; i++) {
         msg[i] = (char)payload[i];
@@ -108,7 +109,8 @@ int8_t get_doors_mqtt(const byte* payload, const int length) {
     if (pch != NULL) {
         pch = strtok(pch, " ");
         if (pch != NULL ) {
-            time_ns = strtoul(strtok(NULL, " "), &ptr, 10);
+            //time_ns = strtoul(strtok(NULL, " "), &ptr, 10);
+            epoch_s = get_epoch_sec(strtok(NULL, " "));
         }
     }
     return ret;
