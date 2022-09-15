@@ -2,13 +2,14 @@
 #ifndef FH_HOMESEC_H
 #define FH_HOMESEC_H
 
+#include <map>
 #include "fh_mqtt.h"
 
 #define ROOM_LOC_LEN 16
 
 class OwensDoor {
     private:
-        bool is_open_;
+        bool is_open_ = false;
         unsigned long last_update_ms_;
         unsigned long last_open_ms_;
         char room_[ROOM_LOC_LEN] = {};
@@ -37,5 +38,13 @@ class OwensDoor {
  * @return int8_t error code (0 on success)
  */
 int8_t get_doors_mqtt(const byte* payload, const int length);
+
+/**
+ * @brief Provide a (pre-defined) map of description->door object
+ * where "description" is a combination of door room-loc
+ * 
+ * @return std::map<const char*, OwensDoor> 
+ */
+std::map<const char*, OwensDoor> get_doors();
 
 #endif /* FH_HOMESEC_H */

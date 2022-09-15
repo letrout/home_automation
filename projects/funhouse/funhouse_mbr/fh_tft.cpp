@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <map>
 #include "fh_tft.h"
 #include "fh_sensors.h"
 #include "fh_mqtt.h"
@@ -29,7 +30,7 @@ extern FhSht40 sht4x;
 extern FhScd40 scd4x;
 #endif
 #ifdef FH_HOMESEC_H
-extern std::array<OwensDoor, 5> owensDoors;
+extern std::map<const char*, OwensDoor> owensDoors;
 #endif
 
 extern uint8_t peppers[];
@@ -222,49 +223,59 @@ void FhTft::displayEnvironment(bool fill) {
 void FhTft::displayDoors(bool fill) {
 #ifdef FH_HOMESEC_H
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
-  for (auto &door: owensDoors) {
-    //Serial.printf("get state door %d...\n", i);
-    door.getCurrentState();
+  /*
+  std::map<const char*, OwensDoor>::iterator itr;
+  for (itr = owensDoors.begin(); itr != owensDoors.end(); itr++) {
+    itr->second.getCurrentState();
   }
+  */
+
+  // update the door states from InfluxDB
+  // FIXME: replace with MQTT sub 
+  for (auto &door: owensDoors) {
+    door.second.getCurrentState();
+  }
+
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Back: ");
-  if (owensDoors[2].is_open()) {
+  if (owensDoors.at("mud-back").is_open()) {
     setTextColor(ST77XX_RED, BG_COLOR);
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors[2].is_open());
+  println(owensDoors.at("mud-back").is_open());
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Deck: ");
-  if (owensDoors[3].is_open()) {
+  if (owensDoors.at("kitchen-deck").is_open()) {
     setTextColor(ST77XX_RED, BG_COLOR);
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors[3].is_open());
+  println(owensDoors.at("kitchen-deck").is_open());
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Front: ");
-  if (owensDoors[4].is_open()) {
+  if (owensDoors.at("library-front").is_open()) {
     setTextColor(ST77XX_RED, BG_COLOR);
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors[4].is_open());
+  println(owensDoors.at("library-front").is_open());
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("GMain: ");
-  if (owensDoors[0].is_open()) {
+  if (owensDoors.at("garage-main").is_open()) {
     setTextColor(ST77XX_RED, BG_COLOR);
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors[0].is_open());
+  println(owensDoors.at("garage-main").is_open());
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("GSide: ");
-  if (owensDoors[1].is_open()) {
+  if (owensDoors.at("garage-side").is_open()) {
     setTextColor(ST77XX_RED, BG_COLOR);
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors[1].is_open());
+  println(owensDoors.at("garage-side").is_open());
+
 #endif
 }

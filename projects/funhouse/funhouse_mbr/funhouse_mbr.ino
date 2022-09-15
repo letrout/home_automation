@@ -51,7 +51,7 @@ extern const char* plants_topic;
 #endif
 #ifdef FH_HOMESEC_H
 extern const char* doors_topic;
-extern std::array<OwensDoor, 5> owensDoors;
+std::map<const char*, OwensDoor> owensDoors;
 #endif
 
 extern FhWifi fh_wifi;
@@ -161,6 +161,11 @@ void setup() {
 
   // Connect to WiFi
   fh_wifi.connect();
+
+#ifdef FH_HOMESEC_H
+  extern const char* doors_topic;
+  owensDoors = get_doors();
+#endif
 
   // Connect to MQTT
   mqtt_client.setup();
@@ -423,8 +428,8 @@ void loop() {
   /************************** Beep! */
   if (digitalRead(BUTTON_SELECT)) {  
      Serial.println("** Beep! ***");
-     tone(SPEAKER, 988, 100);  // tone1 - B5
-     tone(SPEAKER, 1319, 200); // tone2 - E6
+     fh_tone(SPEAKER, 988, 100);  // tone1 - B5
+     fh_tone(SPEAKER, 1319, 200); // tone2 - E6
      delay(100);
      //tone(SPEAKER, 2000, 100);
   }
@@ -483,7 +488,7 @@ void read_sensors() {
 }
 
 
-void tone(uint8_t pin, float frequency, float duration) {
+void fh_tone(uint8_t pin, float frequency, float duration) {
   ledcSetup(1, frequency, 8);
   ledcAttachPin(pin, 1);
   ledcWrite(1, 128);

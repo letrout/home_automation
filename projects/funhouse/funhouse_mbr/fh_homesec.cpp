@@ -9,7 +9,6 @@
  */
 
 #include <InfluxDbClient.h>
-#include <map>
 #include "fh_homesec.h"
 #include "fh_mqtt.h"
 #include "fh_time.h"
@@ -18,21 +17,6 @@
 extern FhPubSubClient mqtt_client;
 
 InfluxDBClient influx_client(influxdb_url, influxdb_org, bucket_events, token_events);
-
-/*
-std::array<OwensDoor, 5> owensDoors = {OwensDoor("garage", "main"),
-                            OwensDoor("garage", "side"),
-                            OwensDoor("mud", "back"),
-                            OwensDoor("kitchen", "deck"),
-                            OwensDoor("library", "front")};
-                            */
-std::map<const char*, OwensDoor> owensDoors = {
-    {"garage-main", OwensDoor("garage", "main")},
-    {"garage-side", OwensDoor("garage", "side")},
-    {"mud-back", OwensDoor("mud", "back")},
-    {"kitchen-deck", OwensDoor("kitchen", "deck")},
-    {"library-front", OwensDoor("libray", "front")},
-    };
 
 OwensDoor::OwensDoor(const char* room, const char* loc) {
     strncpy(room_, room, ROOM_LOC_LEN);
@@ -69,6 +53,17 @@ uint8_t OwensDoor::getCurrentState() {
     is_open_ = state;
     // Serial.printf("%s %s open %d, time %f\n", room_, loc_, state, time_ms);
     return 0;
+}
+
+std::map<const char*, OwensDoor> get_doors() {
+    std::map<const char*, OwensDoor> owensDoors = {
+        {"garage-main", OwensDoor("garage", "main")},
+        {"garage-side", OwensDoor("garage", "side")},
+        {"mud-back", OwensDoor("mud", "back")},
+        {"kitchen-deck", OwensDoor("kitchen", "deck")},
+        {"library-front", OwensDoor("libray", "front")},
+    };
+    return owensDoors;
 }
 
 int8_t get_doors_mqtt(const byte* payload, const int length) {
