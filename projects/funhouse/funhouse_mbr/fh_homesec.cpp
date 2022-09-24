@@ -15,6 +15,7 @@
 #include "secrets_homesec.h"
 
 extern FhPubSubClient mqtt_client;
+extern std::map<const char*, OwensDoor> owensDoors;
 
 InfluxDBClient influx_client(influxdb_url, influxdb_org, bucket_events, token_events);
 
@@ -56,6 +57,7 @@ uint8_t OwensDoor::getCurrentState() {
 }
 
 std::map<const char*, OwensDoor> get_doors() {
+    // FIXME: generate this with an array of room/loc and make_key()?
     std::map<const char*, OwensDoor> owensDoors = {
         {"garage-main", OwensDoor("garage", "main")},
         {"garage-side", OwensDoor("garage", "side")},
@@ -66,10 +68,16 @@ std::map<const char*, OwensDoor> get_doors() {
     return owensDoors;
 }
 
+uint8_t make_key(const char* room, const char* loc, char* key) {
+    strncpy(key, room, strlen(room));
+    strncat(key, "-", 1);
+    strncat(key, loc, strlen(loc));
+    return 0;
+}
+
 int8_t get_doors_mqtt(const byte* payload, const int length) {
-    int8_t ret = 0;
     bool state;
-    char msg[length];
+    char msg[length], key[20];
     char *pch, *room, *loc, *ptr;
     uint32_t epoch_s;
     //memccpy(msg, payload, sizeof(payload), sizeof(char));
@@ -83,6 +91,8 @@ int8_t get_doors_mqtt(const byte* payload, const int length) {
     }
     if (pch != NULL) {
         room = strtok(NULL, ",");  // get the second token after split
+    } else {
+        return 1;
     }
     // Get the loc
     for (int i = 0; i < length; i++) {
@@ -94,6 +104,14 @@ int8_t get_doors_mqtt(const byte* payload, const int length) {
     }
     if (pch != NULL) {
         loc = strtok(NULL, ",");  // get the second token after split
+    } else {
+        return 2;
+    }
+    if (make_key(room, loc, key) !=0 ) {
+        return 3;
+    }
+    if (!owensDoors.count(key)) {
+        return 4;
     }
     // Get the door state
     for (int i = 0; i < length; i++) {
@@ -102,9 +120,13 @@ int8_t get_doors_mqtt(const byte* payload, const int length) {
     pch = strstr(msg, "state="); // payload starting at "room="
     if (pch != NULL) {
         pch = strtok(pch, "="); // split result on delimiters
+    } else {
+        return 5;
     }
     if (pch != NULL) {
         state = atoi(strtok(NULL, ","));  // get the second token after split
+    } else {
+        return 6;
     }
     // Get the time
     for (int i = 0; i < sizeof(payload); i++) {
@@ -117,6 +139,10 @@ int8_t get_doors_mqtt(const byte* payload, const int length) {
             //time_ns = strtoul(strtok(NULL, " "), &ptr, 10);
             epoch_s = get_epoch_sec(strtok(NULL, " "));
         }
+    } else {
+        return 7;
     }
-    return ret;
+    // Update the door object with the new data
+    //owensDoors.at(key).
+    return 0;
 }

@@ -21,6 +21,7 @@ class OwensDoor {
         unsigned long last_open_ms() { return last_open_ms_; }
         const char* room() const { return room_; }
         const char* loc() const { return loc_; }
+        static uint8_t make_key(const char* room, const char* loc, char* key);
         /**
          * @brief GUpdate the object with current door state
          * 
