@@ -24,7 +24,7 @@ OwensDoor::OwensDoor(const char* room, const char* loc) {
     strncpy(loc_, loc, ROOM_LOC_LEN);
 }
 
-uint8_t OwensDoor::getCurrentStateMqtt() {
+uint8_t OwensDoor::setCurrentState(bool is_open, uint32_t epoch_s) {
     return 0;
 }
 
@@ -68,7 +68,7 @@ std::map<const char*, OwensDoor> get_doors() {
     return owensDoors;
 }
 
-uint8_t make_key(const char* room, const char* loc, char* key) {
+uint8_t OwensDoor::make_key(const char* room, const char* loc, char* key) {
     strncpy(key, room, strlen(room));
     strncat(key, "-", 1);
     strncat(key, loc, strlen(loc));
@@ -77,7 +77,7 @@ uint8_t make_key(const char* room, const char* loc, char* key) {
 
 int8_t get_doors_mqtt(const byte* payload, const int length) {
     bool state;
-    char msg[length], key[20];
+    char msg[length], key[ROOM_LOC_LEN * 2 + 1];
     char *pch, *room, *loc, *ptr;
     uint32_t epoch_s;
     //memccpy(msg, payload, sizeof(payload), sizeof(char));
@@ -107,7 +107,7 @@ int8_t get_doors_mqtt(const byte* payload, const int length) {
     } else {
         return 2;
     }
-    if (make_key(room, loc, key) !=0 ) {
+    if (OwensDoor::make_key(room, loc, key) !=0 ) {
         return 3;
     }
     if (!owensDoors.count(key)) {

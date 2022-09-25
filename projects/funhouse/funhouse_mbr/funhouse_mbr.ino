@@ -527,7 +527,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
   if (pch = strstr(topic, plants_topic)) {
     get_pepper_mqtt(payload, length);
   } else if (pch = strstr(topic, doors_topic)) {
-    //get_doors_mqtt(payload, length);
+    get_doors_mqtt(payload, length);
   }
   
 }
