@@ -41,11 +41,22 @@ class OwensDoor {
 int8_t get_doors_mqtt(const byte* payload, const int length);
 
 /**
+ * @brief comparator for char* keys of our map of of OwensDoor's
+ * 
+ */
+struct char_cmp { 
+    bool operator () (const char *a,const char *b) const 
+    {
+        return strcmp(a,b)<0;
+    } 
+};
+
+/**
  * @brief Provide a (pre-defined) map of description->door object
  * where "description" is a combination of door room-loc
  * 
  * @return std::map<const char*, OwensDoor> 
  */
-std::map<const char*, OwensDoor> get_doors();
+std::map<const char*, OwensDoor, char_cmp> get_doors();
 
 #endif /* FH_HOMESEC_H */

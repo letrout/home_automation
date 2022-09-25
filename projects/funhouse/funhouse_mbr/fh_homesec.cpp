@@ -15,7 +15,7 @@
 #include "secrets_homesec.h"
 
 extern FhPubSubClient mqtt_client;
-extern std::map<const char*, OwensDoor> owensDoors;
+extern std::map<const char*, OwensDoor, char_cmp> owensDoors;
 
 InfluxDBClient influx_client(influxdb_url, influxdb_org, bucket_events, token_events);
 
@@ -56,9 +56,9 @@ uint8_t OwensDoor::getCurrentState() {
     return 0;
 }
 
-std::map<const char*, OwensDoor> get_doors() {
+std::map<const char*, OwensDoor, char_cmp> get_doors() {
     // FIXME: generate this with an array of room/loc and make_key()?
-    std::map<const char*, OwensDoor> owensDoors = {
+    std::map<const char*, OwensDoor, char_cmp> owensDoors = {
         {"garage-main", OwensDoor("garage", "main")},
         {"garage-side", OwensDoor("garage", "side")},
         {"mud-back", OwensDoor("mud", "back")},

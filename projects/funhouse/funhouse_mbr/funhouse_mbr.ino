@@ -51,7 +51,7 @@ extern const char* plants_topic;
 #endif
 #ifdef FH_HOMESEC_H
 extern const char* doors_topic;
-std::map<const char*, OwensDoor> owensDoors;
+std::map<const char*, OwensDoor, char_cmp> owensDoors;
 #endif
 
 extern FhWifi fh_wifi;
