@@ -30,7 +30,7 @@ extern FhSht40 sht4x;
 extern FhScd40 scd4x;
 #endif
 #ifdef FH_HOMESEC_H
-extern std::map<const char*, OwensDoor> owensDoors;
+extern std::map<const char*, OwensDoor, char_cmp> owensDoors;
 #endif
 
 extern uint8_t peppers[];
@@ -232,9 +232,11 @@ void FhTft::displayDoors(bool fill) {
 
   // update the door states from InfluxDB
   // FIXME: replace with MQTT sub 
+  /*
   for (auto &door: owensDoors) {
     door.second.getCurrentState();
   }
+  */
 
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Back: ");
