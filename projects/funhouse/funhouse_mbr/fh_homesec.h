@@ -11,6 +11,7 @@ class OwensDoor {
     private:
         bool is_open_ = false;
         unsigned long last_update_ms_;
+        time_t last_update_epoch_s_;
         unsigned long last_open_ms_;
         char room_[ROOM_LOC_LEN] = {};
         char loc_[ROOM_LOC_LEN] = {};
@@ -28,7 +29,7 @@ class OwensDoor {
          * @return uint8_t error code - 0 on success
          */
         uint8_t getCurrentState();
-        uint8_t setCurrentState(bool is_open, uint32_t epoch_s = 0);
+        uint8_t setCurrentState(bool is_open, time_t epoch_s = 0);
 };
 
 /**
