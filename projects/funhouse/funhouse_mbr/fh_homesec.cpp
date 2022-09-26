@@ -24,7 +24,13 @@ OwensDoor::OwensDoor(const char* room, const char* loc) {
     strncpy(loc_, loc, ROOM_LOC_LEN);
 }
 
-uint8_t OwensDoor::setCurrentState(bool is_open, uint32_t epoch_s) {
+uint8_t OwensDoor::setCurrentState(bool is_open, time_t epoch_s) {
+    is_open_ = is_open;
+    if (epoch_s) {
+        last_update_epoch_s_ = epoch_s;
+    } else {
+        time(&last_update_epoch_s_);
+    }
     return 0;
 }
 
@@ -70,53 +76,74 @@ std::map<const char*, OwensDoor, char_cmp> get_doors() {
 
 uint8_t OwensDoor::make_key(const char* room, const char* loc, char* key) {
     strncpy(key, room, strlen(room));
+    Serial.printf("room: %s, roomlen: %lu, key: %s, ", room, strlen(room), key);
     strncat(key, "-", 1);
+    Serial.printf("key: %s, ", key);
     strncat(key, loc, strlen(loc));
+    Serial.printf("key: %s\n", key);
     return 0;
 }
 
 int8_t get_doors_mqtt(const byte* payload, const int length) {
     bool state;
-    char msg[length], key[ROOM_LOC_LEN * 2 + 1];
-    char *pch, *room, *loc, *ptr;
-    uint32_t epoch_s;
+    char msg[length + 1], key[ROOM_LOC_LEN * 2 + 1];
+    char *pch, *ptr;
+    char room[ROOM_LOC_LEN + 1], loc[ROOM_LOC_LEN + 1];
+    uint32_t epoch_s = 0;
+    memset(room, '\0', sizeof(room));
+    memset(loc, '\0', sizeof(loc));
+    memset(key, '\0', sizeof(key));
     //memccpy(msg, payload, sizeof(payload), sizeof(char));
     for (int i = 0; i < length; i++) {
         msg[i] = (char)payload[i];
+        //msg[i + 1] = '\0';
     }
+    msg[length] = '\0';
+    Serial.println(msg);
     //Get the room
     pch = strstr(msg, "room="); // payload starting at "room="
     if (pch != NULL) {
         pch = strtok(pch, "="); // split result on delimiters
     }
     if (pch != NULL) {
-        room = strtok(NULL, ",");  // get the second token after split
+        //ptr = strtok(NULL, ",");  // get the second token after split
+        strncpy(room, strtok(NULL, ","), ROOM_LOC_LEN);
     } else {
         return 1;
     }
     // Get the loc
     for (int i = 0; i < length; i++) {
         msg[i] = (char)payload[i];
+        //msg[i + 1] = '\0';
     }
+    msg[length] = '\0';
     pch = strstr(msg, "room_loc="); // payload starting at "room="
     if (pch != NULL) {
         pch = strtok(pch, "="); // split result on delimiters
     }
     if (pch != NULL) {
-        loc = strtok(NULL, ",");  // get the second token after split
+        //loc = strtok(NULL, ",");  // get the second token after split
+        //loc = strtok(NULL, ",");
+        //strcpy(loc, ptr);
+        strncpy(loc, strtok(NULL, ","), ROOM_LOC_LEN);
     } else {
         return 2;
     }
-    if (OwensDoor::make_key(room, loc, key) !=0 ) {
+    Serial.printf("ROOM: %s, LOC: %s\n", room, loc);
+    if (OwensDoor::make_key(room, loc, key) !=0) {
+        Serial.printf("ROOM: %s, LOC: %s, key: %s\n", room, loc, key);
         return 3;
     }
-    if (!owensDoors.count(key)) {
+    if (owensDoors.count(key) != 1) {
+        Serial.printf("room: %s, loc: %s, key: %s, count: %d\n", room, loc, key, owensDoors.count(key));
         return 4;
     }
     // Get the door state
     for (int i = 0; i < length; i++) {
         msg[i] = (char)payload[i];
+        //msg[i + 1] = '\0';
     }
+    msg[length] = '\0';
     pch = strstr(msg, "state="); // payload starting at "room="
     if (pch != NULL) {
         pch = strtok(pch, "="); // split result on delimiters
@@ -125,24 +152,25 @@ int8_t get_doors_mqtt(const byte* payload, const int length) {
     }
     if (pch != NULL) {
         state = atoi(strtok(NULL, ","));  // get the second token after split
+        Serial.printf("%s state: %d\n", key, state);
     } else {
         return 6;
     }
     // Get the time
-    for (int i = 0; i < sizeof(payload); i++) {
+    for (int i = 0; i < length; i++) {
         msg[i] = (char)payload[i];
+        //msg[i + 1] = '\0';
     }
+    msg[length] = '\0';
     pch = strstr(msg, "state=");
     if (pch != NULL) {
         pch = strtok(pch, " ");
         if (pch != NULL ) {
             //time_ns = strtoul(strtok(NULL, " "), &ptr, 10);
             epoch_s = get_epoch_sec(strtok(NULL, " "));
+            Serial.printf("%s time: %lu\n", key, epoch_s);
         }
-    } else {
-        return 7;
     }
     // Update the door object with the new data
-    //owensDoors.at(key).
-    return 0;
+    return owensDoors.at(key).setCurrentState(state, epoch_s);
 }
