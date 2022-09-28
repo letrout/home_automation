@@ -6,7 +6,7 @@
 
 #include "door_monitor.h"
 // Use appropriate header file for the location
-#include "kitchen.h"
+#include "mudroom.h"
 #include "secrets.h"
 
 #define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
@@ -101,7 +101,7 @@ void loop() {
           measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
   int len = strlen(mqtt_msg);
   mqtt_reconnect();
-  client.publish(topic, (uint8_t*)mqtt_msg, len, true);
+  client.publish(topic, (uint8_t*)mqtt_msg, len, false);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
   door_last_state = door_state;
 
