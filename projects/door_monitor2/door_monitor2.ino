@@ -6,7 +6,7 @@
 
 #include "door_monitor.h"
 // Use appropriate header file for the location
-#include "mudroom.h"
+#include "kitchen.h"
 #include "secrets.h"
 
 #define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
@@ -90,10 +90,11 @@ void loop() {
 
   door_state = digitalRead(door_pin);
   if (door_state == HIGH) {
-    Serial.println("Door open");
+    Serial.print("Door open: ");
   } else {
-    Serial.println("Door closed");
+    Serial.print("Door closed: ");
   }
+  Serial.println(millis());
 
   // MQTT publish all door states (even if unchanged)
   // message in influxdb2 line protocol format

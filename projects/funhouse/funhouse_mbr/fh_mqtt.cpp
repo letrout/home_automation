@@ -12,6 +12,7 @@
 #include "secrets.h"
 
 #define WIFI_RETRIES 10
+const uint16_t fh_mqtt_buffer_size = 512;  //set the MQTT buffer size (see setBufferSize())
 
 FhWifi fh_wifi;
 WiFiClient espClient;
@@ -70,6 +71,7 @@ void FhPubSubClient::setup(void) {
 void FhPubSubClient::setMqttServer(void) {
     //setServer(mqtt_broker, mqtt_port);
     setServer(mqtt_broker, mqtt_port);
+    //setBufferSize(fh_mqtt_buffer_size);
 }
 
 int FhPubSubClient::publishTopic(const char *payload) {
@@ -80,9 +82,9 @@ void FhPubSubClient::mqttReconnect(void) {
     while (!connected()) {
         String client_id = "esp32-client-";
         client_id += String(WiFi.macAddress());
-        Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
+        Serial.printf("Client-id %s, connect...\n", client_id.c_str());
         if (connect(client_id.c_str(), mqtt_username, mqtt_password)) {
-            Serial.println("Public emqx mqtt broker connected");
+            Serial.println("MQTT broker connected");
         } else {
             Serial.print("failed with state ");
             Serial.print(state());

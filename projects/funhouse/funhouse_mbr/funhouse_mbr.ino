@@ -162,21 +162,22 @@ void setup() {
   // Connect to WiFi
   fh_wifi.connect();
 
-#ifdef FH_HOMESEC_H
-  extern const char* doors_topic;
-  owensDoors = get_doors();
-#endif
-
   // Connect to MQTT
   mqtt_client.setup();
   mqtt_client.setMqttServer();
   mqtt_client.setCallback(callback);
+  mqtt_client.setBufferSize(512);
+  //mqtt_client.setSocketTimeout(30);
+  mqtt_client.setKeepAlive(60);
   mqtt_client.mqttReconnect();
 #ifdef FH_SUB_PEPPERS
  // get pepper plant data
- mqtt_client.subscribe(plants_topic);
+ //mqtt_client.subscribe(plants_topic);
 #endif
 #ifdef FH_HOMESEC_H
+  extern const char* doors_topic;
+  owensDoors = get_doors();
+  //mqtt_client.subscribe(doors_topic, 1);
   mqtt_client.subscribe(doors_topic);
 #endif
 
@@ -193,6 +194,12 @@ void loop() {
   unsigned long now = millis();
   bool sensors_update = false;
   bool mqtt_pubnow = false;
+
+  mqtt_client.loop();
+  delay(100);
+  if (mqtt_client.state() != MQTT_CONNECTED) {
+    Serial.printf("MQTT state: %d\n", mqtt_client.state());
+  }
 
   // check timers
   if ((now - sensor_last_ms) > sensor_ms) {
@@ -293,7 +300,7 @@ void loop() {
     mqtt_pub_sensors();
     mqtt_last_ms = now;
   } else {
-    mqtt_client.loop();
+    // mqtt_client.loop();
   }
 
   /****************** BUTTONS */
@@ -516,18 +523,21 @@ void printSerialNumber(uint16_t serial0, uint16_t serial1, uint16_t serial2) {
 
 void callback(char *topic, byte *payload, unsigned int length) {
   char* pch;
-  Serial.print("Message arrived in topic: ");
+  uint8_t retval;
+  Serial.print("topic: ");
   Serial.println(topic);
-  Serial.print("Message:");
+  Serial.print("msg:");
   for (int i = 0; i < length; i++) {
     Serial.print((char) payload[i]);
   }
   Serial.println();
-  Serial.println("-----------------------");
+  //Serial.println("-----------------------");
   if (pch = strstr(topic, plants_topic)) {
-    get_pepper_mqtt(payload, length);
+    retval = get_pepper_mqtt(payload, length);
   } else if (pch = strstr(topic, doors_topic)) {
-    get_doors_mqtt(payload, length);
+    unsigned long start = millis();
+    retval = get_doors_mqtt(payload, length);
+    Serial.printf("Doors sub: %d in %lu ms\n", retval, millis() - start);
   }
   
 }
