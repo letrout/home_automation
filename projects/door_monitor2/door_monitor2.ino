@@ -30,6 +30,11 @@ const char* measurement = "sensor";
 const char* msmt_type = "door";
 const char* topic = "influx/Owens/events/doors";
 
+// timers
+const unsigned long heartbeat_ms = 10 * 1000; // interval to publish events with no state change
+const unsigned long publish_ms = 1 * 1000;  // interval to publish on state change
+unsigned long last_publish = 0; // last time we did MQTT publish
+
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
@@ -98,17 +103,38 @@ void loop() {
 
   // MQTT publish all door states (even if unchanged)
   // message in influxdb2 line protocol format
-  sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
-          measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
-  int len = strlen(mqtt_msg);
-  mqtt_reconnect();
-  client.publish(topic, (uint8_t*)mqtt_msg, len, false);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
-  door_last_state = door_state;
+  if (door_state != door_last_state) {
+    sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
+            measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
+    int len = strlen(mqtt_msg);
+    mqtt_reconnect();
+    client.publish(topic, (uint8_t*)mqtt_msg, len, false);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+    door_last_state = door_state;
+    last_publish = now;
+  } else if ((now - last_publish) > heartbeat_ms) {
+    sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
+            measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
+    int len = strlen(mqtt_msg);
+    mqtt_reconnect();
+    client.publish(topic, (uint8_t*)mqtt_msg, len, false);
+    memset(mqtt_msg, 0, sizeof mqtt_msg);
+    //door_last_state = door_state;
+    last_publish = now;
+  }
 
   client.loop();
-  delay(1000);
+  delay(publish_ms);
 } // loop()
+
+boolean mqtt_pub(int state) {
+  char mqtt_msg [128];
+  sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
+            measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
+  int len = strlen(mqtt_msg);
+  mqtt_reconnect();
+  return client.publish(topic, (uint8_t*)mqtt_msg, len, false);
+}
 
 void print_time() {
   Serial.print(timeClient.getHours());
