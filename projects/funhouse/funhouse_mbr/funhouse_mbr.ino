@@ -168,7 +168,7 @@ void setup() {
   mqtt_client.setCallback(callback);
   mqtt_client.setBufferSize(512);
   //mqtt_client.setSocketTimeout(30);
-  mqtt_client.setKeepAlive(60);
+  mqtt_client.setKeepAlive(70);
   mqtt_client.mqttReconnect();
 #ifdef FH_SUB_PEPPERS
  // get pepper plant data
@@ -446,7 +446,7 @@ void loop() {
   ledcWrite(0, LED_dutycycle);
   LED_dutycycle += 32;
 
-  delay(1000);
+  //delay(500);
 } // loop()
 
 
