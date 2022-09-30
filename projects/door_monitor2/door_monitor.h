@@ -8,7 +8,7 @@
  * @param state current door state
  * @return boolean 
  */
-boolean mqtt_pub(int state);
+boolean mqtt_pub_door(int state);
 
 /**
  * @brief print the current time to serial

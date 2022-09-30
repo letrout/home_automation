@@ -104,30 +104,25 @@ void loop() {
   // MQTT publish all door states (even if unchanged)
   // message in influxdb2 line protocol format
   if (door_state != door_last_state) {
-    sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
-            measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
-    int len = strlen(mqtt_msg);
-    mqtt_reconnect();
-    client.publish(topic, (uint8_t*)mqtt_msg, len, false);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-    door_last_state = door_state;
-    last_publish = now;
+    if (mqtt_pub_door(door_state)) {
+      door_last_state = door_state;
+      last_publish = now;
+    } else {
+      Serial.println("FAIL to publish door state");
+    }
   } else if ((now - last_publish) > heartbeat_ms) {
-    sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
-            measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
-    int len = strlen(mqtt_msg);
-    mqtt_reconnect();
-    client.publish(topic, (uint8_t*)mqtt_msg, len, false);
-    memset(mqtt_msg, 0, sizeof mqtt_msg);
-    //door_last_state = door_state;
-    last_publish = now;
+    if (mqtt_pub_door(door_state)) {
+      last_publish = now;
+    } else {
+      Serial.println("FAIL to publish door state");
+    }
   }
 
   client.loop();
   delay(publish_ms);
 } // loop()
 
-boolean mqtt_pub(int state) {
+boolean mqtt_pub_door(int state) {
   char mqtt_msg [128];
   sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
             measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
