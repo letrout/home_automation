@@ -11,6 +11,29 @@ const char* main_room_loc = "main";
 const char* type = "door";
 
 /**
+ * @brief MQTT publish side door state, in Influxdb line protocol
+ * 
+ * @param state current side door state
+ * @return boolean return from client.publish()
+ */
+boolean mqtt_pub_side(int state);
+
+/**
+ * @brief MQTT publish main door state, in Influxdb line protocol
+ * 
+ * @param state current main door state
+ * @return boolean return from client.publish()
+ */
+boolean mqtt_pub_main(int state);
+
+/**
+ * @brief MQTT publish WiFi info
+ * 
+ * @return boolean return from client.publish()
+ */
+boolean mqtt_pub_wifi();
+
+/**
  * @brief print the current time to serial
  * 
  */
