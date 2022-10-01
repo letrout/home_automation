@@ -29,11 +29,14 @@ char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
 const char* measurement = "sensor";
 const char* msmt_type = "door";
 const char* topic = "influx/Owens/events/doors";
+const char* topic_infra = "influx/Owens/infra";
 
 // timers
 const unsigned long heartbeat_ms = 10 * 1000; // interval to publish events with no state change
 const unsigned long publish_ms = 1 * 1000;  // interval to publish on state change
 unsigned long last_publish = 0; // last time we did MQTT publish
+const unsigned long publish_infra_ms = 60 * 1000;  // interval to publish infra data
+unsigned long last_publish_infra = 0; // last time we did infra MQTT publish
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -117,6 +120,14 @@ void loop() {
       Serial.println("FAIL to publish door state");
     }
   }
+  // publish infra?
+  if ((now - last_publish_infra) > publish_infra_ms) {
+    if (mqtt_pub_wifi()) {
+      last_publish_infra = now;
+    } else {
+      Serial.println("FAIL to publish WiFi RSSI");
+    }
+  }
 
   client.loop();
   delay(publish_ms);
@@ -129,6 +140,15 @@ boolean mqtt_pub_door(int state) {
   int len = strlen(mqtt_msg);
   mqtt_reconnect();
   return client.publish(topic, (uint8_t*)mqtt_msg, len, false);
+}
+
+boolean mqtt_pub_wifi() {
+  char mqtt_msg [128];
+  sprintf(mqtt_msg, "wifi,location=%s,room=%s,room_loc=%s,ssid=%s,host=%s rssi=%d %lu%s",
+            location, room, room_loc, WiFi.SSID().c_str(), WiFi.hostname().c_str(), WiFi.RSSI(), timeClient.getEpochTime(), "000000000");
+  int len = strlen(mqtt_msg);
+  mqtt_reconnect();
+  return client.publish(topic_infra, (uint8_t*)mqtt_msg, len, false);
 }
 
 void print_time() {
