@@ -293,7 +293,7 @@ void loop() {
     }
   } else {
     tft.setDisplayMode(DISPLAY_MODE_SLEEP);
-    pixels.setMode(DOTSTAR_MODE_SLEEP);
+    pixels.setMode(DOTSTAR_MODE_SLEEP, true);
   }
   Serial.println("done with button section");
 
