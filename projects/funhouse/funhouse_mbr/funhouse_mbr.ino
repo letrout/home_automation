@@ -47,7 +47,7 @@ const unsigned long scd4x_ms = 10000; // read SCD4x sensors every x ms, min 5000
 uint8_t LED_dutycycle = 0;
 const char* measurement = "environment";
 #ifdef FH_SUB_PEPPERS
-extern const char* plants_topic;
+extern const char* topic_plants;
 #endif
 #ifdef FH_HOMESEC_H
 extern const char* doors_topic;
@@ -62,6 +62,7 @@ extern FhNtpClient ntp_client;
 extern const char* location;
 extern const char* room;
 extern const char* room_loc;
+extern const char* topic_infra;
 
 void setup() {
 
@@ -176,7 +177,7 @@ void setup() {
   mqtt_client.mqttReconnect();
 #ifdef FH_SUB_PEPPERS
  // get pepper plant data
- //mqtt_client.subscribe(plants_topic);
+ //mqtt_client.subscribe(topic_plants);
 #endif
 #ifdef FH_HOMESEC_H
   extern const char* doors_topic;
@@ -536,7 +537,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println();
   //Serial.println("-----------------------");
-  if (pch = strstr(topic, plants_topic)) {
+  if (pch = strstr(topic, topic_plants)) {
     retval = get_pepper_mqtt(payload, length);
   } else if (pch = strstr(topic, doors_topic)) {
     unsigned long start = millis();
@@ -605,9 +606,9 @@ void mqtt_pub_sensors() {
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   #endif
-  sprintf(mqtt_msg, "%s,sensor=wifi,location=%s,room=%s,room_loc=%s rssi=%d",
-    measurement, location, room, room_loc, fh_wifi.RSSI());
-  mqtt_client.publishTopic(mqtt_msg);
+  sprintf(mqtt_msg, "wifi,location=%s,room=%s,room_loc=%s,ssid=%s,host=%s rssi=%d",
+    location, room, room_loc, fh_wifi.SSID().c_str(), fh_wifi.getHostname(), fh_wifi.RSSI());
+  mqtt_client.publish(topic_infra, mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
 
   return;
