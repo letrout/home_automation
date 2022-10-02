@@ -21,7 +21,9 @@ extern uint8_t peppers[];
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
 #endif
+#ifdef FH_HOMESEC_H
 extern std::map<const char*, OwensDoor, char_cmp> owensDoors;
+#endif
 
 FhDotstar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
 
@@ -53,6 +55,7 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
             if (ambient_adjust) {
                 setBrightness(ambientAdjust(true, 5, 100));
             }
+#ifdef FH_HOMESEC_H
             if (owensDoors.at("library-front").is_open()) {
                 setPixelColor(0, Color(0, 255, 0));
             }
@@ -68,6 +71,7 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
             if (owensDoors.at("mud-back").is_open()) {
                 setPixelColor(4, Color(0, 255, 0));
             }
+#endif
             show();
             break;
         case DOTSTAR_MODE_RAINBOW:
