@@ -99,7 +99,7 @@ void loop() {
   }
   //print_time();
 
-  now = timeClient.getEpochTime();
+  //now = timeClient.getEpochTime();
   side_door_state = digitalRead(side_door_pin);
   main_door_state = digitalRead(main_door_pin);
   if (side_door_state == HIGH) {
@@ -225,7 +225,7 @@ void mqtt_reconnect() {
     } else {
       Serial.print("failed with state ");
       Serial.print(client.state());
-      delay(2000);
+      delay(1000);
     }
   }
 }
