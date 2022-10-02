@@ -58,6 +58,10 @@ extern FhWifi fh_wifi;
 // WiFiClient espClient;
 extern FhPubSubClient mqtt_client;
 extern FhNtpClient ntp_client;
+// Location info (from secrets.h)
+extern const char* location;
+extern const char* room;
+extern const char* room_loc;
 
 void setup() {
 
@@ -309,7 +313,7 @@ void loop() {
   cursor_y += tft_line_step;
   tft.setTextColor(ST77XX_YELLOW);
   tft.print("Buttons: ");
-  if (! digitalRead(BUTTON_DOWN)) {  
+  if (! digitalRead(BUTTON_DOWN)) {
     tft.setTextColor(0x808080);
   } else {
     Serial.println("DOWN pressed");
@@ -444,7 +448,7 @@ void loop() {
   /************************** LEDs */
   // pulse red LED
   ledcWrite(0, LED_dutycycle);
-  LED_dutycycle += 32;
+  LED_dutycycle += 16;
 
   //delay(500);
 } // loop()
@@ -551,26 +555,30 @@ void mqtt_pub_sensors() {
 
   // DPS310
   if ((millis() - dps.last_read_ms()) <= max_mqtt_pub_delay_ms) {
-    sprintf(mqtt_msg, "%s,sensor=DPS310 temp_f=%f,pressure=%f", measurement, dps.last_temp_f(), dps.last_press_hpa());
+    sprintf(mqtt_msg, "%s,sensor=DPS310,location=%s,room=%s,room_loc=%s temp_f=%f,pressure=%f",
+      measurement, location, room, room_loc, dps.last_temp_f(), dps.last_press_hpa());
     mqtt_client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   // AHT20
   if ((millis() - aht.last_read_ms()) <= max_mqtt_pub_delay_ms) {
-    sprintf(mqtt_msg, "%s,sensor=AHT20 temp_f=%f,humidity=%f", measurement, aht.last_temp_f(), aht.last_hum_pct());
+    sprintf(mqtt_msg, "%s,sensor=AHT20,location=%s,room=%s,room_loc=%s temp_f=%f,humidity=%f",
+      measurement, location, room, room_loc, aht.last_temp_f(), aht.last_hum_pct());
     mqtt_client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   // Ambient light
   if ((millis() - ambientLight.last_read_ms()) <= max_mqtt_pub_delay_ms) {
-    sprintf(mqtt_msg, "%s,sensor=funhouse light=%d", measurement, ambientLight.last_ambient_light());
+    sprintf(mqtt_msg, "%s,sensor=funhouse,location=%s,room=%s,room_loc=%s light=%d",
+      measurement, location, room, room_loc, ambientLight.last_ambient_light());
     mqtt_client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   // SHT40
   #ifdef ADAFRUIT_SHT4x_H
   if ((millis() - sht4x.last_read_ms()) <= max_mqtt_pub_delay_ms) {
-    sprintf(mqtt_msg, "%s,sensor=SHT40 temp_f=%f,humidity=%f", measurement, sht4x.last_temp_f(), sht4x.last_hum_pct());
+    sprintf(mqtt_msg, "%s,sensor=SHT40,location=%s,room=%s,room_loc=%s temp_f=%f,humidity=%f",
+      measurement, location, room, room_loc, sht4x.last_temp_f(), sht4x.last_hum_pct());
     mqtt_client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
@@ -578,7 +586,8 @@ void mqtt_pub_sensors() {
   #ifdef SENSIRIONI2CSCD4X_H
   // SCD40
   if (scd4x.present() && ((millis() - scd4x.last_update_ms()) <= max_mqtt_pub_delay_ms)) {
-    sprintf(mqtt_msg, "%s,sensor=SCD40 co2=%d,temp_f=%f,humidity=%f", measurement, scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
+    sprintf(mqtt_msg, "%s,sensor=SCD40,location=%s,room=%s,room_loc=%s co2=%d,temp_f=%f,humidity=%f",
+      measurement, location, room, room_loc, scd4x.last_co2_ppm(), scd4x.last_temp_f(), scd4x.last_hum_pct());
     mqtt_client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
@@ -586,15 +595,18 @@ void mqtt_pub_sensors() {
   // SGP30
   #ifdef ADAFRUIT_SGP30_H
   if (sgp30.present() & (millis() - sgp30.last_read_ms()) <= max_mqtt_pub_delay_ms) {
-    sprintf(mqtt_msg, "%s,sensor=SGP30 tvoc=%d,eco2=%d", measurement, sgp30.last_tvoc(), sgp30.last_eco2());
+    sprintf(mqtt_msg, "%s,sensor=SGP30,location=%s,room=%s,room_loc=%s tvoc=%d,eco2=%d",
+      measurement, location, room, room_loc, sgp30.last_tvoc(), sgp30.last_eco2());
     mqtt_client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
-    sprintf(mqtt_msg, "%s,sensor=SGP30 h2=%d,ethanol=%d", measurement, sgp30.last_raw_h2(), sgp30.last_raw_ethanol());
+    sprintf(mqtt_msg, "%s,sensor=SGP30,location=%s,room=%s,room_loc=%s h2=%d,ethanol=%d",
+      measurement, location, room, room_loc, sgp30.last_raw_h2(), sgp30.last_raw_ethanol());
     mqtt_client.publishTopic(mqtt_msg);
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   #endif
-  sprintf(mqtt_msg, "%s,sensor=wifi rssi=%d", measurement, fh_wifi.RSSI());
+  sprintf(mqtt_msg, "%s,sensor=wifi,location=%s,room=%s,room_loc=%s rssi=%d",
+    measurement, location, room, room_loc, fh_wifi.RSSI());
   mqtt_client.publishTopic(mqtt_msg);
   memset(mqtt_msg, 0, sizeof mqtt_msg);
 
