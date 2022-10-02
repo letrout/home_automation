@@ -245,7 +245,8 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors.at("mud-back").is_open());
+  print(owensDoors.at("mud-back").is_open());
+  println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Deck: ");
   if (owensDoors.at("kitchen-deck").is_open()) {
@@ -253,7 +254,8 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors.at("kitchen-deck").is_open());
+  print(owensDoors.at("kitchen-deck").is_open());
+  println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Front: ");
   if (owensDoors.at("library-front").is_open()) {
@@ -261,7 +263,8 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors.at("library-front").is_open());
+  print(owensDoors.at("library-front").is_open());
+  println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("GMain: ");
   if (owensDoors.at("garage-main").is_open()) {
@@ -269,7 +272,8 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors.at("garage-main").is_open());
+  print(owensDoors.at("garage-main").is_open());
+  println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("GSide: ");
   if (owensDoors.at("garage-side").is_open()) {
@@ -277,7 +281,9 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  println(owensDoors.at("garage-side").is_open());
+  print(owensDoors.at("garage-side").is_open());
+  println("          ");
+  println("          ");
 
 #endif
 }
