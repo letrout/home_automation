@@ -17,6 +17,7 @@
 class FhTft : public Adafruit_ST7789 {
   private:
     byte display_mode_;
+    uint32_t last_update_ms_ = 0; // track the last time the display was updated
     /**
      * @brief print display of sensors as they are discovered
      * 

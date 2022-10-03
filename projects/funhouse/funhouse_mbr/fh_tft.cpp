@@ -15,6 +15,8 @@
 #include "fh_time.h"
 #include "fh_homesec.h"
 
+const uint32_t update_ms = 1 * 1000; // Only update the display every X ms
+
 // sensors objects
 extern FhAmbientLight ambientLight;
 extern float prim_temp_f, prim_hum;
@@ -78,6 +80,13 @@ uint8_t FhTft::setDisplayMode(byte mode, bool fill) {
 }
 
 void FhTft::displaySensors(bool fill) {
+  if ((millis() - last_update_ms_) < update_ms) {
+    // display timer not expired, don't update display
+    return;
+  } else {
+    // time to update display
+    last_update_ms_ = millis();
+  }
   setDisplayMode(DISPLAY_MODE_ALL_SENSORS, fill);
 
   // DPS310
@@ -173,6 +182,13 @@ void FhTft::displaySensors(bool fill) {
 }
 
 void FhTft::displayEnvironment(bool fill) {
+  if ((millis() - last_update_ms_) < update_ms) {
+    // display timer not expired, don't update display
+    return;
+  } else {
+    // time to update display
+    last_update_ms_ = millis();
+  }
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
   // Time
   char timeStr[9];
@@ -222,6 +238,13 @@ void FhTft::displayEnvironment(bool fill) {
 
 void FhTft::displayDoors(bool fill) {
 #ifdef FH_HOMESEC_H
+  if ((millis() - last_update_ms_) < update_ms) {
+    // display timer not expired, don't update display
+    return;
+  } else {
+    // time to update display
+    last_update_ms_ = millis();
+  }
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
   /*
   std::map<const char*, OwensDoor>::iterator itr;
