@@ -24,6 +24,13 @@ class OwensDoor {
         const char* loc() const { return loc_; }
         static uint8_t make_key(const char* room, const char* loc, char* key);
         /**
+         * @brief Get the time since last open state, in seconds
+         * @param uint32_t *seconds - pointer to uint32_t to store result
+         * 
+         * @return int8_t return code (0 on success)
+         */
+        uint8_t secSinceOpen(uint32_t *seconds);
+        /**
          * @brief GUpdate the object with current door state
          * 
          * @return uint8_t error code - 0 on success

@@ -14,8 +14,11 @@
 #include "fh_time.h"
 #include "secrets_homesec.h"
 
+const uint8_t door_query_d = 7; // default door query range, in days
 extern FhPubSubClient mqtt_client;
+#ifdef FH_HOMESEC_H
 extern std::map<const char*, OwensDoor, char_cmp> owensDoors;
+#endif
 
 InfluxDBClient influx_client(influxdb_url, influxdb_org, bucket_events, token_events);
 
@@ -31,6 +34,44 @@ uint8_t OwensDoor::setCurrentState(bool is_open, time_t epoch_s) {
     } else {
         time(&last_update_epoch_s_);
     }
+    return 0;
+}
+
+uint8_t OwensDoor::secSinceOpen(uint32_t *seconds) {
+    if (!influx_client.validateConnection()) {
+        return 1;
+    }
+    uint32_t q_sec;
+    char query[550];
+    const char * result_name = "since_open";
+    sprintf(query, "import \"system\""
+    "currentTime = system.time()"
+    "from(bucket: \"home_events\")"
+    "|> range(start: -%dd)"
+    "|> filter(fn: (r) => r[\"_measurement\"] == \"owens_events\")"
+    "|> filter(fn: (r) => r[\"_field\"] ==  \"state\")"
+    "|> filter(fn: (r) => r[\"type\"] == \"door\")"
+    "|> filter(fn: (r) => r[\"room\"] == \"%s\")"
+    "|> filter(fn: (r) => r[\"room_loc\"] == \"%s\")"
+    "|> filter(fn: (r) => r[\"_value\"] == 1)"
+    "|> last()"
+    "|> map(fn: (r) => ({ %s: (uint(v: currentTime) - uint(v: r._time))/uint(v: 1000000000)}))"
+    "|> yield(name: \"%s\")",
+    door_query_d, room_, loc_, result_name, result_name);
+    Serial.println(query);
+    FluxQueryResult result = influx_client.query(query);
+    if (result.getError() != "") {
+        Serial.printf("Error getting door %s %s\n", room_, loc_);
+        Serial.println(result.getError());
+        Serial.println(query);
+        return 2;
+    }
+    while (result.next()) {
+        q_sec = result.getValueByName(result_name).getUnsignedLong();
+        Serial.printf("Seconds: %lu\n", q_sec);
+    }
+    result.close();
+    *seconds = q_sec;
     return 0;
 }
 
