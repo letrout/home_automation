@@ -12,14 +12,19 @@ class OwensDoor {
         bool is_open_ = false;
         unsigned long last_update_ms_;
         time_t last_update_epoch_s_;
-        unsigned long last_open_ms_;
+        unsigned long last_open_epoch_s_;
         char room_[ROOM_LOC_LEN] = {};
         char loc_[ROOM_LOC_LEN] = {};
     public:
         OwensDoor(const char* room, const char* loc);
         bool is_open() { return is_open_; }
         unsigned long last_update_ms() { return last_update_ms_; }
-        unsigned long last_open_ms() { return last_open_ms_; }
+        /**
+         * @brief last time the door opened, seconds since eopch
+         * 
+         * @return unsigned long 
+         */
+        unsigned long last_open_epoch_s() { return last_open_epoch_s_; }
         const char* room() const { return room_; }
         const char* loc() const { return loc_; }
         static uint8_t make_key(const char* room, const char* loc, char* key);

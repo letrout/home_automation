@@ -56,6 +56,9 @@ uint8_t OwensDoor::setCurrentState(bool is_open, time_t epoch_s) {
     } else {
         time(&last_update_epoch_s_);
     }
+    if (is_open) {
+        last_open_epoch_s_ = last_update_epoch_s_;
+    }
     return 0;
 }
 
