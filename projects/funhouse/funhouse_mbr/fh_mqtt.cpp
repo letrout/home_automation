@@ -9,6 +9,7 @@
  */
 
 #include "fh_mqtt.h"
+#include "fh_homesec.h"
 #include "secrets.h"
 
 #define WIFI_RETRIES 10
@@ -20,6 +21,10 @@ FhPubSubClient mqtt_client;
 
 #ifdef FH_SUB_PEPPERS
 uint8_t peppers[PEPPER_PLANTS] = {100, 75, 50, 0}; // store moisture content for four pepper plants
+#endif
+
+#ifdef FH_HOMESEC_H
+extern const char* doors_topic;
 #endif
 
 // Wifi
@@ -85,6 +90,14 @@ void FhPubSubClient::mqttReconnect(void) {
         Serial.printf("Client-id %s, connect...\n", client_id.c_str());
         if (connect(client_id.c_str(), mqtt_username, mqtt_password)) {
             Serial.println("MQTT broker connected");
+#ifdef FH_SUB_PEPPERS
+            // get pepper plant data
+            mqtt_client.subscribe(topic_plants);
+#endif
+#ifdef FH_HOMESEC_H
+            //mqtt_client.subscribe(doors_topic, 1);
+            mqtt_client.subscribe(doors_topic);
+#endif
         } else {
             Serial.print("failed with state ");
             Serial.print(state());

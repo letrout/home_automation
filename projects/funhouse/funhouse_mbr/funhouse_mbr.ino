@@ -180,10 +180,9 @@ void setup() {
  //mqtt_client.subscribe(topic_plants);
 #endif
 #ifdef FH_HOMESEC_H
-  extern const char* doors_topic;
   owensDoors = get_doors();
   //mqtt_client.subscribe(doors_topic, 1);
-  mqtt_client.subscribe(doors_topic);
+  //mqtt_client.subscribe(doors_topic);
 #endif
 
 #ifdef SENSIRIONI2CSCD4X_H
