@@ -15,6 +15,20 @@
 #include "secrets_homesec.h"
 
 const uint8_t door_query_d = 7; // default door query range, in days
+const char *door_query_fmt = "import \"system\""
+    "currentTime = system.time()"
+    "from(bucket: \"home_events\")"
+    "|> range(start: -%dd)"
+    "|> filter(fn: (r) => r[\"_measurement\"] == \"owens_events\")"
+    "|> filter(fn: (r) => r[\"_field\"] ==  \"state\")"
+    "|> filter(fn: (r) => r[\"type\"] == \"door\")"
+    "|> filter(fn: (r) => r[\"room\"] == \"%s\")"
+    "|> filter(fn: (r) => r[\"room_loc\"] == \"%s\")"
+    "|> filter(fn: (r) => r[\"_value\"] == 1)"
+    "|> last()"
+    "|> map(fn: (r) => ({ %s: (uint(v: currentTime) - uint(v: r._time))/uint(v: 1000000000)}))"
+    "|> yield(name: \"%s\")";
+
 extern FhPubSubClient mqtt_client;
 #ifdef FH_HOMESEC_H
 extern std::map<const char*, OwensDoor, char_cmp> owensDoors;
@@ -38,12 +52,17 @@ uint8_t OwensDoor::setCurrentState(bool is_open, time_t epoch_s) {
 }
 
 uint8_t OwensDoor::secSinceOpen(uint32_t *seconds) {
-    if (!influx_client.validateConnection()) {
+    if (influx_client.validateConnection()) {
+        Serial.println("InfluxDB connect success");
+    } else {
+        Serial.print("InfluxDB connect failed: ");
+        Serial.println(influx_client.getLastErrorMessage());
         return 1;
     }
     uint32_t q_sec;
-    char query[550];
+    char query[strlen(door_query_fmt) + 30];
     const char * result_name = "since_open";
+    /*
     sprintf(query, "import \"system\""
     "currentTime = system.time()"
     "from(bucket: \"home_events\")"
@@ -58,7 +77,9 @@ uint8_t OwensDoor::secSinceOpen(uint32_t *seconds) {
     "|> map(fn: (r) => ({ %s: (uint(v: currentTime) - uint(v: r._time))/uint(v: 1000000000)}))"
     "|> yield(name: \"%s\")",
     door_query_d, room_, loc_, result_name, result_name);
-    Serial.println(query);
+    */
+    sprintf(query, door_query_fmt, door_query_d, room_, loc_, result_name, result_name);
+
     FluxQueryResult result = influx_client.query(query);
     if (result.getError() != "") {
         Serial.printf("Error getting door %s %s\n", room_, loc_);

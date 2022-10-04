@@ -245,6 +245,8 @@ void FhTft::displayDoors(bool fill) {
     // time to update display
     last_update_ms_ = millis();
   }
+  uint32_t door_last_sec;
+  int8_t retval;
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
   /*
   std::map<const char*, OwensDoor>::iterator itr;
@@ -268,7 +270,16 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  print(owensDoors.at("mud-back").is_open());
+  //print(owensDoors.at("mud-back").is_open());
+  //unsigned long start = millis();
+  retval = owensDoors.at("mud-back").secSinceOpen(&door_last_sec);
+  //Serial.printf("influxdb query ms: %lu\n", millis() - start);
+  if (retval == 0) {
+    print(door_last_sec);
+  } else {
+    print("Err: ");
+    print(retval);
+  }
   println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Deck: ");
