@@ -15,7 +15,7 @@
 #include "secrets_homesec.h"
 
 const uint8_t door_query_d = 7; // default door query range, in days
-const char *door_query_fmt = "import \"system\""
+const char *door_open_since_query = "import \"system\""
     "currentTime = system.time()"
     "from(bucket: \"home_events\")"
     "|> range(start: -%dd)"
@@ -28,6 +28,14 @@ const char *door_query_fmt = "import \"system\""
     "|> last()"
     "|> map(fn: (r) => ({ %s: (uint(v: currentTime) - uint(v: r._time))/uint(v: 1000000000)}))"
     "|> yield(name: \"%s\")";
+
+const char *door_last_state_query = "from(bucket: \"%s\")"
+"|> range(start: -1h)"
+"|> filter(fn: (r) => r[\"_measurement\"] == \"owens_events\")"
+"|> filter(fn: (r) => r[\"room\"] == \"%s\")"
+"|> filter(fn: (r) => r[\"room_loc\"] == \"%s\")"
+"|> filter(fn: (r) => r[\"_field\"] == \"state\")"
+"|> last()";
 
 extern FhPubSubClient mqtt_client;
 #ifdef FH_HOMESEC_H
@@ -60,25 +68,9 @@ uint8_t OwensDoor::secSinceOpen(uint32_t *seconds) {
         return 1;
     }
     uint32_t q_sec;
-    char query[strlen(door_query_fmt) + 30];
+    char query[strlen(door_open_since_query) + 30];
     const char * result_name = "since_open";
-    /*
-    sprintf(query, "import \"system\""
-    "currentTime = system.time()"
-    "from(bucket: \"home_events\")"
-    "|> range(start: -%dd)"
-    "|> filter(fn: (r) => r[\"_measurement\"] == \"owens_events\")"
-    "|> filter(fn: (r) => r[\"_field\"] ==  \"state\")"
-    "|> filter(fn: (r) => r[\"type\"] == \"door\")"
-    "|> filter(fn: (r) => r[\"room\"] == \"%s\")"
-    "|> filter(fn: (r) => r[\"room_loc\"] == \"%s\")"
-    "|> filter(fn: (r) => r[\"_value\"] == 1)"
-    "|> last()"
-    "|> map(fn: (r) => ({ %s: (uint(v: currentTime) - uint(v: r._time))/uint(v: 1000000000)}))"
-    "|> yield(name: \"%s\")",
-    door_query_d, room_, loc_, result_name, result_name);
-    */
-    sprintf(query, door_query_fmt, door_query_d, room_, loc_, result_name, result_name);
+    sprintf(query, door_open_since_query, door_query_d, room_, loc_, result_name, result_name);
 
     FluxQueryResult result = influx_client.query(query);
     if (result.getError() != "") {
@@ -103,7 +95,7 @@ uint8_t OwensDoor::getCurrentState() {
     char query[512];
     bool state;
     unsigned long time_ms;
-    sprintf(query, "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r[\"_measurement\"] == \"owens_events\") |> filter(fn: (r) => r[\"room\"] == \"%s\") |> filter(fn: (r) => r[\"room_loc\"] == \"%s\") |> filter(fn: (r) => r[\"_field\"] == \"state\") |> last()", bucket_events, room_, loc_);
+    sprintf(query, door_last_state_query, bucket_events, room_, loc_);
     Serial.println(query);
     FluxQueryResult result = influx_client.query(query);
     if (result.getError() != "") {
