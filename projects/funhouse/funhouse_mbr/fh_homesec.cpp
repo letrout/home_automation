@@ -15,6 +15,7 @@
 #include "secrets_homesec.h"
 
 const uint8_t door_query_d = 7; // default door query range, in days
+// Get time in seconds since door was last open
 const char *door_open_since_query = "import \"system\""
     "currentTime = system.time()"
     "from(bucket: \"home_events\")"
@@ -28,7 +29,19 @@ const char *door_open_since_query = "import \"system\""
     "|> last()"
     "|> map(fn: (r) => ({ %s: (uint(v: currentTime) - uint(v: r._time))/uint(v: 1000000000)}))"
     "|> yield(name: \"%s\")";
-
+// Get the last time (epoch sec) door was opened
+const char *door_open_last_query = "from(bucket: \"home_events\")"
+    "|> range(start: -%dd)"
+    "|> filter(fn: (r) => r[\"_measurement\"] == \"owens_events\")"
+    "|> filter(fn: (r) => r[\"_field\"] ==  \"state\")"
+    "|> filter(fn: (r) => r[\"type\"] == \"door\")"
+    "|> filter(fn: (r) => r[\"room\"] == \"%s\")"
+    "|> filter(fn: (r) => r[\"room_loc\"] == \"%s\")"
+    "|> filter(fn: (r) => r[\"_value\"] == 1)"
+    "|> last()"
+    "|> map(fn: (r) => ({ %s: uint(v: r._time)/uint(v: 1000000000)}))"
+    "|> yield(name: \"%s\")";
+// Get the last state of a door
 const char *door_last_state_query = "from(bucket: \"%s\")"
 "|> range(start: -1h)"
 "|> filter(fn: (r) => r[\"_measurement\"] == \"owens_events\")"
@@ -59,6 +72,40 @@ uint8_t OwensDoor::setCurrentState(bool is_open, time_t epoch_s) {
     if (is_open) {
         last_open_epoch_s_ = last_update_epoch_s_;
     }
+    return 0;
+}
+
+uint8_t OwensDoor::secLastOpen(uint32_t *seconds, bool update) {
+    if (influx_client.validateConnection()) {
+        Serial.println("InfluxDB connect success");
+    } else {
+        Serial.print("InfluxDB connect failed: ");
+        Serial.println(influx_client.getLastErrorMessage());
+        return 1;
+    }
+    uint32_t q_sec;
+    char query[strlen(door_open_last_query) + 30];
+    const char * result_name = "last_open";
+    sprintf(query, door_open_last_query, door_query_d, room_, loc_, result_name, result_name);
+    Serial.println(query);
+
+    FluxQueryResult result = influx_client.query(query);
+    if (result.getError() != "") {
+        Serial.printf("Error getting door %s %s\n", room_, loc_);
+        Serial.println(result.getError());
+        Serial.println(query);
+        return 2;
+    }
+    while (result.next()) {
+        q_sec = result.getValueByName(result_name).getUnsignedLong();
+        Serial.printf("Seconds: %lu\n", q_sec);
+    }
+    result.close();
+    *seconds = q_sec;
+    if (update) {
+        last_open_epoch_s_ = q_sec;
+    }
+    Serial.println(q_sec);
     return 0;
 }
 
@@ -126,7 +173,7 @@ std::map<const char*, OwensDoor, char_cmp> get_doors() {
         {"garage-side", OwensDoor("garage", "side")},
         {"mud-back", OwensDoor("mud", "back")},
         {"kitchen-deck", OwensDoor("kitchen", "deck")},
-        {"library-front", OwensDoor("libray", "front")},
+        {"library-front", OwensDoor("library", "front")},
     };
     return owensDoors;
 }

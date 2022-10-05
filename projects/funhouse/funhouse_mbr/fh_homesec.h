@@ -27,7 +27,23 @@ class OwensDoor {
         unsigned long last_open_epoch_s() { return last_open_epoch_s_; }
         const char* room() const { return room_; }
         const char* loc() const { return loc_; }
+        /**
+         * @brief Make a map key from room and room location
+         * 
+         * @param room room name
+         * @param loc room location name
+         * @param key suitable map key
+         * @return uint8_t 
+         */
         static uint8_t make_key(const char* room, const char* loc, char* key);
+        /**
+         * @brief Get the time of last door open state, in epoch seconds
+         * 
+         * @param seconds variable to store result, last open time in epoch seconds
+         * @param update if true, update the object with result (default false)
+         * @return uint8_t error code, 0 on success
+         */
+        uint8_t secLastOpen(uint32_t *seconds, bool update = false);
         /**
          * @brief Get the time since last open state, in seconds
          * @param uint32_t *seconds - pointer to uint32_t to store result
@@ -36,7 +52,7 @@ class OwensDoor {
          */
         uint8_t secSinceOpen(uint32_t *seconds);
         /**
-         * @brief GUpdate the object with current door state
+         * @brief Update the object with current door state
          * 
          * @return uint8_t error code - 0 on success
          */
