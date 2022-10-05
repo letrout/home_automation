@@ -11,6 +11,8 @@
  */
 uint32_t get_epoch_sec(const char* time_str);
 
+uint8_t sec_to_string(char* time_str, uint32_t seconds);
+
 class FhNtpClient {
     private:
     public:

@@ -23,6 +23,24 @@ uint32_t get_epoch_sec(const char *time_str) {
     return epoch_sec;
 }
 
+uint8_t sec_to_string(char* time_str, uint32_t seconds) {
+    uint8_t retval = 0;
+    char my_time[10]; // hhh:mm:ss
+    uint8_t hh, mm, ss;
+    // max 999:59:59 is 3,599,999 seconds
+    if (seconds > 3599999) {
+        sprintf(my_time, ">999 hr");
+        retval = 1;
+    } else {
+        hh = seconds / 3600;
+        mm = (seconds % 3600) / 60;
+        ss = seconds % 60;
+        sprintf(my_time, "%d:%02d:%02d", hh, mm, ss);
+    }
+    strncpy(time_str, my_time, sizeof(my_time));
+    return retval;
+}
+
 // NTP client
 // FIXME: add option to set update interval
 FhNtpClient::FhNtpClient(uint16_t update_interval) {
