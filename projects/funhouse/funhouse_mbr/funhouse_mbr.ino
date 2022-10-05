@@ -180,7 +180,15 @@ void setup() {
  //mqtt_client.subscribe(topic_plants);
 #endif
 #ifdef FH_HOMESEC_H
+  uint32_t door_last_sec;
   owensDoors = get_doors();
+  // Prime the object with last open time from InfluxDB
+  // after this, last open time will be maintained via MQTT sub
+  for (const auto &door : owensDoors) {
+    owensDoors.at(door.first).secLastOpen(&door_last_sec, true);
+  }
+  // InfluxDB seems to break MQTT connection, so reconnect
+  mqtt_client.mqttReconnect();
   //mqtt_client.subscribe(doors_topic, 1);
   //mqtt_client.subscribe(doors_topic);
 #endif
