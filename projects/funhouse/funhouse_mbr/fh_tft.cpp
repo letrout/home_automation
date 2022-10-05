@@ -13,7 +13,6 @@
 #include "fh_sensors.h"
 #include "fh_mqtt.h"
 #include "fh_time.h"
-#include "fh_homesec.h"
 
 const uint32_t update_ms = 1 * 1000; // Only update the display every X ms
 
@@ -236,6 +235,26 @@ void FhTft::displayEnvironment(bool fill) {
 #endif /* ADAFRUIT_SGP30_H */
 }
 
+void FhTft::displayDoor(OwensDoor door, time_t now) {
+  if (now == 0) {
+    time(&now);
+  }
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  // hack to prepend "G" to loc for garage doors
+  if (strcmp(door.room(), "garage")) {
+    print("G");
+  }
+  printf("%s: ", door.loc());
+  if (door.is_open()) {
+    setTextColor(ST77XX_RED, BG_COLOR);
+  } else {
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+  }
+  print(now - door.last_open_epoch_s());
+  println("          ");
+  return;
+}
+
 void FhTft::displayDoors(bool fill) {
 #ifdef FH_HOMESEC_H
   if ((millis() - last_update_ms_) < update_ms) {
@@ -263,8 +282,10 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  print(sec_to_string(time_str, now - owensDoors.at("mud-back").last_open_epoch_s()));
+  sec_to_string(time_str, now - owensDoors.at("mud-back").last_open_epoch_s());
+  print(time_str);
   println("          ");
+  /*
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Deck: ");
   if (owensDoors.at("kitchen-deck").is_open()) {
@@ -292,15 +313,12 @@ void FhTft::displayDoors(bool fill) {
   }
   print(now - owensDoors.at("garage-main").last_open_epoch_s());
   println("          ");
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("GSide: ");
-  if (owensDoors.at("garage-side").is_open()) {
-    setTextColor(ST77XX_RED, BG_COLOR);
-  } else {
-    setTextColor(ST77XX_GREEN, BG_COLOR);
-  }
-  print(now - owensDoors.at("garage-side").last_open_epoch_s());
-  println("          ");
+  */
+  displayDoor(owensDoors.at("mud-back"), now);
+  displayDoor(owensDoors.at("kitchen-deck"), now);
+  displayDoor(owensDoors.at("library-front"), now);
+  displayDoor(owensDoors.at("garage-main"), now);
+  displayDoor(owensDoors.at("garage-side"), now);
   println("          ");
 
 #endif
