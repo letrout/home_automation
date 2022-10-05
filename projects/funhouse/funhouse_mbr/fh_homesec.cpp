@@ -87,7 +87,6 @@ uint8_t OwensDoor::secLastOpen(uint32_t *seconds, bool update) {
     char query[strlen(door_open_last_query) + 30];
     const char * result_name = "last_open";
     sprintf(query, door_open_last_query, door_query_d, room_, loc_, result_name, result_name);
-    Serial.println(query);
 
     FluxQueryResult result = influx_client.query(query);
     if (result.getError() != "") {
@@ -98,14 +97,12 @@ uint8_t OwensDoor::secLastOpen(uint32_t *seconds, bool update) {
     }
     while (result.next()) {
         q_sec = result.getValueByName(result_name).getUnsignedLong();
-        Serial.printf("Seconds: %lu\n", q_sec);
     }
     result.close();
     *seconds = q_sec;
     if (update) {
         last_open_epoch_s_ = q_sec;
     }
-    Serial.println(q_sec);
     return 0;
 }
 
@@ -131,7 +128,6 @@ uint8_t OwensDoor::secSinceOpen(uint32_t *seconds) {
     }
     while (result.next()) {
         q_sec = result.getValueByName(result_name).getUnsignedLong();
-        Serial.printf("Seconds: %lu\n", q_sec);
     }
     result.close();
     *seconds = q_sec;

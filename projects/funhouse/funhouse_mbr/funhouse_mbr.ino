@@ -175,10 +175,6 @@ void setup() {
   //mqtt_client.setSocketTimeout(30);
   mqtt_client.setKeepAlive(70);
   mqtt_client.mqttReconnect();
-#ifdef FH_SUB_PEPPERS
- // get pepper plant data
- //mqtt_client.subscribe(topic_plants);
-#endif
 #ifdef FH_HOMESEC_H
   uint32_t door_last_sec;
   owensDoors = get_doors();
@@ -189,8 +185,6 @@ void setup() {
   }
   // InfluxDB seems to break MQTT connection, so reconnect
   mqtt_client.mqttReconnect();
-  //mqtt_client.subscribe(doors_topic, 1);
-  //mqtt_client.subscribe(doors_topic);
 #endif
 
 #ifdef SENSIRIONI2CSCD4X_H

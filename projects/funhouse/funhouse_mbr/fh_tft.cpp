@@ -245,23 +245,14 @@ void FhTft::displayDoors(bool fill) {
     // time to update display
     last_update_ms_ = millis();
   }
+  char time_str[10];
   time_t now;
   time(&now);
-  // uint32_t door_last_sec;
-  // int8_t retval;
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
   /*
   std::map<const char*, OwensDoor>::iterator itr;
   for (itr = owensDoors.begin(); itr != owensDoors.end(); itr++) {
     itr->second.getCurrentState();
-  }
-  */
-
-  // update the door states from InfluxDB
-  // FIXME: replace with MQTT sub 
-  /*
-  for (auto &door: owensDoors) {
-    door.second.getCurrentState();
   }
   */
 
@@ -272,19 +263,7 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  //print(owensDoors.at("mud-back").is_open());
-  print(now - owensDoors.at("mud-back").last_open_epoch_s());
-  Serial.printf("NOW sec: %lu\n", now);
-  Serial.printf("back sec: %lu\n", owensDoors.at("mud-back").last_open_epoch_s());
-  /*
-  retval = owensDoors.at("mud-back").secSinceOpen(&door_last_sec);
-  if (retval == 0) {
-    print(door_last_sec);
-  } else {
-    print("Err: ");
-    print(retval);
-  }
-  */
+  print(sec_to_string(time_str, now - owensDoors.at("mud-back").last_open_epoch_s()));
   println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Deck: ");
