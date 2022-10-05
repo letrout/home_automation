@@ -245,8 +245,10 @@ void FhTft::displayDoors(bool fill) {
     // time to update display
     last_update_ms_ = millis();
   }
-  uint32_t door_last_sec;
-  int8_t retval;
+  time_t now;
+  time(&now);
+  // uint32_t door_last_sec;
+  // int8_t retval;
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
   /*
   std::map<const char*, OwensDoor>::iterator itr;
@@ -271,15 +273,18 @@ void FhTft::displayDoors(bool fill) {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
   //print(owensDoors.at("mud-back").is_open());
-  //unsigned long start = millis();
+  print(now - owensDoors.at("mud-back").last_open_epoch_s());
+  Serial.printf("NOW sec: %lu\n", now);
+  Serial.printf("back sec: %lu\n", owensDoors.at("mud-back").last_open_epoch_s());
+  /*
   retval = owensDoors.at("mud-back").secSinceOpen(&door_last_sec);
-  //Serial.printf("influxdb query ms: %lu\n", millis() - start);
   if (retval == 0) {
     print(door_last_sec);
   } else {
     print("Err: ");
     print(retval);
   }
+  */
   println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Deck: ");
@@ -288,7 +293,7 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  print(owensDoors.at("kitchen-deck").is_open());
+  print(now - owensDoors.at("kitchen-deck").last_open_epoch_s());
   println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("Front: ");
@@ -297,7 +302,7 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  print(owensDoors.at("library-front").is_open());
+  print(now - owensDoors.at("library-front").last_open_epoch_s());
   println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("GMain: ");
@@ -306,7 +311,7 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  print(owensDoors.at("garage-main").is_open());
+  print(now - owensDoors.at("garage-main").last_open_epoch_s());
   println("          ");
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("GSide: ");
@@ -315,7 +320,7 @@ void FhTft::displayDoors(bool fill) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  print(owensDoors.at("garage-side").is_open());
+  print(now - owensDoors.at("garage-side").last_open_epoch_s());
   println("          ");
   println("          ");
 
