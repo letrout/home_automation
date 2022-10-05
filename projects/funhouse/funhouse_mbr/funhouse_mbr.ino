@@ -285,6 +285,7 @@ void loop() {
       case 1:
         // BUTTON_SELECT Display door sensor events
         tft.displayDoors();
+        pixels.setMode(DOTSTAR_MODE_SLEEP, true);
         break;
       case 2:
         // BUTTON_DOWN - display all sensor data

@@ -236,12 +236,13 @@ void FhTft::displayEnvironment(bool fill) {
 }
 
 void FhTft::displayDoor(OwensDoor door, time_t now) {
+  char time_str[10];
   if (now == 0) {
     time(&now);
   }
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   // hack to prepend "G" to loc for garage doors
-  if (strcmp(door.room(), "garage")) {
+  if (!strcmp(door.room(), "garage")) {
     print("G");
   }
   printf("%s: ", door.loc());
@@ -250,7 +251,9 @@ void FhTft::displayDoor(OwensDoor door, time_t now) {
   } else {
     setTextColor(ST77XX_GREEN, BG_COLOR);
   }
-  print(now - door.last_open_epoch_s());
+  sec_to_string(time_str, now - door.last_open_epoch_s());
+  //print(now - door.last_open_epoch_s());
+  print(time_str);
   println("          ");
   return;
 }
@@ -264,7 +267,6 @@ void FhTft::displayDoors(bool fill) {
     // time to update display
     last_update_ms_ = millis();
   }
-  char time_str[10];
   time_t now;
   time(&now);
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
@@ -273,46 +275,6 @@ void FhTft::displayDoors(bool fill) {
   for (itr = owensDoors.begin(); itr != owensDoors.end(); itr++) {
     itr->second.getCurrentState();
   }
-  */
-
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("Back: ");
-  if (owensDoors.at("mud-back").is_open()) {
-    setTextColor(ST77XX_RED, BG_COLOR);
-  } else {
-    setTextColor(ST77XX_GREEN, BG_COLOR);
-  }
-  sec_to_string(time_str, now - owensDoors.at("mud-back").last_open_epoch_s());
-  print(time_str);
-  println("          ");
-  /*
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("Deck: ");
-  if (owensDoors.at("kitchen-deck").is_open()) {
-    setTextColor(ST77XX_RED, BG_COLOR);
-  } else {
-    setTextColor(ST77XX_GREEN, BG_COLOR);
-  }
-  print(now - owensDoors.at("kitchen-deck").last_open_epoch_s());
-  println("          ");
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("Front: ");
-  if (owensDoors.at("library-front").is_open()) {
-    setTextColor(ST77XX_RED, BG_COLOR);
-  } else {
-    setTextColor(ST77XX_GREEN, BG_COLOR);
-  }
-  print(now - owensDoors.at("library-front").last_open_epoch_s());
-  println("          ");
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("GMain: ");
-  if (owensDoors.at("garage-main").is_open()) {
-    setTextColor(ST77XX_RED, BG_COLOR);
-  } else {
-    setTextColor(ST77XX_GREEN, BG_COLOR);
-  }
-  print(now - owensDoors.at("garage-main").last_open_epoch_s());
-  println("          ");
   */
   displayDoor(owensDoors.at("mud-back"), now);
   displayDoor(owensDoors.at("kitchen-deck"), now);
