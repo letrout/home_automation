@@ -15,6 +15,7 @@
 #include "fh_time.h"
 
 const uint32_t update_ms = 1 * 1000; // Only update the display every X ms
+const char *spaces = "              ";
 
 // sensors objects
 extern FhAmbientLight ambientLight;
@@ -95,7 +96,7 @@ void FhTft::displaySensors(bool fill) {
   print(" F ");
   print(dps.last_press_hpa(), 0);
   print(" hPa");
-  println("              ");
+  println(spaces);
 
   // AHT20
   setTextColor(ST77XX_YELLOW, BG_COLOR);
@@ -104,7 +105,7 @@ void FhTft::displaySensors(bool fill) {
   print(" F ");
   print(aht.last_hum_pct(), 0);
   print(" %");
-  println("              ");
+  println(spaces);
 
 #ifdef ADAFRUIT_SHT4x_H
   // SHT40
@@ -115,7 +116,7 @@ void FhTft::displaySensors(bool fill) {
     print(" F ");
     print(sht4x.last_hum_pct(), 0);
     print(" %");
-    println("              ");
+    println(spaces);
   }
 #endif
 
@@ -131,7 +132,7 @@ void FhTft::displaySensors(bool fill) {
     print(" F ");
     print(scd4x.last_hum_pct(), 0);
     print(" %");
-    println("              ");
+    println(spaces);
   }
 #endif
 
@@ -145,14 +146,15 @@ void FhTft::displaySensors(bool fill) {
     println(" ppb ");
     print("eCO2 ");
     print(sgp30.last_eco2(), 0);
-    println(" ppm");
+    print(" ppm");
+    println(spaces);
 
     setTextColor(ST77XX_YELLOW, BG_COLOR);
     print("H2 ");
     print(sgp30.last_raw_h2(), 0);
     print(" Eth ");
     print(sgp30.last_raw_ethanol());
-    println("");
+    println(spaces);
   }
 #endif
 
@@ -161,7 +163,7 @@ void FhTft::displaySensors(bool fill) {
   print("Light: ");
   setTextColor(ST77XX_WHITE, BG_COLOR);
   print(ambientLight.last_ambient_light());
-  println("    ");
+  println(spaces);
 
 #ifdef FH_SUB_PEPPERS
   // Pepper plant soil moisture (from MQTT)
@@ -171,7 +173,7 @@ void FhTft::displaySensors(bool fill) {
     print(" ");
     print(peppers[i]);
   }
-  println("");
+  println(spaces);
 #endif
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print("WiFi: ");
@@ -245,7 +247,7 @@ void FhTft::displayDoor(OwensDoor door, time_t now) {
   if (!strcmp(door.room(), "garage")) {
     print("G");
   }
-  printf("%s: ", door.loc());
+  printf("%s:", door.loc());
   if (door.is_open()) {
     setTextColor(ST77XX_RED, BG_COLOR);
   } else {
@@ -254,7 +256,7 @@ void FhTft::displayDoor(OwensDoor door, time_t now) {
   sec_to_string(time_str, now - door.last_open_epoch_s());
   //print(now - door.last_open_epoch_s());
   print(time_str);
-  println("          ");
+  println(spaces);
   return;
 }
 
@@ -281,7 +283,8 @@ void FhTft::displayDoors(bool fill) {
   displayDoor(owensDoors.at("library-front"), now);
   displayDoor(owensDoors.at("garage-main"), now);
   displayDoor(owensDoors.at("garage-side"), now);
-  println("          ");
+  println(spaces);
+  println(spaces);
 
 #endif
 }
