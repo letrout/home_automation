@@ -8,9 +8,14 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <map>
 #include "fh_tft.h"
 #include "fh_sensors.h"
 #include "fh_mqtt.h"
+#include "fh_time.h"
+
+const uint32_t update_ms = 1 * 1000; // Only update the display every X ms
+const char *spaces = "              ";
 
 // sensors objects
 extern FhAmbientLight ambientLight;
@@ -26,8 +31,13 @@ extern FhSht40 sht4x;
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
 #endif
+#ifdef FH_HOMESEC_H
+extern std::map<const char*, OwensDoor, char_cmp> owensDoors;
+#endif
 
 extern uint8_t peppers[];
+extern FhNtpClient ntp_client;
+extern FhWifi fh_wifi;
 
 // display!
 FhTft tft = FhTft(TFT_CS, TFT_DC, TFT_RESET);
@@ -70,6 +80,13 @@ uint8_t FhTft::setDisplayMode(byte mode, bool fill) {
 }
 
 void FhTft::displaySensors(bool fill) {
+  if ((millis() - last_update_ms_) < update_ms) {
+    // display timer not expired, don't update display
+    return;
+  } else {
+    // time to update display
+    last_update_ms_ = millis();
+  }
   setDisplayMode(DISPLAY_MODE_ALL_SENSORS, fill);
 
   // DPS310
@@ -79,7 +96,7 @@ void FhTft::displaySensors(bool fill) {
   print(" F ");
   print(dps.last_press_hpa(), 0);
   print(" hPa");
-  println("              ");
+  println(spaces);
 
   // AHT20
   setTextColor(ST77XX_YELLOW, BG_COLOR);
@@ -88,50 +105,57 @@ void FhTft::displaySensors(bool fill) {
   print(" F ");
   print(aht.last_hum_pct(), 0);
   print(" %");
-  println("              ");
+  println(spaces);
 
 #ifdef ADAFRUIT_SHT4x_H
   // SHT40
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("SHT40: ");
-  print(sht4x.last_temp_f(), 0);
-  print(" F ");
-  print(sht4x.last_hum_pct(), 0);
-  print(" %");
-  println("              ");
+  if (sht4x.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print("SHT40: ");
+    print(sht4x.last_temp_f(), 0);
+    print(" F ");
+    print(sht4x.last_hum_pct(), 0);
+    print(" %");
+    println(spaces);
+  }
 #endif
 
 #ifdef SENSIRIONI2CSCD4X_H
   // SCD40
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("SCD4x: ");
-  print(scd4x.last_co2_ppm(), 0);
-  println(" ppm ");
-  print("SCD4x: ");
-  print(scd4x.last_temp_f(), 0);
-  print(" F ");
-  print(scd4x.last_hum_pct(), 0);
-  print(" %");
-  println("              ");
+  if (scd4x.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print("SCD4x: ");
+    print(scd4x.last_co2_ppm(), 0);
+    println(" ppm ");
+    print("SCD4x: ");
+    print(scd4x.last_temp_f(), 0);
+    print(" F ");
+    print(scd4x.last_hum_pct(), 0);
+    print(" %");
+    println(spaces);
+  }
 #endif
 
 #ifdef ADAFRUIT_SGP30_H
   // SGP30
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("SGP30: ");
-  print("TVOC ");
-  print(sgp30.last_tvoc(), 0);
-  println(" ppb ");
-  print("eCO2 ");
-  print(sgp30.last_eco2(), 0);
-  println(" ppm");
+  if (sgp30.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print("SGP30: ");
+    print("TVOC ");
+    print(sgp30.last_tvoc(), 0);
+    println(" ppb ");
+    print("eCO2 ");
+    print(sgp30.last_eco2(), 0);
+    print(" ppm");
+    println(spaces);
 
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print("H2 ");
-  print(sgp30.last_raw_h2(), 0);
-  print(" Eth ");
-  print(sgp30.last_raw_ethanol());
-  println("");
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print("H2 ");
+    print(sgp30.last_raw_h2(), 0);
+    print(" Eth ");
+    print(sgp30.last_raw_ethanol());
+    println(spaces);
+  }
 #endif
 
   // Light sensor
@@ -139,7 +163,7 @@ void FhTft::displaySensors(bool fill) {
   print("Light: ");
   setTextColor(ST77XX_WHITE, BG_COLOR);
   print(ambientLight.last_ambient_light());
-  println("    ");
+  println(spaces);
 
 #ifdef FH_SUB_PEPPERS
   // Pepper plant soil moisture (from MQTT)
@@ -149,15 +173,29 @@ void FhTft::displaySensors(bool fill) {
     print(" ");
     print(peppers[i]);
   }
-  println("");
+  println(spaces);
 #endif
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  print("WiFi: ");
+  println(fh_wifi.RSSI());
 
   return;
 }
 
-
 void FhTft::displayEnvironment(bool fill) {
+  if ((millis() - last_update_ms_) < update_ms) {
+    // display timer not expired, don't update display
+    return;
+  } else {
+    // time to update display
+    last_update_ms_ = millis();
+  }
   setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
+  // Time
+  char timeStr[9];
+  ntp_client.getFormattedTime(timeStr);
+  setTextColor(ST77XX_GREEN, BG_COLOR);
+  println(timeStr);
   // Temp and humidity
   setTextColor(ST77XX_YELLOW, BG_COLOR);
   print(prim_temp_f, 0);
@@ -176,21 +214,77 @@ void FhTft::displayEnvironment(bool fill) {
   println(" inHg");
 #ifdef SENSIRIONI2CSCD4X_H
   // CO2
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print(scd4x.last_co2_ppm());
-  setTextColor(ST77XX_GREEN, BG_COLOR);
-  println(" ppm CO2");
+  if (scd4x.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print(scd4x.last_co2_ppm());
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+    println(" ppm CO2");
+  }
 #endif
 #ifdef ADAFRUIT_SGP30_H
 //#ifndef SENSIRIONI2CSCD4X_H
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print(sgp30.last_eco2());
-  setTextColor(ST77XX_GREEN, BG_COLOR);
-  println(" ppm eCO2");
-//#endif /* SENSIRIONI2CSCD4X_H */
-  setTextColor(ST77XX_YELLOW, BG_COLOR);
-  print(sgp30.last_tvoc());
-  setTextColor(ST77XX_GREEN, BG_COLOR);
-  println(" ppb TVOC");
+  if (sgp30.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print(sgp30.last_eco2());
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+    println(" ppm eCO2");
+  //#endif /* SENSIRIONI2CSCD4X_H */
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print(sgp30.last_tvoc());
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+    println(" ppb TVOC");
+  }
 #endif /* ADAFRUIT_SGP30_H */
+}
+
+void FhTft::displayDoor(OwensDoor door, time_t now) {
+  char time_str[10];
+  if (now == 0) {
+    time(&now);
+  }
+  setTextColor(ST77XX_YELLOW, BG_COLOR);
+  // hack to prepend "G" to loc for garage doors
+  if (!strcmp(door.room(), "garage")) {
+    print("G");
+  }
+  printf("%s:", door.loc());
+  if (door.is_open()) {
+    setTextColor(ST77XX_RED, BG_COLOR);
+  } else {
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+  }
+  sec_to_string(time_str, now - door.last_open_epoch_s());
+  //print(now - door.last_open_epoch_s());
+  print(time_str);
+  println(spaces);
+  return;
+}
+
+void FhTft::displayDoors(bool fill) {
+#ifdef FH_HOMESEC_H
+  if ((millis() - last_update_ms_) < update_ms) {
+    // display timer not expired, don't update display
+    return;
+  } else {
+    // time to update display
+    last_update_ms_ = millis();
+  }
+  time_t now;
+  time(&now);
+  setDisplayMode(DISPLAY_MODE_ENVIRONMENTAL, fill);
+  /*
+  std::map<const char*, OwensDoor>::iterator itr;
+  for (itr = owensDoors.begin(); itr != owensDoors.end(); itr++) {
+    itr->second.getCurrentState();
+  }
+  */
+  displayDoor(owensDoors.at("mud-back"), now);
+  displayDoor(owensDoors.at("kitchen-deck"), now);
+  displayDoor(owensDoors.at("library-front"), now);
+  displayDoor(owensDoors.at("garage-main"), now);
+  displayDoor(owensDoors.at("garage-side"), now);
+  println(spaces);
+  println(spaces);
+
+#endif
 }

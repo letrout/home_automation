@@ -9,16 +9,22 @@
  */
 
 #include "fh_mqtt.h"
+#include "fh_homesec.h"
 #include "secrets.h"
 
 #define WIFI_RETRIES 10
+const uint16_t fh_mqtt_buffer_size = 512;  //set the MQTT buffer size (see setBufferSize())
 
 FhWifi fh_wifi;
 WiFiClient espClient;
-FhPubSubClient client;
+FhPubSubClient mqtt_client;
 
 #ifdef FH_SUB_PEPPERS
 uint8_t peppers[PEPPER_PLANTS] = {100, 75, 50, 0}; // store moisture content for four pepper plants
+#endif
+
+#ifdef FH_HOMESEC_H
+extern const char* doors_topic;
 #endif
 
 // Wifi
@@ -70,6 +76,7 @@ void FhPubSubClient::setup(void) {
 void FhPubSubClient::setMqttServer(void) {
     //setServer(mqtt_broker, mqtt_port);
     setServer(mqtt_broker, mqtt_port);
+    //setBufferSize(fh_mqtt_buffer_size);
 }
 
 int FhPubSubClient::publishTopic(const char *payload) {
@@ -80,9 +87,17 @@ void FhPubSubClient::mqttReconnect(void) {
     while (!connected()) {
         String client_id = "esp32-client-";
         client_id += String(WiFi.macAddress());
-        Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
+        Serial.printf("Client-id %s, connect...\n", client_id.c_str());
         if (connect(client_id.c_str(), mqtt_username, mqtt_password)) {
-            Serial.println("Public emqx mqtt broker connected");
+            Serial.println("MQTT broker connected");
+#ifdef FH_SUB_PEPPERS
+            // get pepper plant data
+            mqtt_client.subscribe(topic_plants);
+#endif
+#ifdef FH_HOMESEC_H
+            //mqtt_client.subscribe(doors_topic, 1);
+            mqtt_client.subscribe(doors_topic);
+#endif
         } else {
             Serial.print("failed with state ");
             Serial.print(state());

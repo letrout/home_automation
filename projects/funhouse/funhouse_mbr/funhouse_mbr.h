@@ -26,7 +26,7 @@ uint16_t read_scd4x(void);
  * @param frequency 
  * @param duration 
  */
-void tone(uint8_t pin, float frequency, float duration);
+void fh_tone(uint8_t pin, float frequency, float duration);
 
 
 /**

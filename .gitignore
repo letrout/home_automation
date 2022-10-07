@@ -4,3 +4,4 @@ mqtt_conf.py
 .vscode
 secrets.h
 secrets_wifi.h
+projects/funhouse/funhouse_mbr/secrets_homesec.h

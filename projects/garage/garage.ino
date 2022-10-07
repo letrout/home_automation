@@ -21,6 +21,8 @@ const char* mqtt_password = MQTT_PASSWORD;
 
 int side_door_state = -1; // 0 - closed, 1 - open
 int main_door_state = -1; // 0 - closed, 1 - open
+int side_door_last = -1; // 0 - closed, 1 - open
+int main_door_last = -1; // 0 - closed, 1 - open
 const long utcOffsetInSeconds = 0;
 const unsigned long ntp_update_ms = 30 * 60 * 1000L; // NTP update interval ms
 unsigned long ntp_last_ms = 0L;
@@ -28,6 +30,15 @@ char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
 const char* measurement = "sensor";
 const char* msmt_type = "door";
 const char* topic = "influx/Owens/events/doors";
+const char* topic_infra = "influx/Owens/infra";
+
+// timers
+const unsigned long heartbeat_ms = 10 * 1000; // interval to publish events with no state change
+const unsigned long publish_ms = 1 * 1000;  // interval to publish on state change
+unsigned long last_publish_side = 0; // last time we did MQTT publish side door
+unsigned long last_publish_main = 0; // last time we did MQTT publish main door
+const unsigned long publish_infra_ms = 60 * 1000;  // interval to publish infra data
+unsigned long last_publish_infra = 0; // last time we did infra MQTT publish
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -88,7 +99,7 @@ void loop() {
   }
   //print_time();
 
-  now = timeClient.getEpochTime();
+  //now = timeClient.getEpochTime();
   side_door_state = digitalRead(side_door_pin);
   main_door_state = digitalRead(main_door_pin);
   if (side_door_state == HIGH) {
@@ -104,21 +115,77 @@ void loop() {
 
   // MQTT publish all door states (even if unchanged)
   // message in influxdb2 line protocol format
-  mqtt_reconnect();
-  sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
-          measurement, location, room, side_room_loc, msmt_type, side_door_state, now, "000000000");
-  int len = strlen(mqtt_msg);
-  client.publish(topic, (uint8_t*)mqtt_msg, len, true);
-  memset(mqtt_msg, 0, sizeof mqtt_msg);
-  sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
-          measurement, location, room, main_room_loc, msmt_type, main_door_state, now, "000000000");
-  len = strlen(mqtt_msg);
-  client.publish(topic, (uint8_t*)mqtt_msg, len, true);
-  // memset(mqtt_msg, 0, sizeof mqtt_msg);
+  // TODO: better way to combine the code for multiple doors?
+  // side door
+  if (side_door_state != side_door_last) {
+    if (mqtt_pub_side(side_door_state)) {
+      side_door_last = side_door_state;
+      last_publish_side = now;
+    } else {
+      Serial.println("FAIL to publish side door state");
+    }
+  } else if ((now - last_publish_side) > heartbeat_ms) {
+    if (mqtt_pub_side(side_door_state)) {
+      last_publish_side = now;
+    } else {
+      Serial.println("FAIL to HB publish side door state");
+    }
+  }
+  // main door
+  if (main_door_state != main_door_last) {
+    if (mqtt_pub_main(main_door_state)) {
+      main_door_last = main_door_state;
+      last_publish_main = now;
+    } else {
+      Serial.println("FAIL to publish main door state");
+    }
+  } else if ((now - last_publish_main) > heartbeat_ms) {
+    if (mqtt_pub_main(main_door_state)) {
+      last_publish_main = now;
+    } else {
+      Serial.println("FAIL to HB publish main door state");
+    }
+  }
+
+  // publish infra?
+  if ((now - last_publish_infra) > publish_infra_ms) {
+    if (mqtt_pub_wifi()) {
+      last_publish_infra = now;
+    } else {
+      Serial.println("FAIL to publish WiFi RSSI");
+    }
+  }
 
   client.loop();
   delay(1000);
 } // loop()
+
+boolean mqtt_pub_side(int state) {
+  char mqtt_msg [128];
+  sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
+            measurement, location, room, "side", msmt_type, state, timeClient.getEpochTime(), "000000000");
+  int len = strlen(mqtt_msg);
+  mqtt_reconnect();
+  return client.publish(topic, (uint8_t*)mqtt_msg, len, false);
+}
+
+boolean mqtt_pub_main(int state) {
+  char mqtt_msg [128];
+  sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
+            measurement, location, room, "main", msmt_type, state, timeClient.getEpochTime(), "000000000");
+  int len = strlen(mqtt_msg);
+  mqtt_reconnect();
+  return client.publish(topic, (uint8_t*)mqtt_msg, len, false);
+}
+
+boolean mqtt_pub_wifi() {
+  char mqtt_msg [128];
+  sprintf(mqtt_msg, "wifi,location=%s,room=%s,room_loc=%s,ssid=%s,host=%s rssi=%d %lu%s",
+            location, room, "side", WiFi.SSID().c_str(), WiFi.hostname().c_str(), WiFi.RSSI(), timeClient.getEpochTime(), "000000000");
+  int len = strlen(mqtt_msg);
+  mqtt_reconnect();
+  return client.publish(topic_infra, (uint8_t*)mqtt_msg, len, false);
+}
 
 void print_time() {
   Serial.print(timeClient.getHours());
@@ -158,7 +225,7 @@ void mqtt_reconnect() {
     } else {
       Serial.print("failed with state ");
       Serial.print(client.state());
-      delay(2000);
+      delay(1000);
     }
   }
 }

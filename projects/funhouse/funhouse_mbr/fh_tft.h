@@ -3,6 +3,7 @@
 
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
+#include "fh_homesec.h"
 
 // FIXME: move to cpp file when removed from funhouse_mbr.ino
 #define BG_COLOR ST77XX_BLACK
@@ -17,6 +18,7 @@
 class FhTft : public Adafruit_ST7789 {
   private:
     byte display_mode_;
+    uint32_t last_update_ms_ = 0; // track the last time the display was updated
     /**
      * @brief print display of sensors as they are discovered
      * 
@@ -58,6 +60,19 @@ class FhTft : public Adafruit_ST7789 {
      * @param fill - if true fill background (passthru to FhTft::setDsiplayMode)
      */
     void displayEnvironment(bool fill = false);
+    /**
+     * @brief display door state information for all doors
+     * 
+     * @param fill 
+     */
+    void displayDoors(bool fill = false);
+    /**
+     * @brief Display state information for a door
+     * 
+     * @param door The OwensDoor object
+     * @param now Current time, in epoch seconds (if 0 we will go get it)
+     */
+    void displayDoor(OwensDoor door, time_t now = 0);
 };
 
 #endif /* FH_TFT_H */

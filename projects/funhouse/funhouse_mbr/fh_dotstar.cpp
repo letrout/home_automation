@@ -8,7 +8,9 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <map>
 #include "fh_dotstar.h"
+#include "fh_homesec.h"
 #include "fh_sensors.h"
 #include "fh_mqtt.h"
 
@@ -18,6 +20,9 @@ extern uint8_t peppers[];
 #endif
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
+#endif
+#ifdef FH_HOMESEC_H
+extern std::map<const char*, OwensDoor, char_cmp> owensDoors;
 #endif
 
 FhDotstar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
@@ -45,7 +50,28 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
     mode_ = mode;
     switch(mode_) {
         case DOTSTAR_MODE_SLEEP:
-            setBrightness(0);
+            //setBrightness(0);
+            clear();
+            if (ambient_adjust) {
+                setBrightness(ambientAdjust(true, 5, 100));
+            }
+#ifdef FH_HOMESEC_H
+            if (owensDoors.at("library-front").is_open()) {
+                setPixelColor(0, Color(0, 255, 0));
+            }
+            if (owensDoors.at("garage-side").is_open()) {
+                setPixelColor(1, Color(0, 255, 0));
+            }
+            if (owensDoors.at("kitchen-deck").is_open()) {
+                setPixelColor(2, Color(0, 255, 0));
+            }
+            if (owensDoors.at("garage-main").is_open()) {
+                setPixelColor(3, Color(0, 255, 0));
+            }
+            if (owensDoors.at("mud-back").is_open()) {
+                setPixelColor(4, Color(0, 255, 0));
+            }
+#endif
             show();
             break;
         case DOTSTAR_MODE_RAINBOW:

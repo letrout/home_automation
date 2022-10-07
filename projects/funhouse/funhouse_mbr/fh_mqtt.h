@@ -1,6 +1,8 @@
+#pragma once
 #ifndef FH_MQTT_H
 #define FH_MQTT_H
 
+// #define MQTT_VERSION MQTT_VERSION_3_1   // Set to 3.1 for better compatibility?? (vs 3.1.1)
 #include <PubSubClient.h>
 #include <WiFi.h>
 

@@ -3,6 +3,21 @@
 
 
 /**
+ * @brief MQTT publish door state, in Influxdb line protocol
+ * 
+ * @param state current door state
+ * @return boolean return from client.publish()
+ */
+boolean mqtt_pub_door(int state);
+
+/**
+ * @brief MQTT publish WiFi info
+ * 
+ * @return boolean return from client.publish()
+ */
+boolean mqtt_pub_wifi();
+
+/**
  * @brief print the current time to serial
  * 
  */
