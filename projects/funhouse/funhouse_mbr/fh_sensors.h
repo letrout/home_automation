@@ -6,6 +6,7 @@
 #include <Adafruit_SGP30.h>
 #include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
+#include <Adafruit_PM25AQI.h>
 
 #define E_SENSOR_SUCCESS 0  // standard success return value
 #define E_SENSOR_FAIL 1  // standard read failure return value
@@ -161,6 +162,43 @@ class FhSht40 : public Adafruit_SHT4x {
     uint8_t readSht40();
 };
 #endif /* ADAFRUIT_SHT4x_H */
+
+#ifdef ADAFRUIT_PM25AQI_H
+class FhPm25Aqi : public Adafruit_PM25AQI {
+  private:
+    bool present_ = false;
+    unsigned long last_read_ms_;
+    unsigned long last_update_ms_;
+    PM25_AQI_Data last_data_;
+  public:
+    FhPm25Aqi();
+    /**
+     * @brief Adafruit_PM25AQI::begin_I2C(), sets present_ member
+     * 
+     * @return return value of Adafruit_PM25AQI::begin_I2C
+     */
+    bool begin_I2C();
+    bool present() const { return present_; }
+    /**
+     * @brief Call Adafruit_PM25AQI::read(), set last_read_ms_ if successful
+     * 
+     * @param data PM25_AQI_Data struct for sensor read values
+     * @return return value of Adafruit_PM25AQI::read()
+     */
+    bool read(PM25_AQI_Data *data);
+    PM25_AQI_Data last_data() const { return last_data_; }
+    /**
+     * @brief Last time (millis()) sensors was attemtped to be read (successfully or not)
+     * 
+     */
+    unsigned long last_read_ms() const { return last_read_ms_; }
+    /**
+     * @brief Last time (millis()) sensor was *successfully* read
+     * 
+     */
+    unsigned long last_update_ms() const { return last_update_ms_; }
+};
+#endif  /* ADAFRUIT_PM25AQI_H */
 
 #ifdef SENSIRIONI2CSCD4X_H
 /**

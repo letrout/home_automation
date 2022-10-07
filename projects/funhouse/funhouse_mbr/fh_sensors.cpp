@@ -27,6 +27,9 @@ FhScd40 scd4x;
 #define SCD4X_OFFSET_C 3.4  // Stock is 4C(?), testing shows 3.4 better matches my SHT40
 const unsigned long scd4x_min_read_ms = 5000;  // minimum interval between SCD4x reads, in ms
 #endif
+#ifdef ADAFRUIT_PM25AQI_H
+FhPm25Aqi pm25Aqi = FhPm25Aqi();
+#endif
 
 uint32_t getAbsoluteHumidity(float temp_c, float hum_pct) {
   // approximation formula from Sensirion SGP30 Driver Integration chapter 3.15
@@ -324,3 +327,22 @@ uint16_t FhScd40::readScd40(uint16_t ambient_press_hpa) {
   return error;
 }
 #endif /* SENSIRIONI2CSCD4X_H */
+
+#ifdef ADAFRUIT_PM25AQI_H
+FhPm25Aqi::FhPm25Aqi(void) {
+}
+
+bool FhPm25Aqi::begin_I2C() {
+  present_ = Adafruit_PM25AQI::begin_I2C();
+  return present();
+}
+
+bool FhPm25Aqi::read(PM25_AQI_Data *data) {
+  if (Adafruit_PM25AQI::read(data)) {
+    last_read_ms_ = millis();
+    return true;
+  } else {
+    return false;
+  }
+}
+#endif

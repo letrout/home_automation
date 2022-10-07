@@ -24,6 +24,9 @@ extern FhSht40 sht4x;
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
 #endif
+#ifdef ADAFRUIT_PM25AQI_H
+extern FhPm25Aqi pm25Aqi;
+#endif
 
 // display!
 extern FhTft tft;
