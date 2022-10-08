@@ -185,8 +185,8 @@ class FhPm25Aqi : public Adafruit_PM25AQI {
      * @param data PM25_AQI_Data struct for sensor read values
      * @return return value of Adafruit_PM25AQI::read()
      */
-    bool read(PM25_AQI_Data *data);
-    PM25_AQI_Data last_data() const { return last_data_; }
+    bool read();
+    const PM25_AQI_Data * last_data() const { return &last_data_; }
     /**
      * @brief Last time (millis()) sensors was attemtped to be read (successfully or not)
      * 

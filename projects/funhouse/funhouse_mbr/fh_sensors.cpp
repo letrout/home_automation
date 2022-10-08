@@ -337,8 +337,8 @@ bool FhPm25Aqi::begin_I2C() {
   return present();
 }
 
-bool FhPm25Aqi::read(PM25_AQI_Data *data) {
-  if (Adafruit_PM25AQI::read(data)) {
+bool FhPm25Aqi::read() {
+  if (Adafruit_PM25AQI::read(&last_data_)) {
     last_read_ms_ = millis();
     return true;
   } else {
