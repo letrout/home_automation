@@ -156,6 +156,18 @@ void setup() {
     Serial.println(sgp30.serialnumber[2], HEX);
   }
   #endif
+#ifdef ADAFRUIT_PM25AQI_H
+  // check PM25!
+  tft.setTextColor(ST77XX_YELLOW);
+  tft.print("PM25? ");
+  if (!pm25Aqi.begin_I2C()) {
+    tft.setTextColor(ST77XX_RED);
+    tft.println("FAIL!");
+  } else {
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println("OK!");
+  }
+#endif
 
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(SPEAKER, OUTPUT);
