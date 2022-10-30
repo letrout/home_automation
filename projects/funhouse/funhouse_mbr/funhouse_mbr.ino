@@ -512,6 +512,11 @@ void read_sensors() {
     Serial.printf("ERROR - SGP30 read returned: %d\n", sensor_return);
   }
   #endif
+  #ifdef ADAFRUIT_PM25AQI_H
+  if (!pm25Aqi.read()) {
+    Serial.println("ERROR - failed to read PM25 sensor");
+  }
+  #endif
 
   return;
 }
