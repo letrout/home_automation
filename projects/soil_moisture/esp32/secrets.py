@@ -8,6 +8,7 @@ secrets = {
     'mqtt_topic' : 'influx/Owens/plants/',
     'aio_username' : 'my_adafruit_io_username',
     'aio_key' : 'my_adafruit_io_key',
+    'ntp_server' : 'NTP_SERVER_IP',
     'timezone' : "America/Chicago", # http://worldtimeapi.org/timezones
     }
 
