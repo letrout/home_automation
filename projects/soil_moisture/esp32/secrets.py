@@ -31,10 +31,28 @@ dry: ADC value when probe in air
 wet: ADC value when probe submerged in water
 """
 probes = {
-    "A0": {
+    "A1": {
         "analog_in": None,
         "bits_dry": 52586,
         "bits_wet": 29113,
         "plant": "pepper1"
+    },
+    "A2": {
+        "analog_in": None,
+        "bits_dry": 52586,
+        "bits_wet": 28954,
+        "plant": "pepper2"
+    },
+    "A3": {
+        "analog_in": None,
+        "bits_dry": 52586,
+        "bits_wet": 28636,
+        "plant": "pepper3"
+    },
+    "A4": {
+        "analog_in": None,
+        "bits_dry": 52586,
+        "bits_wet": 28775,
+        "plant": "pepper4"
     }
 }
