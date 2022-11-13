@@ -120,15 +120,6 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
             setPixelColor(4, gamma32(ColorHSV(pepper_hues[0], 255, brightness_)));
             */
 #endif
-#ifdef SENSIRIONI2CSCD4X_H
-            // Set middle dotstar hue by CO2 level
-            uint16_t co2_hue;
-            co2_hue = map(scd4x.last_co2_ppm(), 400, 4000, 0, 26000);  // 400ppm=green, 4000ppm=red
-            // setPixelColor(2, gamma32(ColorHSV(co2_hue, 255, brightness_)));
-            setPixelColor(2, gamma32(ColorHSV(co2_hue)));
-            Serial.print("CO2 pixel hue ");
-            Serial.println(co2_hue);
-#endif
             show();
             break;
         case DOTSTAR_MODE_ENV:
