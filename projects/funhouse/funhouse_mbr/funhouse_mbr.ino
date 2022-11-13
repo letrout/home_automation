@@ -295,7 +295,7 @@ void loop() {
       case 0:
         // BUTTON_UP - display environmental data
         tft.displayEnvironment();
-        pixels.setMode(DOTSTAR_MODE_PLANTS);
+        pixels.setMode(DOTSTAR_MODE_ENV);
         break;
       case 1:
         // BUTTON_SELECT Display door sensor events
@@ -305,7 +305,7 @@ void loop() {
       case 2:
         // BUTTON_DOWN - display all sensor data
         tft.displaySensors();
-        pixels.setMode(DOTSTAR_MODE_RAINBOW);
+        pixels.setMode(DOTSTAR_MODE_PLANTS);
         break;
       // default:
     }
