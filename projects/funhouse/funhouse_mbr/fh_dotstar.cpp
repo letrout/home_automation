@@ -15,14 +15,21 @@
 #include "fh_mqtt.h"
 
 extern FhAmbientLight ambientLight;
+extern float prim_temp_f, prim_hum;  // primary temp and humidity measurements
 #ifdef FH_SUB_PEPPERS
 extern uint8_t peppers[];
 #endif
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
 #endif
+#ifdef ADAFRUIT_SGP30_H
+extern FhSgp30 sgp30;
+#endif
 #ifdef FH_HOMESEC_H
 extern std::map<const char*, OwensDoor, char_cmp> owensDoors;
+#endif
+#ifdef ADAFRUIT_PM25AQI_H
+extern FhPm25Aqi pm25Aqi;
 #endif
 
 FhDotstar pixels(NUM_DOTSTAR, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLOCK, DOTSTAR_BRG);
@@ -121,6 +128,43 @@ uint8_t FhDotstar::setMode(byte mode, bool ambient_adjust) {
             setPixelColor(2, gamma32(ColorHSV(co2_hue)));
             Serial.print("CO2 pixel hue ");
             Serial.println(co2_hue);
+#endif
+            show();
+            break;
+        case DOTSTAR_MODE_ENV:
+            // Set far left, right dotstars to temp, humidity
+            uint16_t temp_hue, hum_hue;
+            // FIXME: should map blue-red instead of green-red
+            temp_hue = map(prim_temp_f, 60, 85, 26000, 0);  // 60=green, 85=red
+            setPixelColor(0, gamma32(ColorHSV(temp_hue)));
+            Serial.print("Temp pixel hue ");
+            Serial.println(temp_hue);
+            // FIXME: should map blue-red instead of green-red
+            hum_hue = map(prim_hum, 10, 85, 0, 26000);  // 85=green, 10=red
+            setPixelColor(4, gamma32(ColorHSV(hum_hue)));
+            Serial.print("Humidity pixel hue ");
+            Serial.println(hum_hue);
+#ifdef ADAFRUIT_PM25AQI_H
+            // Set middle left to AQI PM2.5
+            uint16_t pm25_hue;
+#endif
+#ifdef SENSIRIONI2CSCD4X_H
+            // Set middle dotstar hue by CO2 level
+            uint16_t co2_hue;
+            co2_hue = map(scd4x.last_co2_ppm(), 400, 4000, 0, 26000);  // 400ppm=green, 4000ppm=red
+            // setPixelColor(2, gamma32(ColorHSV(co2_hue, 255, brightness_)));
+            setPixelColor(2, gamma32(ColorHSV(co2_hue)));
+            Serial.print("CO2 pixel hue ");
+            Serial.println(co2_hue);
+#endif
+#ifdef ADAFRUIT_SGP30_H
+            // Set the middle right dotstar hue by VOC
+            uint16_t voc_hue;
+            voc_hue = map(sgp30.last_eco2(), 0, 2000, 0, 26000);  // 0ppm=green, 2000ppm=red
+            // setPixelColor(2, gamma32(ColorHSV(co2_hue, 255, brightness_)));
+            setPixelColor(3, gamma32(ColorHSV(voc_hue)));
+            Serial.print("VOC pixel hue ");
+            Serial.println(voc_hue);
 #endif
             show();
             break;

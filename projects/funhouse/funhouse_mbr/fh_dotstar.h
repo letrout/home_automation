@@ -10,6 +10,7 @@
 #define DOTSTAR_MODE_SLEEP 0
 #define DOTSTAR_MODE_RAINBOW 1
 #define DOTSTAR_MODE_PLANTS 2
+#define DOTSTAR_MODE_ENV 3
 
 class FhDotstar : public Adafruit_DotStar {
   private:
