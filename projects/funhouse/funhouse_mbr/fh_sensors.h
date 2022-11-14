@@ -4,7 +4,7 @@
 #include <Adafruit_DPS310.h>
 #include <Adafruit_AHTX0.h>
 #include <Adafruit_SGP30.h>
-#include <Adafruit_SHT4x.h>
+//#include <Adafruit_SHT4x.h>
 #include <SensirionI2CScd4x.h>
 #include <Adafruit_PM25AQI.h>
 
