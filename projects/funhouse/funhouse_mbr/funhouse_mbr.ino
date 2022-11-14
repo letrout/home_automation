@@ -631,10 +631,10 @@ void mqtt_pub_sensors() {
   // PMSA003i
   #ifdef ADAFRUIT_PM25AQI_H
   if (pm25Aqi.present() & (millis() - pm25Aqi.last_read_ms()) <= max_mqtt_pub_delay_ms) {
-    sprintf(mqtt_msg, "%s,sensor=PMSA003i,location=%s,room=%s,room_loc=%s \
-      pm10_standard=%d,pm25_standard=%d,pm100_standard=%d,\
-      pm10_env=%d,pm25_env=%d,pm100_env=%d\
-      particles_03um=%d,particles_05um=%d,particles_10um=%d,particles_25um=%d,particles_50um=%d,particles_100um=%d",
+    sprintf(mqtt_msg, "%s,sensor=PMSA003i,location=%s,room=%s,room_loc=%s "
+      "pm10_standard=%d,pm25_standard=%d,pm100_standard=%d,"
+      "pm10_env=%d,pm25_env=%d,pm100_env=%d,"
+      "particles_03um=%d,particles_05um=%d,particles_10um=%d,particles_25um=%d,particles_50um=%d,particles_100um=%d",
       measurement, location, room, room_loc,
       pm25Aqi.last_data()->pm10_standard, pm25Aqi.last_data()->pm25_standard, pm25Aqi.last_data()->pm100_standard,
       pm25Aqi.last_data()->pm10_env, pm25Aqi.last_data()->pm25_env, pm25Aqi.last_data()->pm100_env,
