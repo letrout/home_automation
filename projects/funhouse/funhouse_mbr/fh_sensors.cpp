@@ -29,6 +29,7 @@ const unsigned long scd4x_min_read_ms = 5000;  // minimum interval between SCD4x
 #endif
 #ifdef ADAFRUIT_PM25AQI_H
 FhPm25Aqi pm25Aqi = FhPm25Aqi();
+const unsigned long pm25aqi_min_read_ms = 10000;  // minimum interval between PMSA003I reads, in ms
 #endif
 
 uint32_t getAbsoluteHumidity(float temp_c, float hum_pct) {
@@ -338,6 +339,11 @@ bool FhPm25Aqi::begin_I2C() {
 }
 
 bool FhPm25Aqi::read() {
+  // Protect against reading the PMSA003I too quickly
+  if ((millis() - last_read_ms_) < pm25aqi_min_read_ms) {
+    Serial.printf("Error - trying to re-read PMSA003I before %lu ms have elapsed\n", pm25aqi_min_read_ms);
+    return false;
+  }
   if (Adafruit_PM25AQI::read(&last_data_)) {
     last_read_ms_ = millis();
     return true;
