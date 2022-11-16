@@ -159,8 +159,14 @@ void setup() {
 #ifdef ADAFRUIT_PM25AQI_H
   // check PM25!
   tft.setTextColor(ST77XX_YELLOW);
+  boolean pms25_success = pm25Aqi.begin_I2C();
   tft.print("PM25? ");
-  if (!pm25Aqi.begin_I2C()) {
+  if (!pms25_success) {
+    // retry
+    delay(1000);
+    pms25_success = pm25Aqi.begin_I2C();
+  }
+  if (!pms25_success) {
     tft.setTextColor(ST77XX_RED);
     tft.println("FAIL!");
   } else {
