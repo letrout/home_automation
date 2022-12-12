@@ -24,6 +24,9 @@ extern FhSht40 sht4x;
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
 #endif
+#ifdef ADAFRUIT_PM25AQI_H
+extern FhPm25Aqi pm25Aqi;
+#endif
 
 // display!
 extern FhTft tft;
@@ -153,6 +156,24 @@ void setup() {
     Serial.println(sgp30.serialnumber[2], HEX);
   }
   #endif
+#ifdef ADAFRUIT_PM25AQI_H
+  // check PM25!
+  tft.setTextColor(ST77XX_YELLOW);
+  boolean pms25_success = pm25Aqi.begin_I2C();
+  tft.print("PM25? ");
+  if (!pms25_success) {
+    // retry
+    delay(1000);
+    pms25_success = pm25Aqi.begin_I2C();
+  }
+  if (!pms25_success) {
+    tft.setTextColor(ST77XX_RED);
+    tft.println("FAIL!");
+  } else {
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println("OK!");
+  }
+#endif
 
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(SPEAKER, OUTPUT);
@@ -280,7 +301,7 @@ void loop() {
       case 0:
         // BUTTON_UP - display environmental data
         tft.displayEnvironment();
-        pixels.setMode(DOTSTAR_MODE_PLANTS);
+        pixels.setMode(DOTSTAR_MODE_ENV);
         break;
       case 1:
         // BUTTON_SELECT Display door sensor events
@@ -290,7 +311,7 @@ void loop() {
       case 2:
         // BUTTON_DOWN - display all sensor data
         tft.displaySensors();
-        pixels.setMode(DOTSTAR_MODE_RAINBOW);
+        pixels.setMode(DOTSTAR_MODE_PLANTS);
         break;
       // default:
     }
@@ -497,6 +518,11 @@ void read_sensors() {
     Serial.printf("ERROR - SGP30 read returned: %d\n", sensor_return);
   }
   #endif
+  #ifdef ADAFRUIT_PM25AQI_H
+  if (!pm25Aqi.read()) {
+    Serial.println("ERROR - failed to read PM25 sensor");
+  }
+  #endif
 
   return;
 }
@@ -551,7 +577,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
 
 
 void mqtt_pub_sensors() {
-  char mqtt_msg [128];
+  char mqtt_msg [384];
 
   // check/reconnect connection to broker
   mqtt_client.mqttReconnect();
@@ -608,6 +634,22 @@ void mqtt_pub_sensors() {
     memset(mqtt_msg, 0, sizeof mqtt_msg);
   }
   #endif
+  // PMSA003i
+  #ifdef ADAFRUIT_PM25AQI_H
+  if (pm25Aqi.present() & (millis() - pm25Aqi.last_read_ms()) <= max_mqtt_pub_delay_ms) {
+    sprintf(mqtt_msg, "%s,sensor=PMSA003i,location=%s,room=%s,room_loc=%s "
+      "pm10_standard=%d,pm25_standard=%d,pm100_standard=%d,"
+      "pm10_env=%d,pm25_env=%d,pm100_env=%d,"
+      "particles_03um=%d,particles_05um=%d,particles_10um=%d,particles_25um=%d,particles_50um=%d,particles_100um=%d",
+      measurement, location, room, room_loc,
+      pm25Aqi.last_data()->pm10_standard, pm25Aqi.last_data()->pm25_standard, pm25Aqi.last_data()->pm100_standard,
+      pm25Aqi.last_data()->pm10_env, pm25Aqi.last_data()->pm25_env, pm25Aqi.last_data()->pm100_env,
+      pm25Aqi.last_data()->particles_03um, pm25Aqi.last_data()->particles_05um,pm25Aqi.last_data()->particles_10um,pm25Aqi.last_data()->particles_25um,pm25Aqi.last_data()->particles_50um,pm25Aqi.last_data()->particles_100um);
+      mqtt_client.publishTopic(mqtt_msg);
+      memset(mqtt_msg, 0, sizeof mqtt_msg);
+  }
+  #endif
+  // WiFi RSSI
   sprintf(mqtt_msg, "wifi,location=%s,room=%s,room_loc=%s,ssid=%s,host=%s rssi=%d",
     location, room, room_loc, fh_wifi.SSID().c_str(), fh_wifi.getHostname(), fh_wifi.RSSI());
   mqtt_client.publish(topic_infra, mqtt_msg);

@@ -31,6 +31,9 @@ extern FhSht40 sht4x;
 #ifdef SENSIRIONI2CSCD4X_H
 extern FhScd40 scd4x;
 #endif
+#ifdef ADAFRUIT_PM25AQI_H
+extern FhPm25Aqi pm25Aqi;
+#endif
 #ifdef FH_HOMESEC_H
 extern std::map<const char*, OwensDoor, char_cmp> owensDoors;
 #endif
@@ -235,6 +238,15 @@ void FhTft::displayEnvironment(bool fill) {
     println(" ppb TVOC");
   }
 #endif /* ADAFRUIT_SGP30_H */
+#ifdef ADAFRUIT_PM25AQI_H
+  if (pm25Aqi.present()) {
+    setTextColor(ST77XX_YELLOW, BG_COLOR);
+    print("PM: ");
+    setTextColor(ST77XX_GREEN, BG_COLOR);
+    printf("%d, %d, %d", pm25Aqi.last_data()->pm10_env, pm25Aqi.last_data()->pm25_env, pm25Aqi.last_data()->pm100_env);
+    println(spaces);
+  }
+#endif /* ADAFRUIT_PM25AQI_H */
 }
 
 void FhTft::displayDoor(OwensDoor door, time_t now) {
