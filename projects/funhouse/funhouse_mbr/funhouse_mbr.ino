@@ -187,8 +187,19 @@ void setup() {
 
   // Connect to WiFi
   fh_wifi.connect();
+  tft.setTextColor(ST77XX_YELLOW);
+  tft.print("WiFi? ");
+  if (fh_wifi.status() == WL_CONNECTED) {
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println(fh_wifi.localIP());
+  } else {
+    tft.setTextColor(ST77XX_RED);
+    tft.println("NONE!");
+  }
 
   // Connect to MQTT
+  tft.setTextColor(ST77XX_YELLOW);
+  tft.print("MQTT? ");
   mqtt_client.setup();
   mqtt_client.setMqttServer();
   mqtt_client.setCallback(callback);
@@ -196,6 +207,13 @@ void setup() {
   //mqtt_client.setSocketTimeout(30);
   mqtt_client.setKeepAlive(70);
   mqtt_client.mqttReconnect();
+  if (mqtt_client.connected()) {
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println("OK!");
+  } else {
+    tft.setTextColor(ST77XX_RED);
+    tft.println("NONE!");
+  }
 #ifdef FH_HOMESEC_H
   uint32_t door_last_sec;
   owensDoors = get_doors();
