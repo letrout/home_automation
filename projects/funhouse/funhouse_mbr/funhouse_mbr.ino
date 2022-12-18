@@ -599,6 +599,10 @@ void mqtt_pub_sensors() {
 
   // check/reconnect connection to broker
   mqtt_client.mqttReconnect();
+  if (!mqtt_client.connected()) {
+    Serial.println("Skipping MQTT publish, not connected to broker!");
+    return;
+  }
 
   // DPS310
   if ((millis() - dps.last_read_ms()) <= max_mqtt_pub_delay_ms) {
