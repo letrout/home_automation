@@ -58,8 +58,10 @@ class FhPubSubClient : public PubSubClient {
          * This is blocking. Right now this app only exists to publish to MQTT,
          * but if that changes this will need to change to something non-blocking
          * 
+         * @return uint8_t 0 on success, 1 on failure
+         * 
          */
-        void mqttReconnect(void);
+        uint8_t mqttReconnect(void);
 };
 
 #ifdef FH_SUB_PEPPERS

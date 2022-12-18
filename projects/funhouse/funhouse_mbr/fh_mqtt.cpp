@@ -83,7 +83,8 @@ int FhPubSubClient::publishTopic(const char *payload) {
     return publish(topic, payload);
 }
 
-void FhPubSubClient::mqttReconnect(void) {
+uint8_t FhPubSubClient::mqttReconnect(void) {
+    uint8_t i = 0;
     while (!connected()) {
         String client_id = "esp32-client-";
         client_id += String(WiFi.macAddress());
@@ -103,6 +104,11 @@ void FhPubSubClient::mqttReconnect(void) {
             Serial.print(state());
             delay(2000);
         }
+    }
+    if (connected()) {
+      return 0;
+    } else {
+      return 1;
     }
 }
 
