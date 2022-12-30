@@ -1,3 +1,5 @@
+# telegraf with docker-compose
+
 # telegraf docker container (same host as influxdb container)
 ## Generate a config file
 	$ docker run --rm telegraf telegraf config > /docker/telegraf/telegraf.conf
