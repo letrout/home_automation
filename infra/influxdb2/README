@@ -1,4 +1,17 @@
-Run InfluxDB 2.0, eg:
+Make directories for persistent volumes
+$ sudo mkdir /docker/influxdb2/data
+$ sudo mkdir /docker/influxdb2/config
+Run InfluxDB with docker-compose
+$ sudo docker-compose up -d
+Configure the influxdb server with data from old server
+Copy a backup on the old server
+Copy the back to /docker/influxdb2/data/
+$ sudo docker exec -it influxdb2 bash
+# influx setup --token <admin token from old server>
+# influx restore /var/lib/influxdb2/<backup dir> --full
+Verify data
+
+Run InfluxDB 2.0 with Docker (this was used to create my original InfluxDB server)
 $ docker network create influxdb2
 $ sudo docker run -d -p 8086:8086 \
       --restart unless-stopped \
