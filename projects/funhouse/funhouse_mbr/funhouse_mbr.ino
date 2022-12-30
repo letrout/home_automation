@@ -489,7 +489,7 @@ void loop() {
   
   /************************** LEDs */
   // pulse red LED
-  ledcWrite(0, LED_dutycycle);
+  ledcWrite(0, LED_dutycycle / 2);
   LED_dutycycle += 16;
 
   //delay(500);
