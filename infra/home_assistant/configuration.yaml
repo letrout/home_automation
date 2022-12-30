@@ -60,8 +60,6 @@ automation:
         data:
           message: "ALARM! The alarm is Disarmed at {{ states('sensor.date_time') }}"
 
-sensor:
-
 mqtt:
   sensor:
     - unique_id: mar_temp
