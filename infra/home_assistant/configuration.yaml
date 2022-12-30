@@ -62,7 +62,7 @@ automation:
 
 mqtt:
   sensor:
-    - unique_id: mar_temp
+    - unique_id: mbr_temp
       state_topic: "influx/Owens/sensors/mbr/door/temp_F"
       name: Master BR temperature
       unit_of_measurement: 'F'
