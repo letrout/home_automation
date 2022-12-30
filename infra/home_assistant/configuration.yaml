@@ -10,11 +10,11 @@ frontend:
 tts:
   - platform: google_translate
 
-automation: !include automations.yaml
+#automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
-arm_control_panel:
+alarm_control_panel:
   - platform: manual
     name: "Home Alarm"
     code: ""
@@ -60,109 +60,130 @@ automation:
         data:
           message: "ALARM! The alarm is Disarmed at {{ states('sensor.date_time') }}"
 
-sensor:
-  - platform: mqtt
-    state_topic: "influx/Owens/sensors/mbr/door/temp_F"
-    name: Master BR temperature
-    unit_of_measurement: 'F'
+mqtt:
+  sensor:
+    - unique_id: mbr_temp
+      state_topic: "influx/Owens/sensors/#"
+      name: Master BR temperature
+      unit_of_measurement: 'F'
+      value_template: >
+        {% if value.split(',')[1].split('=')[1] == 'SCD40' and value.split(',')[3].split('=')[1] == 'mbr' and value.split(',')[4].split(' ')[0].split('=')[1] == 'door' %}
+          {{ value.split(' ')[1].split(',')[1].split('=')[1] }}
+        {% endif %}
 
-  - platform: mqtt
-    state_topic: "influx/Owens/sensors/mbr/door/rel_humidity"
-    name: Master BR humidity
-    unit_of_measurement: '%'
+    - unique_id: mbr_humidity
+      state_topic: "influx/Owens/sensors/#"
+      name: Master BR humidity
+      unit_of_measurement: '%'
+      value_template: >
+        {% if value.split(',')[1].split('=')[1] == 'SCD40' and value.split(',')[3].split('=')[1] == 'mbr' and value.split(',')[4].split(' ')[0].split('=')[1] == 'door' %}
+          {{ value.split(' ')[1].split(',')[2].split('=')[1] }}
+        {% endif %}
 
-  - platform: mqtt
-    state_topic: "Owens/sensors/basement/dc/temp_F"
-    name: Basement DC temperature
-    unit_of_measurement: 'F'
+    - unique_id: basement_dc_temp
+      state_topic: "Owens/sensors/basement/dc/temp_F"
+      name: Basement DC temperature
+      unit_of_measurement: 'F'
 
-  - platform: mqtt
-    state_topic: "Owens/sensors/basement/dc/rel_humidity"
-    name: Basement DC humidity
-    unit_of_measurement: '%'
+    - unique_id: basement_dc_humidiy
+      state_topic: "Owens/sensors/basement/dc/rel_humidity"
+      name: Basement DC humidity
+      unit_of_measurement: '%'
 
-  - platform: mqtt
-    state_topic: "Owens/sensors/garage/back/temp_F"
-    name: Garage temperature
-    unit_of_measurement: 'F'
+    - unique_id: garage_temp
+      state_topic: "Owens/sensors/garage/back/temp_F"
+      name: Garage temperature
+      unit_of_measurement: 'F'
 
-  - platform: mqtt
-    state_topic: "Owens/sensors/garage/back/rel_humidity"
-    name: Garage humidity
-    unit_of_measurement: '%'
+    - unique_id: garage_humidity
+      state_topic: "Owens/sensors/garage/back/rel_humidity"
+      name: Garage humidity
+      unit_of_measurement: '%'
 
-  - platform: mqtt
-    state_topic: "influx/Owens/sensors/mbr/door/PM1.0_std"
-    name: Master BR PM1.0
-    unit_of_measurement: 'ug/m3'
+    - unique_id: mbr_pm1.0
+      state_topic: "influx/Owens/sensors/#"
+      name: Master BR PM1.0
+      unit_of_measurement: 'ug/m3'
+      value_template: >
+        {% if value.split(',')[1].split('=')[1] == 'PMSA003i' and value.split(',')[3].split('=')[1] == 'mbr' and value.split(',')[4].split(' ')[0].split('=')[1] == 'door' %}
+          {{ value.split(' ')[1].split(',')[3].split('=')[1] }}
+        {% endif %}
 
-  - platform: mqtt
-    state_topic: "influx/Owens/sensors/mbr/door/PM2.5_std"
-    name: Master BR PM2.5
-    unit_of_measurement: 'ug/m3'
+    - unique_id: mbr_pm2.5
+      state_topic: "influx/Owens/sensors/#"
+      name: Master BR PM2.5
+      unit_of_measurement: 'ug/m3'
+      value_template: >
+        {% if value.split(',')[1].split('=')[1] == 'PMSA003i' and value.split(',')[3].split('=')[1] == 'mbr' and value.split(',')[4].split(' ')[0].split('=')[1] == 'door' %}
+          {{ value.split(' ')[1].split(',')[4].split('=')[1] }}
+        {% endif %}
 
-  - platform: mqtt
-    state_topic: "influx/Owens/sensors/mbr/door/PM10.0_std"
-    name: Master BR PM10.0
-    unit_of_measurement: 'ug/m3'
+    - unique_id: mbr_pm10.0
+      state_topic: "influx/Owens/sensors/#"
+      name: Master BR PM10.0
+      unit_of_measurement: 'ug/m3'
+      value_template: >
+        {% if value.split(',')[1].split('=')[1] == 'PMSA003i' and value.split(',')[3].split('=')[1] == 'mbr' and value.split(',')[4].split(' ')[0].split('=')[1] == 'door' %}
+          {{ value.split(' ')[1].split(',')[5].split('=')[1] }}
+        {% endif %}
 
-binary_sensor:
-  - platform: mqtt
-    state_topic: "influx/Owens/events/#"
-    name: "Garage side door"
-    payload_on: 1
-    payload_off: 0
-    qos: 0
-    device_class: door
-    value_template: >
-      {% if value.split(',')[2].split('=')[1] == 'garage' and value.split(',')[3].split('=')[1] == 'side' %}
-        {{ value.split(' ')[1].split('=')[1] }}
-      {% endif %}
+  binary_sensor:
+    - unique_id: garage_side_door
+      state_topic: "influx/Owens/events/#"
+      name: "Garage side door"
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'garage' and value.split(',')[3].split('=')[1] == 'side' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
 
-  - platform: mqtt
-    state_topic: "influx/Owens/events/#"
-    name: "Garage main door"
-    payload_on: 1
-    payload_off: 0
-    qos: 0
-    device_class: door
-    value_template: >
-      {% if value.split(',')[2].split('=')[1] == 'garage' and value.split(',')[3].split('=')[1] == 'main' %}
-        {{ value.split(' ')[1].split('=')[1] }}
-      {% endif %}
+    - unique_id: garage_main_door
+      state_topic: "influx/Owens/events/#"
+      name: "Garage main door"
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'garage' and value.split(',')[3].split('=')[1] == 'main' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
 
-  - platform: mqtt
-    state_topic: "influx/Owens/events/#"
-    name: Front door
-    payload_on: 1
-    payload_off: 0
-    qos: 0
-    device_class: door
-    value_template: >
-      {% if value.split(',')[2].split('=')[1] == 'library' and value.split(',')[3].split('=')[1] == 'front' %}
-        {{ value.split(' ')[1].split('=')[1] }}
-      {% endif %}
+    - unique_id: front_door
+      state_topic: "influx/Owens/events/#"
+      name: Front door
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'library' and value.split(',')[3].split('=')[1] == 'front' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
 
-  - platform: mqtt
-    state_topic: "influx/Owens/events/#"
-    name: Back door
-    payload_on: 1
-    payload_off: 0
-    qos: 0
-    device_class: door
-    value_template: >
-      {% if value.split(',')[2].split('=')[1] == 'mud' and value.split(',')[3].split('=')[1] == 'back' %}
-        {{ value.split(' ')[1].split('=')[1] }}
-      {% endif %}
+    - unique_id: back_door
+      state_topic: "influx/Owens/events/#"
+      name: Back door
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'mud' and value.split(',')[3].split('=')[1] == 'back' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
 
-  - platform: mqtt
-    state_topic: "influx/Owens/events/#"
-    name: Kitchen door
-    payload_on: 1
-    payload_off: 0
-    qos: 0
-    device_class: door
-    value_template: >
-      {% if value.split(',')[2].split('=')[1] == 'kitchen' and value.split(',')[3].split('=')[1] == 'deck' %}
-        {{ value.split(' ')[1].split('=')[1] }}
-      {% endif %}
+    - unique_id: kitchen_door
+      state_topic: "influx/Owens/events/#"
+      name: Kitchen door
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'kitchen' and value.split(',')[3].split('=')[1] == 'deck' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
