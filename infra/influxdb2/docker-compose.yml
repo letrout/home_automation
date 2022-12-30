@@ -1,0 +1,11 @@
+services:
+  influxdb:
+    container_name: influxdb2
+    hostname: influxdb2
+    image: influxdb:2.6-alpine
+    ports:
+      - '8086:8086'
+    volumes:
+      - /docker/influxdb2/data:/var/lib/influxdb2
+      - /docker/influxdb2/config:/etc/influxdb2
+    restart: unless-stopped
