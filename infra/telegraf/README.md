@@ -1,5 +1,15 @@
 # telegraf with docker-compose
-
+## set up  directories for persistent volumes
+	$ mkdir -p /docker/telegraf/conf/telegraf.d
+	$ mkdir -p /docker/telegraf/default
+	$ cp default/telegraf /docker/telegraf/default/telegraf
+## Edit the telegraf env variables
+	/docker/telegraf/default/telegraf
+## Generate base config file
+	$ sudo docker run --rm telegraf:1.25-alpine telegraf config > telegraf.conf
+	$ sudo cp telegraf.conf /docker/telegraf/conf/
+## run the container
+	$ sudo docker-compose up -d
 # telegraf docker container (same host as influxdb container)
 ## Generate a config file
 	$ docker run --rm telegraf telegraf config > /docker/telegraf/telegraf.conf

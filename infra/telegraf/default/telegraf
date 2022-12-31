@@ -1,0 +1,4 @@
+#USER="alice"
+INFLUX_URL="http://influxdb2.luth.bog:8086"
+INFLUX_SKIP_DATABASE_CREATION="true"
+#INFLUX_PASSWORD="monkey123"

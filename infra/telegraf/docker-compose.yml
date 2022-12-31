@@ -5,7 +5,9 @@ services:
     image: telegraf:1.25-alpine
     restart: unless-stopped
     volumes:
-      - /docker/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /docker/telegraf/conf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /docker/telegraf/conf/telegraf.d:/etc/telegraf/telegraf.d:ro
+      - /docker/telegraf/default/telegraf:/etc/default/telegraf:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /docker/influxdb2/data/bucket_du.txt:/influxdb2/bucket_du.txt:ro
       - /:/hostfs:ro
