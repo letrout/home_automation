@@ -12,3 +12,6 @@ TOKEN_HOME="<xxx>"
 TOKEN_HOME_1H="<xxx">
 TOKEN_AIRQUALITY="<xxx>"
 TOKEN_TEST="<xxx>"
+MQTT_BROKER="<name or ip>"
+MQTT_USER="MQTT user name"
+MQTT_PW="MQTT password"
