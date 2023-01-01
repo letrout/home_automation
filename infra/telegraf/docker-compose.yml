@@ -9,6 +9,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /docker/influxdb2/data/bucket_du.txt:/influxdb2/bucket_du.txt:ro
       - /:/hostfs:ro
+      - /docker/telegraf/bin/aq.star:/usr/local/bin/aq.star:ro
+      - /docker/telegraf/bin/aq.star:/usr/local/bin/bucket_du.sh:ro
     env_file:
       - env_file_secret
     environment:

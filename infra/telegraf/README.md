@@ -1,11 +1,16 @@
 # telegraf with docker-compose
 ## set up  directories for persistent volumes
 	$ mkdir -p /docker/telegraf/conf/telegraf.d
+	$ mkdir /docker/telegraf/bin
 ## Edit the telegraf env variables
 	$ cp env_file env_file_secret
 	edit env_file_secret with appropriate values
 ## Copy the config files
-	$ sudo cp telegraf.d/* /docker/telegraf/conf/telegraf.d/
+	$ cp telegraf.d/* /docker/telegraf/conf/telegraf.d/
+## Copy the utility scripts
+	$ cp aq.star /docker/telegraf/bin/
+	$ cp inputs/influxdb2_bucket/bucket_k.sh /docker/telegraf/bin/
+	$ chmod +x /docker/telegraf/bin/*
 ## run the container
 	$ sudo docker-compose up -d
 # telegraf docker container (same host as influxdb container)
