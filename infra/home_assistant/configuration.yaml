@@ -80,12 +80,38 @@ mqtt:
           {{ value.split(' ')[1].split(',')[2].split('=')[1] }}
         {% endif %}
 
+    - unique_id: mbr_co2
+      state_topic: "influx/Owens/sensors/#"
+      name: Master BR CO2
+      unit_of_measurement: 'ppm'
+      value_template: >
+        {% if value.split(',')[1].split('=')[1] == 'SCD40' and value.split(',')[3].split('=')[1] == 'mbr' and value.split(',')[4].split(' ')[0].split('=')[1] == 'door' %}
+          {{ value.split(' ')[1].split(',')[0].split('=')[1] }}
+        {% endif %}
+
+    - unique_id: mbr_light
+      state_topic: "influx/Owens/sensors/#"
+      name: Master BR light
+      value_template: >
+        {% if value.split(',')[1].split('=')[1] == 'funhouse' and value.split(',')[3].split('=')[1] == 'mbr' and value.split(',')[4].split(' ')[0].split('=')[1] == 'door' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
+
+    - unique_id: mbr_tvoc
+      state_topic: "influx/Owens/sensors/#"
+      name: Master BR TVOC
+      unit_of_measurement: 'ppm'
+      value_template: >
+        {% if value.split(',')[1].split('=')[1] == 'SGP30' and value.split(' ')[1].split('=')[0] == 'tvoc' and value.split(',')[3].split('=')[1] == 'mbr' and value.split(',')[4].split(' ')[0].split('=')[1] == 'door' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
+
     - unique_id: basement_dc_temp
       state_topic: "Owens/sensors/basement/dc/temp_F"
       name: Basement DC temperature
       unit_of_measurement: 'F'
 
-    - unique_id: basement_dc_humidiy
+    - unique_id: basement_dc_humidity
       state_topic: "Owens/sensors/basement/dc/rel_humidity"
       name: Basement DC humidity
       unit_of_measurement: '%'
