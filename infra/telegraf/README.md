@@ -8,7 +8,8 @@
 ## Copy the config files
 	$ cp telegraf.d/* /docker/telegraf/conf/telegraf.d/
 ## Copy the utility scripts
-	$ cp aq.star /docker/telegraf/bin/
+	$ cp bin/aq.star /docker/telegraf/bin/
+	$ cp bin/airnow.star /docker/telegraf/bin/
 	$ cp inputs/influxdb2_bucket/bucket_k.sh /docker/telegraf/bin/
 	$ chmod +x /docker/telegraf/bin/*
 ## run the container
