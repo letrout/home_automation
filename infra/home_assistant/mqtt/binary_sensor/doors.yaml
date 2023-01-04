@@ -1,0 +1,59 @@
+    - unique_id: garage_side_door
+      state_topic: "influx/Owens/events/#"
+      name: "Garage side door"
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'garage' and value.split(',')[3].split('=')[1] == 'side' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
+
+    - unique_id: garage_main_door
+      state_topic: "influx/Owens/events/#"
+      name: "Garage main door"
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'garage' and value.split(',')[3].split('=')[1] == 'main' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
+
+    - unique_id: front_door
+      state_topic: "influx/Owens/events/#"
+      name: Front door
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'library' and value.split(',')[3].split('=')[1] == 'front' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
+
+    - unique_id: back_door
+      state_topic: "influx/Owens/events/#"
+      name: Back door
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'mud' and value.split(',')[3].split('=')[1] == 'back' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
+
+    - unique_id: kitchen_door
+      state_topic: "influx/Owens/events/#"
+      name: Kitchen door
+      payload_on: 1
+      payload_off: 0
+      qos: 0
+      device_class: door
+      value_template: >
+        {% if value.split(',')[2].split('=')[1] == 'kitchen' and value.split(',')[3].split('=')[1] == 'deck' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
