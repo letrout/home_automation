@@ -1,0 +1,5 @@
+docker run -d --name telegraf_is \
+        --restart unless-stopped \
+        --net=container:influxdb2 \
+        -v /docker/telegraf/telegraf_is.conf:/etc/telegraf/telegraf.conf:ro \
+        telegraf
