@@ -6,8 +6,11 @@ influxdb2 server setup
 # Run InfluxDB with docker-compose
 	$ sudo docker-compose up -d
 ## Configure the influxdb server with data from old server
+	Get the token from the old server
+	$ sudo docker exec influxdb2 influx auth list --user joel --json | jq -r '.[].token'
 	Shutdown the telegraf server
 	Create a backup on the old server
+	$ sudo docker exec influxdb2 influx backup /var/lib/influxdb2/backup_<date>
 	Copy the backup to /docker/influxdb2/data/ on the new server
 	$ sudo docker exec -it influxdb2 bash
 	# influx setup --token <admin token from old server>

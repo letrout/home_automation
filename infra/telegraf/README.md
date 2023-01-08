@@ -1,26 +1,43 @@
-Generate a config file
+# telegraf with docker-compose
+## set up  directories for persistent volumes
+	$ mkdir -p /docker/telegraf/conf/telegraf.d
+	$ mkdir /docker/telegraf/bin
+## Edit the telegraf env variables
+	$ cp env_file env_file_secret
+	edit env_file_secret with appropriate values
+## Copy the config files
+	$ cp telegraf.d/* /docker/telegraf/conf/telegraf.d/
+## Copy the utility scripts
+	$ cp bin/aq.star /docker/telegraf/bin/
+	$ cp bin/airnow.star /docker/telegraf/bin/
+	$ cp inputs/influxdb2_bucket/bucket_k.sh /docker/telegraf/bin/
+	$ chmod +x /docker/telegraf/bin/*
+## run the container
+	$ sudo docker-compose up -d
+# telegraf docker container (same host as influxdb container)
+## Generate a config file
 	$ docker run --rm telegraf telegraf config > /docker/telegraf/telegraf.conf
 
-Run influxdb2
+## Run influxdb2
 	$ docker network create influxdb
 	<start influxdb2 container>
 	get the influxdb API token
 
-Edit the telegraf config for influxdb
+## Edit the telegraf config for influxdb
 [[outputs.influxdb_v2]]
   urls = ["http://influxdb:8086"]
   token = "<token>
   organization = "$DOCKER_INFLUXDB_INIT_ORG"
   bucket = "$DOCKER_INFLUXDB_INIT_BUCKET"
 
-Add sources to the telegraf config
+## Add sources to the telegraf config
 [TBD]
 
-Add influxdb token(s) to telegraf.conf
+## Add influxdb token(s) to telegraf.conf
 	Search for "REPLACE_ME" in the config, replace with influxdb token(s)
 	
-Run telegraf container
-docker run -d --name telegraf \
+## Run telegraf container
+	docker run -d --name telegraf \
 	--restart unless-stopped \
 	--net=container:influxdb2 \
 	-v /docker/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro \

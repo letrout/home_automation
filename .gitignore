@@ -5,3 +5,4 @@ mqtt_conf.py
 secrets.h
 secrets_wifi.h
 projects/funhouse/funhouse_mbr/secrets_homesec.h
+infra/telegraf/env_file_secret
