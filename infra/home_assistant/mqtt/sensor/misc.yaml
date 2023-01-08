@@ -1,0 +1,7 @@
+    - unique_id: mbr_light
+      state_topic: "influx/Owens/sensors/#"
+      name: Master BR light
+      value_template: >
+        {% if value.split(',')[1].split('=')[1] == 'funhouse' and value.split(',')[3].split('=')[1] == 'mbr' and value.split(',')[4].split(' ')[0].split('=')[1] == 'door' %}
+          {{ value.split(' ')[1].split('=')[1] }}
+        {% endif %}
