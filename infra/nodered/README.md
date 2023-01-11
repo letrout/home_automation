@@ -14,5 +14,9 @@
 	Refresh browser
 	Settings->Integrations->Node-RED Companion
 		Submit
+	Generate access token
+		Click on user icon->generate long-lived access token
 ### Set up HA in Node-RED
-	TBD
+	Place a home assstant node, double-click on it
+		Edit the Server field
+		Enter the Home Assistant URL, token
