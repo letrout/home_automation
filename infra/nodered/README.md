@@ -20,3 +20,10 @@
 	Place a home assstant node, double-click on it
 		Edit the Server field
 		Enter the Home Assistant URL, token
+## Other flows
+### bigtimer
+	https://flows.nodered.org/node/node-red-contrib-bigtimer
+### stoptimer
+	https://flows.nodered.org/node/node-red-contrib-stoptimer
+### weekday
+	https://flows.nodered.org/node/node-red-contrib-weekday
