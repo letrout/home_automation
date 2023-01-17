@@ -67,10 +67,20 @@ sudo docker exec telegraf chmod +x /usr/local/bin/bucket_du.sh
 # run at same or more frequent than telegraf exec plugin interval
 { du -sk /docker/influxdb2/data/engine/data/* & du -sk /docker/influxdb2/data/engine/wal/*; } >/docker/influxdb2/data/bucket_du.txt 2>/dev/null
 
-Test the telegraf container
+# Set up Proxmox access for telegraf
+## Add User influx
+	pveum user add influx@pve
+## Add User influx as "PVEAuditor" Role
+	pveum acl modify / -user influx@pve -role PVEAuditor
+## Add User Token influx
+	pveum user token add influx@pve monitoring -privsep 1
+## Modify Token Role influx as "PVEAuditor" Role
+	pveum acl modify / -token 'influx@pve!monitoring' -role PVEAuditor
+
+# Test the telegraf container
 	sudo docker exec telegraf telegraf --test
 
-Telegraf on Pi
+# Telegraf on Pi
   Get the Debian version
 	cat /etc/os-release
 	PRETTY_NAME="Raspbian GNU/Linux 10 (buster)"
