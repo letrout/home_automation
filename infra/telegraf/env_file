@@ -17,3 +17,5 @@ MQTT_USER="MQTT user name"
 MQTT_PW="MQTT password"
 AIRNOW_KEY="<airnow key>"
 OPENWEATHERMAP_KEY="<openweathermap key">
+PVE_15Z_URL="https://<host>:8006/api2/json"
+PVE_15Z_TOKEN="USER@REALM!TOKENID=UUID"
