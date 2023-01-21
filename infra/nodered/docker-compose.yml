@@ -8,3 +8,5 @@ services:
       - /docker/nodered/data:/data
     ports:
       - 1880:1880
+    environment:
+      - TZ=America/Chicago
