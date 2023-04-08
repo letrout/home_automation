@@ -6,6 +6,6 @@ services:
     restart: unless-stopped
     volumes:
       - /docker/grafana/grafana:/var/lib/grafana
-      - /docker/grafana/conf:/usr/share/grafana/conf
+#      - /docker/grafana/conf:/usr/share/grafana/conf
     ports:
       - 3000:3000
