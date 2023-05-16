@@ -1,3 +1,11 @@
+# docker-compose
+sudo mkdir -p /docker/grafana/grafana
+sudo chown 472 /docker/grafana/grafana
+sudo mkdir -p /docker/grafana/conf
+sudo chown 472 /docker/grafana/conf
+docker-compose up -d
+
+# Docker run
 Run grafana container with influxdb2 connectivity
 docker run -d --name grafana \
 	--restart unless-stopped \

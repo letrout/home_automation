@@ -1,0 +1,11 @@
+services:
+   grafana:
+    container_name: grafana
+    hostname: grafana
+    image: grafana/grafana:9.4.7
+    restart: unless-stopped
+    volumes:
+      - /docker/grafana/grafana:/var/lib/grafana
+#      - /docker/grafana/conf:/usr/share/grafana/conf
+    ports:
+      - 3000:3000
