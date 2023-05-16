@@ -1,4 +1,3 @@
-#FROM debian:11-slim
 FROM ubuntu:23.04
 
 RUN apt-get update \

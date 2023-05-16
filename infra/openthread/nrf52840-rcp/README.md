@@ -1,6 +1,5 @@
 #nRF52840 OpenThread Border Router RCP
 
-
 Builds firmware for nRF8240 dongle, for use as a Radio Co-processor for  
 an OpenThread Border Router device.
 
