@@ -5,8 +5,9 @@ an OpenThread Border Router device.
 
 ## Usage
 	$ sudo docker build -t nrf52840-rcp .
-	$ sudo docker run --rm -v $PWD:/out nrf52840-rcp:latest cp ot-nrf528xx/ot-cli-ftd.hex /out/
-The firmware is hex format will be in $PWD/ot-cli-ftd.hex
+	$ sudo docker run --rm -v $PWD:/out nrf52840-rcp:latest cp ot-rcp.hex /out/
+	$ sudo docker run --rm -v $PWD:/out nrf52840-rcp:latest cp ot-cli-ftd.hex /out/
+The firmware is hex format will be in $PWD/ot-cli-ftd.hex and ot-rcp.hex
 
 ## References
 OTBR project: https://openthread.io/guides/border-router

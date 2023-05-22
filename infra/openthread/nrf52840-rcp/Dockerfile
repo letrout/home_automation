@@ -21,3 +21,4 @@ RUN ./script/build nrf52840 USB_trans -DOT_BOOTLOADER=USB
 
 # Convert to hex
 RUN arm-none-eabi-objcopy -O ihex build/bin/ot-cli-ftd ot-cli-ftd.hex
+RUN arm-none-eabi-objcopy -O ihex build/bin/ot-rcp ot-rcp.hex
