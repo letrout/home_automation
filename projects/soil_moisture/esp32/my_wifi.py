@@ -17,9 +17,17 @@ def connect():
     """
     Connect to Wifi
     """
+    retries = 5;
+    if wifi.radio.ipv4_address is not None:
+        print("Connected to %s, RSSI: %d!" % (str(wifi.radio.ap_info.ssid), wifi.radio.ap_info.rssi))
+        return 0
     print("Connecting to %s"%secrets["ssid"])
     wifi.radio.connect(secrets["ssid"], secrets["password"])
-    print("Connected to %s!"%secrets["ssid"])
+    if wifi.radio.ipv4_address is not None:
+        print("Connected to %s, RSSI: %d!" % (str(wifi.radio.ap_info.ssid), wifi.radio.ap_info.rssi))
+        return 0
+    print("FAILED to connect to %s!"%secrets["ssid"])
+    return 1
 
 
 def scan_networks():

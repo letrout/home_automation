@@ -13,9 +13,9 @@ from secrets import influx, probes, secrets
 ADC_BITS = 16
 V_REF = 3.3
 NTP_SERVER = None  # If !None, set RTC from NTP and pass timestamp in MQTT msgs
-QUERY_INT = 5  # Seconds between queries of the probes
-MQTT_PUB = False  # Set to True to publish to MQTT
-SAMPLES = 1  # The number of probe readings to take and average for each measurement
+QUERY_INT = 3600  # Seconds between queries of the probes
+MQTT_PUB = True  # Set to True to publish to MQTT
+SAMPLES = 32  # The number of probe readings to take and average for each measurement
 
 
 def read_pin(pin):
@@ -112,6 +112,7 @@ def main():
     # Connect to probes
     for pin in probes:
         probes[pin]["analog_in"] = AnalogIn(eval(f'board.{pin}'))
+    my_wifi.scan_networks()
     if MQTT_PUB:
             mqtt_client = my_mqtt.get_client()
     while True:
@@ -119,9 +120,10 @@ def main():
         # analog_in = AnalogIn(eval(f'board.{ADC_PIN}'))
         # Optionally, set RTC to NTP and use local RTC for MQTT timestamp
         time_ns = None
-        if NTP_SERVER:
+        if "ntp_server" in secrets and secrets["ntp_server"] is not None:
             pool = socketpool.SocketPool(my_wifi.wifi.radio)
-            time_ns = my_ntp.time_ns(pool, NTP_SERVER)
+            time_ns = my_ntp.time_ns(pool, secrets["ntp_server"])
+            print("NTP time_ns: %d" % time_ns)
         if MQTT_PUB:
             my_mqtt.mqtt_connect(mqtt_client)
             mqtt_client.loop()
