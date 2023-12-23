@@ -28,8 +28,13 @@ unsigned long ntp_last_ms = 0L;
 char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
 const char* measurement = "sensor";
 const char* msmt_type = "door";
+#ifdef DEBUG
+const char* topic = "influx/Owens/test";
+const char* topic_infra = "influx/Owens/test";
+#else
 const char* topic = "influx/Owens/events/doors";
 const char* topic_infra = "influx/Owens/infra";
+#endif
 
 // timers
 const unsigned long heartbeat_ms = 10 * 1000; // interval to publish events with no state change
@@ -51,6 +56,10 @@ void setup()
   Serial.println();
 
   pinMode(door_pin, INPUT_PULLUP);
+
+  #ifdef PIR
+  pinMode(pir_pin, INPUT);
+  #endif
 
   // WiFi
   WiFi.begin(ssid, password);
@@ -95,6 +104,16 @@ void loop() {
     timeClient.update();
   }
   //print_time();
+
+  #ifdef PIR
+  pir_state = digitalRead(pir_pin);
+  if (pir_state == HIGH) {
+    Serial.print("PIR triggered: ");
+  } else {
+    Serial.print("PIR not triggered: ");
+  }
+  Serial.println(millis());
+  #endif
 
   door_state = digitalRead(door_pin);
   if (door_state == HIGH) {
