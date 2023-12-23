@@ -34,19 +34,21 @@ char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
 const char* measurement = "sensor";
 const char* msmt_type = "door";
 #ifdef DEBUG
-const char* topic = "influx/Owens/test";
-const char* topic_infra = "influx/Owens/test";
+const char* event_topic = "influx/Owens/test";
+const char* infra_topic = "influx/Owens/test";
+const char* env_topic = "influx/Owens/test";
 #else
 const char* topic = "influx/Owens/events/doors";
 const char* topic_infra = "influx/Owens/infra";
 #endif
 
 // timers
-const unsigned long heartbeat_ms = 10 * 1000; // interval to publish events with no state change
-const unsigned long publish_ms = 1 * 1000;  // interval to publish on state change
-unsigned long last_publish = 0; // last time we did MQTT publish
-const unsigned long publish_infra_ms = 60 * 1000;  // interval to publish infra data
-unsigned long last_publish_infra = 0; // last time we did infra MQTT publish
+const unsigned long event_heartbeat_ms = 10 * 1000; // interval to publish events with no state change
+const unsigned long event_publish_ms = 1 * 1000;  // interval to publish on event state change
+unsigned long door_last_publish = 0; // last time we did door event MQTT publish
+unsigned long pir_last_publish = 0; // last time we did PIR event MQTT publish
+const unsigned long env_publish_ms = 60 * 1000;  // interval to publish environmental data
+unsigned long env_last_publish = 0; // last time we did environmental MQTT publish
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -163,28 +165,28 @@ void loop() {
   if (door_state != door_last_state) {
     if (mqtt_pub_door(door_state)) {
       door_last_state = door_state;
-      last_publish = now;
+      door_last_publish = now;
     } else {
       Serial.println("FAIL to publish door state");
     }
-  } else if ((now - last_publish) > heartbeat_ms) {
+  } else if ((now - door_last_publish) > event_heartbeat_ms) {
     if (mqtt_pub_door(door_state)) {
-      last_publish = now;
+      door_last_publish = now;
     } else {
       Serial.println("FAIL to publish door state");
     }
   }
   // publish infra?
-  if ((now - last_publish_infra) > publish_infra_ms) {
+  if ((now - env_last_publish) > env_publish_ms) {
     if (mqtt_pub_wifi()) {
-      last_publish_infra = now;
+      env_last_publish = now;
     } else {
       Serial.println("FAIL to publish WiFi RSSI");
     }
   }
 
   client.loop();
-  delay(publish_ms);
+  delay(event_publish_ms);
 } // loop()
 
 boolean mqtt_pub_door(int state) {
@@ -193,7 +195,7 @@ boolean mqtt_pub_door(int state) {
             measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
   int len = strlen(mqtt_msg);
   mqtt_reconnect();
-  return client.publish(topic, (uint8_t*)mqtt_msg, len, false);
+  return client.publish(event_topic, (uint8_t*)mqtt_msg, len, false);
 }
 
 boolean mqtt_pub_wifi() {
@@ -202,7 +204,7 @@ boolean mqtt_pub_wifi() {
             location, room, room_loc, WiFi.SSID().c_str(), WiFi.hostname().c_str(), WiFi.RSSI(), timeClient.getEpochTime(), "000000000");
   int len = strlen(mqtt_msg);
   mqtt_reconnect();
-  return client.publish(topic_infra, (uint8_t*)mqtt_msg, len, false);
+  return client.publish(infra_topic, (uint8_t*)mqtt_msg, len, false);
 }
 
 void print_time() {
