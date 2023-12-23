@@ -1,6 +1,7 @@
 #ifndef SENSOR_DEVICE_H
 #define SENSOR_DEVICE_H 1
 #define KITCHEN 1
+#define AMBIENT_LIGHT 1
 
 #define DEBUG 1
 

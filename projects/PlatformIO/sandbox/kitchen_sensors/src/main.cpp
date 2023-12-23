@@ -3,11 +3,16 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include <string.h>
+#include <Wire.h>
 
 #include "door_monitor.h"
 // Use appropriate header file for the location
 #include "kitchen.h"
 #include "secrets.h"
+
+#ifdef AMBIENT_LIGHT
+#include <BH1750.h>
+#endif
 
 #define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
 
@@ -50,16 +55,31 @@ PubSubClient client(wifiClient);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntp_server, utcOffsetInSeconds);
 
+#ifdef AMBIENT_LIGHT
+BH1750 lightMeter(0x23);
+#endif
+
 void setup()
 {
   Serial.begin(115200);
   Serial.println();
 
+  Wire.begin();
+
+#ifdef AMBIENT_LIGHT
+  // begin returns a boolean that can be used to detect setup problems.
+  if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) {
+    Serial.println(F("BH1750 Advanced begin"));
+  } else {
+    Serial.println(F("Error initialising BH1750"));
+  }
+#endif
+
   pinMode(door_pin, INPUT_PULLUP);
 
-  #ifdef PIR
+#ifdef PIR
   pinMode(pir_pin, INPUT);
-  #endif
+#endif
 
   // WiFi
   WiFi.begin(ssid, password);
@@ -105,7 +125,22 @@ void loop() {
   }
   //print_time();
 
-  #ifdef PIR
+#ifdef AMBIENT_LIGHT
+  if (lightMeter.measurementReady()) {
+    float lux = lightMeter.readLightLevel();
+    Serial.print("Light: ");
+    Serial.print(lux);
+    Serial.println(" lx");
+    /*
+    sprintf(mqtt_msg, "%s,location=%s,room=%s type=light value=%f", measurement, location, room, lux);
+    if (!mqtt_publish(mqtt_msg)) {
+      Serial.println("FAIL to publish light");
+    }
+    */
+  }
+#endif
+
+#ifdef PIR
   pir_state = digitalRead(pir_pin);
   if (pir_state == HIGH) {
     Serial.print("PIR triggered: ");
@@ -113,7 +148,7 @@ void loop() {
     Serial.print("PIR not triggered: ");
   }
   Serial.println(millis());
-  #endif
+#endif
 
   door_state = digitalRead(door_pin);
   if (door_state == HIGH) {
