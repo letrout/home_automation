@@ -8,6 +8,8 @@
 #include "door_monitor.h"
 // Use appropriate header file for the location
 #include "kitchen.h"
+#include "ambient_light.h"
+#include "owens_sensors.h"
 #include "secrets.h"
 
 #ifdef AMBIENT_LIGHT
@@ -57,8 +59,10 @@ PubSubClient client(wifiClient);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntp_server, utcOffsetInSeconds);
 
+// sensors
 #ifdef AMBIENT_LIGHT
-BH1750 lightMeter(0x23);
+AmbientLight lightMeter(0x23);
+//BH1750 lightMeter(0x23);
 #endif
 
 void setup()
@@ -120,7 +124,7 @@ void setup()
 
 void loop() {
   unsigned long now = millis();
-  char mqtt_msg [128];
+  // char mqtt_msg [128];
   if ((now - ntp_last_ms) > ntp_update_ms) {
     ntp_last_ms = now;
     timeClient.update();
@@ -128,11 +132,11 @@ void loop() {
   //print_time();
 
 #ifdef AMBIENT_LIGHT
-  if (lightMeter.measurementReady()) {
-    float lux = lightMeter.readLightLevel();
+  if (lightMeter.read() == E_SENSOR_SUCCESS) {
     Serial.print("Light: ");
-    Serial.print(lux);
+    Serial.print(lightMeter.last_ambient_lux());
     Serial.println(" lx");
+    Serial.println(lightMeter.mqtt_msg_lp(location, room, room_loc).c_str());
     /*
     sprintf(mqtt_msg, "%s,location=%s,room=%s type=light value=%f", measurement, location, room, lux);
     if (!mqtt_publish(mqtt_msg)) {
