@@ -1,0 +1,17 @@
+{
+  "name": "Owens Base",
+  "version": "1.0.0",
+  "description": "Base library stuff for Owens",
+  "keywords": "Owens",
+  "frameworks": "*",
+  "platforms": "*",
+  "authors":
+  [
+    {
+      "name": "Joel Luth",
+      "email": "joelluth@gmail.com",
+      "url": "https://github.com/letrout"
+    }
+  ],
+  "license": "MIT"
+}

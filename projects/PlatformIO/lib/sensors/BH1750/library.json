@@ -1,0 +1,17 @@
+{
+  "name": "BH1750 ambient light sensor",
+  "version": "1.0.0",
+  "description": "Wrapper class for BH1750 ambient light sensor",
+  "keywords": "Luth, sensor, environment, light",
+  "frameworks": "*",
+  "platforms": "*",
+  "authors":
+  [
+    {
+      "name": "Joel Luth",
+      "email": "joelluth@gmail.com",
+      "url": "https://github.com/letrout"
+    }
+  ],
+  "license": "MIT"
+}
