@@ -14,17 +14,33 @@ class AmbientLight : public BH1750 {
     unsigned long last_read_epoch_ms_ = 0;
 
   public:
+    /**
+     * @brief Construct a new Ambient Light object
+     * 
+     * @param byte addr I2C address of the sensor
+     */
     AmbientLight(byte addr = 0x23)
     : BH1750(addr) {
       last_ambient_lux_ = 0.0;
       last_read_ms_ = 0;
     };
     float last_ambient_lux() const { return last_ambient_lux_; }
+    /**
+     * @brief time of last read of the sensor, in millis()
+     * 
+     * @return unsigned long time in milliseconds
+     */
     unsigned long last_read_ms() const { return last_read_ms_; }
+    /**
+     * @brief time of last read of sensor, in epoch milliseconds
+     * 
+     * @return unsigned long time in epoch milliseconds
+     */
     unsigned long last_read_epoch_ms() const { return last_read_epoch_ms_; }
     /**
      * @brief read the ambient light sensor
      * 
+     * @return int8_t E_SENSOR_SUCCESS or E_SENSOR_FAIL
      */
     int8_t read();
     std::string mqtt_msg_lp(
