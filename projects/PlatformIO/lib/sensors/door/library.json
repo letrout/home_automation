@@ -1,0 +1,17 @@
+{
+  "name": "door sensor",
+  "version": "1.0.0",
+  "description": "class for door open/close sensor",
+  "keywords": "Luth, sensor, events, open",
+  "frameworks": "*",
+  "platforms": "*",
+  "authors":
+  [
+    {
+      "name": "Joel Luth",
+      "email": "joelluth@gmail.com",
+      "url": "https://github.com/letrout"
+    }
+  ],
+  "license": "MIT"
+}

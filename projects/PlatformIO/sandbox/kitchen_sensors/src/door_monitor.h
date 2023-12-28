@@ -1,14 +1,16 @@
 #ifndef DOOR_MONITOR_H
 #define DOOR_MONITOR_H 1
 
+#include "door.h"
+
 
 /**
  * @brief MQTT publish door state, in Influxdb line protocol
  * 
- * @param state current door state
+ * @param door DoorSensor object
  * @return boolean return from client.publish()
  */
-boolean mqtt_pub_door(int state);
+boolean mqtt_pub_door(DoorSensor door);
 
 /**
  * @brief MQTT publish WiFi info

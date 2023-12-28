@@ -9,6 +9,7 @@
 // Use appropriate header file for the location
 #include "kitchen.h"
 #include "ambient_light.h"
+#include "door.h"
 #include "owens_sensors.h"
 #include "secrets.h"
 
@@ -27,14 +28,11 @@ const int mqtt_port = MQTT_PORT;
 const char* mqtt_username = MQTT_USER;
 const char* mqtt_password = MQTT_PASSWORD;
 
-int door_state = -1; // 0 - closed, 1 - open
 int door_last_state = -1; // initialize to invalid state
 const long utcOffsetInSeconds = 0;
 const unsigned long ntp_update_ms = 30 * 60 * 1000L; // NTP update interval ms
 unsigned long ntp_last_ms = 0L;
 char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
-const char* measurement = "sensor";
-const char* msmt_type = "door";
 #ifdef DEBUG
 const char* event_topic = "influx/Owens/test";
 const char* infra_topic = "influx/Owens/test";
@@ -62,8 +60,8 @@ NTPClient timeClient(ntpUDP, ntp_server, utcOffsetInSeconds);
 // sensors
 #ifdef AMBIENT_LIGHT
 AmbientLight lightMeter(0x23);
-//BH1750 lightMeter(0x23);
 #endif
+DoorSensor deckDoor(door_pin);
 
 void setup()
 {
@@ -81,7 +79,7 @@ void setup()
   }
 #endif
 
-  pinMode(door_pin, INPUT_PULLUP);
+  deckDoor.begin();
 
 #ifdef PIR
   pinMode(pir_pin, INPUT);
@@ -136,10 +134,10 @@ void loop() {
     Serial.print("Light: ");
     Serial.print(lightMeter.last_ambient_lux());
     Serial.println(" lx");
-    Serial.println(lightMeter.mqtt_msg_lp(location, room, room_loc).c_str());
+    // Serial.println(lightMeter.mqtt_msg_lp(location, room, room_loc).c_str());
+    // sprintf(mqtt_msg, "%s,location=%s,room=%s type=light value=%f", measurement, location, room, lux);
     /*
-    sprintf(mqtt_msg, "%s,location=%s,room=%s type=light value=%f", measurement, location, room, lux);
-    if (!mqtt_publish(mqtt_msg)) {
+    if (!mqtt_publish(lightMeter.mqtt_msg_lp(location, room, room_loc).c_str())) {
       Serial.println("FAIL to publish light");
     }
     */
@@ -156,8 +154,8 @@ void loop() {
   Serial.println(millis());
 #endif
 
-  door_state = digitalRead(door_pin);
-  if (door_state == HIGH) {
+  deckDoor.read();
+  if (deckDoor.last_read_state() == HIGH) {
     Serial.print("Door open: ");
   } else {
     Serial.print("Door closed: ");
@@ -166,15 +164,15 @@ void loop() {
 
   // MQTT publish all door states (even if unchanged)
   // message in influxdb2 line protocol format
-  if (door_state != door_last_state) {
-    if (mqtt_pub_door(door_state)) {
-      door_last_state = door_state;
+  if (deckDoor.last_read_state() != door_last_state) {
+    if (mqtt_pub_door(deckDoor.last_read_state())) {
+      door_last_state = deckDoor.last_read_state();
       door_last_publish = now;
     } else {
       Serial.println("FAIL to publish door state");
     }
   } else if ((now - door_last_publish) > event_heartbeat_ms) {
-    if (mqtt_pub_door(door_state)) {
+    if (mqtt_pub_door(deckDoor.last_read_state())) {
       door_last_publish = now;
     } else {
       Serial.println("FAIL to publish door state");
@@ -193,13 +191,14 @@ void loop() {
   delay(event_publish_ms);
 } // loop()
 
-boolean mqtt_pub_door(int state) {
-  char mqtt_msg [128];
-  sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d %lu%s",
-            measurement, location, room, room_loc, msmt_type, door_state, timeClient.getEpochTime(), "000000000");
-  int len = strlen(mqtt_msg);
+boolean mqtt_pub_door(DoorSensor door) {
+  int len = strlen(door.mqtt_msg_lp(location, room, room_loc).c_str());
   mqtt_reconnect();
-  return client.publish(event_topic, (uint8_t*)mqtt_msg, len, false);
+  return client.publish(
+    event_topic,
+    (uint8_t*)door.mqtt_msg_lp(location, room, room_loc).c_str(),
+    len,
+    false);
 }
 
 boolean mqtt_pub_wifi() {

@@ -43,6 +43,14 @@ class AmbientLight : public BH1750 {
      * @return int8_t E_SENSOR_SUCCESS or E_SENSOR_FAIL
      */
     int8_t read();
+    /**
+     * @brief MQTT message for the last read of the sensor
+     * 
+     * @param location location of the sensor
+     * @param room room of the sensor
+     * @param room_loc room location of the sensor
+     * @return std::string MQTT message
+     */
     std::string mqtt_msg_lp(
       const char * location,
       const char * room,
