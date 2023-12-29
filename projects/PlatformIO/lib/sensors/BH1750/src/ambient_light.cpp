@@ -1,6 +1,8 @@
 #include "ambient_light.h"
 #include "owens_sensors.h"
 
+#define MQTT_STR "%s,sensor=BH1750,location=%s,room=%s,room_loc=%s lux=%f %lu%s"
+
 
 // Ambient light sensor
 //AmbientLight::AmbientLight(byte addr = 0x23) {
@@ -20,9 +22,15 @@ int8_t AmbientLight::read(void) {
   return E_SENSOR_FAIL;
 }
 
-char * AmbientLight::mqtt_msg_lp() 
+uint16_t AmbientLight::set_mqtt_msg_len() {
+  char msg[256];
+  sprintf(msg, MQTT_STR,
+    AMBIENT_LIGHT_MEASUREMENT, location_, room_, room_loc_, 123456.123456, 1703827402ul, "000000");
+  return strlen(msg) + 2;
+}
+
+void AmbientLight::mqtt_msg_lp(char * mqtt_msg) 
 {
-  char mqtt_msg [128];
   if (last_read_epoch_ms() == 0) {
     sprintf(mqtt_msg, "%s,sensor=BH1750,location=%s,room=%s,room_loc=%s lux=%lf",
     AMBIENT_LIGHT_MEASUREMENT, location_, room_, room_loc_, last_ambient_lux());
@@ -30,24 +38,26 @@ char * AmbientLight::mqtt_msg_lp()
     sprintf(mqtt_msg, "%s,sensor=BH1750,location=%s,room=%s,room_loc=%s lux=%f %lu%s",
     AMBIENT_LIGHT_MEASUREMENT, location_, room_, room_loc_, last_ambient_lux(), last_read_epoch_ms(), "000000");
   }
-  return mqtt_msg;
+  return;
 }
 
 #ifdef PubSubClient_h
 bool AmbientLight::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic) 
 {
-  unsigned int len = strlen(mqtt_msg_lp());
-  if (mqtt_client.publish(mqtt_topic, (uint8_t*)mqtt_msg_lp(), len, false)) {
+  char msg[mqtt_msg_len_];
+  mqtt_msg_lp(msg);
+  unsigned int len = strlen(msg);
+  if (mqtt_client.publish(mqtt_topic, (uint8_t*)msg, len, false)) {
     last_publish_ms_ = millis();
 #ifdef DEBUG
     Serial.print("MQTT publish ok: ");
-    Serial.println(mqtt_msg_lp());
+    Serial.println(msg);
 #endif
     return true;
   } else {
 #ifdef DEBUG
     Serial.print("MQTT publish failed: ");
-    Serial.println(mqtt_msg_lp());
+    Serial.println(msg);
 #endif
     return false;
   }

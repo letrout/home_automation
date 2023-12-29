@@ -13,10 +13,12 @@ class DoorSensor {
     const char * location_;
     const char * room_;
     const char * room_loc_;
+    uint16_t mqtt_msg_len_ = 0;
     int8_t last_read_state_ = -1; // 0 - closed, 1 - open
     unsigned int last_read_ms_ = 0;
     unsigned long last_read_epoch_ms_ = 0;
     unsigned int last_publish_ms_ = 0;
+    uint16_t set_mqtt_msg_len();
 
   public:
     DoorSensor(const uint8_t door_pin, const char * location, const char * room, const char * room_loc) {
@@ -24,6 +26,7 @@ class DoorSensor {
         location_ = location;
         room_ = room;
         room_loc_ = room_loc;
+        mqtt_msg_len_ = set_mqtt_msg_len();
     }
     /**
      * @brief initialize the sensor
@@ -64,9 +67,16 @@ class DoorSensor {
     /**
      * @brief MQTT message for the last read of the sensor
      * 
-     * @return std::string MQTT message
+     * @param mqtt_msg char array to hold the MQTT message
+     * @return
      */
-    char * mqtt_msg_lp();
+    void mqtt_msg_lp(char * mqtt_msg);
+    /**
+     * @brief Length needed for MQTT message string
+     * 
+     * @return uint16_t MQTT message length
+     */
+    uint16_t mqtt_msg_len() const { return mqtt_msg_len_; }
 #ifdef PubSubClient_h
     /**
      * @brief Publish MQTT message for the last read of the sensor

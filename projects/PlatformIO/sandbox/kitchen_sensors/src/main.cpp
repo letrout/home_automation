@@ -152,14 +152,18 @@ void loop() {
   // MQTT publish all door states (even if unchanged)
   // message in influxdb2 line protocol format
   if (deckDoor.last_read_state() != door_last_state) {
+    Serial.println("Door state changes, publishing...");
     if (deckDoor.mqtt_pub(client, event_topic)) {
       door_last_state = deckDoor.last_read_state();
       door_last_publish = now;
+      Serial.println("Door state published");
     } else {
       Serial.println("FAIL to publish door state");
     }
   } else if ((now - door_last_publish) > event_heartbeat_ms) {
+    Serial.println("Door heartbeat expired, publishing...");
     if (deckDoor.mqtt_pub(client, event_topic)) {
+      Serial.println("Door state published");
       door_last_publish = now;
     } else {
       Serial.println("FAIL to publish door state");

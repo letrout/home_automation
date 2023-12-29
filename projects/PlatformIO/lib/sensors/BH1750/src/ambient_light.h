@@ -13,10 +13,12 @@ class AmbientLight : public BH1750 {
     const char * location_;
     const char * room_;
     const char * room_loc_;
+    uint16_t mqtt_msg_len_ = 0;
     float last_ambient_lux_ = -1.0;
     unsigned long last_read_ms_ = 0;
     unsigned long last_read_epoch_ms_ = 0;
     unsigned int last_publish_ms_ = 0;
+    uint16_t set_mqtt_msg_len();
 
   public:
     /**
@@ -29,6 +31,7 @@ class AmbientLight : public BH1750 {
       location_ = location;
       room_ = room;
       room_loc_ = room_loc;
+      mqtt_msg_len_ = set_mqtt_msg_len();
     };
     float last_ambient_lux() const { return last_ambient_lux_; }
     /**
@@ -58,9 +61,16 @@ class AmbientLight : public BH1750 {
     /**
      * @brief MQTT message for the last read of the sensor
      * 
-     * @return std::string MQTT message
+     * @param mqtt_msg char array to store the MQTT message
+     * @return 
      */
-    char * mqtt_msg_lp();
+    void mqtt_msg_lp(char * mqtt_msg);
+    /**
+     * @brief Length needed for MQTT message string
+     * 
+     * @return uint16_t MQTT message length
+     */
+    uint16_t mqtt_msg_len() const { return mqtt_msg_len_; }
 #ifdef PubSubClient_h
     /**
      * @brief Publish MQTT message for the last read of the sensor
