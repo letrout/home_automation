@@ -38,8 +38,9 @@ const char* event_topic = "influx/Owens/test";
 const char* infra_topic = "influx/Owens/test";
 const char* env_topic = "influx/Owens/test";
 #else
-const char* topic = "influx/Owens/events/doors";
-const char* topic_infra = "influx/Owens/infra";
+const char* event_topic = "influx/Owens/events/doors";
+const char* infra_topic = "influx/Owens/infra";
+const char* env_topic = "influx/Owens/sensors";
 #endif
 
 // timers
@@ -59,7 +60,7 @@ NTPClient timeClient(ntpUDP, ntp_server, utcOffsetInSeconds);
 
 // sensors
 #ifdef AMBIENT_LIGHT
-AmbientLight lightMeter(0x23);
+AmbientLight lightMeter(location, room, room_loc, 0x23);
 #endif
 DoorSensor deckDoor(door_pin, location, room, room_loc);
 
@@ -122,6 +123,7 @@ void setup()
 
 void loop() {
   unsigned long now = millis();
+  bool new_env_read = false;
   // char mqtt_msg [128];
   if ((now - ntp_last_ms) > ntp_update_ms) {
     ntp_last_ms = now;
@@ -131,18 +133,15 @@ void loop() {
 
 #ifdef AMBIENT_LIGHT
   if (lightMeter.read() == E_SENSOR_SUCCESS) {
+    new_env_read = true;
     Serial.print("Light: ");
     Serial.print(lightMeter.last_ambient_lux());
     Serial.println(" lx");
-    // Serial.println(lightMeter.mqtt_msg_lp(location, room, room_loc).c_str());
-    // sprintf(mqtt_msg, "%s,location=%s,room=%s type=light value=%f", measurement, location, room, lux);
-    /*
-    if (!mqtt_publish(lightMeter.mqtt_msg_lp(location, room, room_loc).c_str())) {
-      Serial.println("FAIL to publish light");
+    if (millis() - lightMeter.last_publish_ms() > env_publish_ms) {
+      lightMeter.mqtt_pub(client, env_topic);
     }
-    */
   }
-#endif
+#endif // AMBIENT_LIGHT
 
 #ifdef PIR
   pir_state = digitalRead(pir_pin);

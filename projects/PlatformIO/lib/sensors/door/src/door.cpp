@@ -26,10 +26,10 @@ std::string DoorSensor::mqtt_msg_lp()
 {
   char mqtt_msg [128];
   if (last_read_epoch_ms() == 0) {
-    sprintf(mqtt_msg, "%s,sensor=light,location=%s,room=%s,room_loc=%s,type=%s state=%d",
+    sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s,type=%s state=%d",
     DOOR_OPEN_MEASUREMENT, location_, room_, room_loc_, DOOR_OPEN_MEASUREMENT_TYPE, last_read_state());
   } else {
-    sprintf(mqtt_msg, "%s,sensor=light,location=%s,room=%s,room_loc=%s, type=%s state=%d %lu%s",
+    sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s, type=%s state=%d %lu%s",
     DOOR_OPEN_MEASUREMENT, location_, room_, room_loc_,  DOOR_OPEN_MEASUREMENT_TYPE, last_read_state(), last_read_epoch_ms(), "000000");
   }
   return std::string(mqtt_msg);
@@ -54,4 +54,5 @@ bool DoorSensor::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic)
     return false;
   }
 }
-#endif 
+
+#endif // PubSubClient_h

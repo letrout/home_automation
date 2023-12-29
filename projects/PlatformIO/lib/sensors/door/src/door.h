@@ -61,7 +61,7 @@ class DoorSensor {
      * 
      * @return unsigned long time in milliseconds
      */
-    unsigned long last_publush_ms() const { return last_publish_ms_; }
+    unsigned long last_publish_ms() const { return last_publish_ms_; }
     /**
      * @brief MQTT message for the last read of the sensor
      * 
