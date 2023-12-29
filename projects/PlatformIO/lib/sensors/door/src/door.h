@@ -1,7 +1,6 @@
 #ifndef DOOR_OPEN_H
 #define DOOR_OPEN_H 1
 
-#include <string>
 #include <PubSubClient.h>
 #include "owens_sensors.h"
 
@@ -67,7 +66,7 @@ class DoorSensor {
      * 
      * @return std::string MQTT message
      */
-    std::string mqtt_msg_lp();
+    char * mqtt_msg_lp();
 #ifdef PubSubClient_h
     /**
      * @brief Publish MQTT message for the last read of the sensor

@@ -131,18 +131,6 @@ void loop() {
   }
   //print_time();
 
-#ifdef AMBIENT_LIGHT
-  if (lightMeter.read() == E_SENSOR_SUCCESS) {
-    new_env_read = true;
-    Serial.print("Light: ");
-    Serial.print(lightMeter.last_ambient_lux());
-    Serial.println(" lx");
-    if (millis() - lightMeter.last_publish_ms() > env_publish_ms) {
-      lightMeter.mqtt_pub(client, env_topic);
-    }
-  }
-#endif // AMBIENT_LIGHT
-
 #ifdef PIR
   pir_state = digitalRead(pir_pin);
   if (pir_state == HIGH) {
@@ -177,6 +165,20 @@ void loop() {
       Serial.println("FAIL to publish door state");
     }
   }
+
+  // Environment seonsors
+#ifdef AMBIENT_LIGHT
+  if (lightMeter.read() == E_SENSOR_SUCCESS) {
+    new_env_read = true;
+    Serial.print("Light: ");
+    Serial.print(lightMeter.last_ambient_lux());
+    Serial.println(" lx");
+    if (millis() - lightMeter.last_publish_ms() > env_publish_ms) {
+      lightMeter.mqtt_pub(client, env_topic);
+    }
+  }
+#endif // AMBIENT_LIGHT
+
   // publish infra?
   if ((now - env_last_publish) > env_publish_ms) {
     if (mqtt_pub_wifi()) {
@@ -191,11 +193,11 @@ void loop() {
 } // loop()
 
 boolean mqtt_pub_door(DoorSensor door) {
-  int len = strlen(door.mqtt_msg_lp().c_str());
+  int len = strlen(door.mqtt_msg_lp());
   mqtt_reconnect();
   return client.publish(
     event_topic,
-    (uint8_t*)door.mqtt_msg_lp().c_str(),
+    (uint8_t*)door.mqtt_msg_lp(),
     len,
     false);
 }

@@ -1,7 +1,6 @@
 #ifndef AMBIENT_LIGHT_H
 #define AMBIENT_LIGHT_H 1
 
-#include <string>
 #include <PubSubClient.h>
 #include <BH1750.h>
 #include "owens_sensors.h"
@@ -61,7 +60,7 @@ class AmbientLight : public BH1750 {
      * 
      * @return std::string MQTT message
      */
-    std::string mqtt_msg_lp();
+    char * mqtt_msg_lp();
 #ifdef PubSubClient_h
     /**
      * @brief Publish MQTT message for the last read of the sensor
