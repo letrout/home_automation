@@ -61,7 +61,7 @@ NTPClient timeClient(ntpUDP, ntp_server, utcOffsetInSeconds);
 #ifdef AMBIENT_LIGHT
 AmbientLight lightMeter(0x23);
 #endif
-DoorSensor deckDoor(door_pin);
+DoorSensor deckDoor(door_pin, location, room, room_loc);
 
 void setup()
 {
@@ -165,14 +165,14 @@ void loop() {
   // MQTT publish all door states (even if unchanged)
   // message in influxdb2 line protocol format
   if (deckDoor.last_read_state() != door_last_state) {
-    if (mqtt_pub_door(deckDoor.last_read_state())) {
+    if (deckDoor.mqtt_pub(client, event_topic)) {
       door_last_state = deckDoor.last_read_state();
       door_last_publish = now;
     } else {
       Serial.println("FAIL to publish door state");
     }
   } else if ((now - door_last_publish) > event_heartbeat_ms) {
-    if (mqtt_pub_door(deckDoor.last_read_state())) {
+    if (deckDoor.mqtt_pub(client, event_topic)) {
       door_last_publish = now;
     } else {
       Serial.println("FAIL to publish door state");
@@ -192,11 +192,11 @@ void loop() {
 } // loop()
 
 boolean mqtt_pub_door(DoorSensor door) {
-  int len = strlen(door.mqtt_msg_lp(location, room, room_loc).c_str());
+  int len = strlen(door.mqtt_msg_lp().c_str());
   mqtt_reconnect();
   return client.publish(
     event_topic,
-    (uint8_t*)door.mqtt_msg_lp(location, room, room_loc).c_str(),
+    (uint8_t*)door.mqtt_msg_lp().c_str(),
     len,
     false);
 }

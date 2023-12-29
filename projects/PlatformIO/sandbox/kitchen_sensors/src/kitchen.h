@@ -6,7 +6,7 @@
 #define DEBUG 1
 
 
-const int door_pin = D7;
+const uint8_t door_pin = D7;
 const char* location = "Owens";
 const char* room = "kitchen";
 const char* room_loc = "deck";

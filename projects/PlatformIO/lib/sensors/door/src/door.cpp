@@ -22,18 +22,36 @@ int8_t DoorSensor::read(void) {
   return E_SENSOR_SUCCESS;
 }
 
-std::string DoorSensor::mqtt_msg_lp(
-  const char * location,
-  const char * room,
-  const char * room_loc) 
+std::string DoorSensor::mqtt_msg_lp() 
 {
   char mqtt_msg [128];
   if (last_read_epoch_ms() == 0) {
     sprintf(mqtt_msg, "%s,sensor=light,location=%s,room=%s,room_loc=%s,type=%s state=%d",
-    DOOR_OPEN_MEASUREMENT, location, room, room_loc, DOOR_OPEN_MEASUREMENT_TYPE, last_read_state());
+    DOOR_OPEN_MEASUREMENT, location_, room_, room_loc_, DOOR_OPEN_MEASUREMENT_TYPE, last_read_state());
   } else {
     sprintf(mqtt_msg, "%s,sensor=light,location=%s,room=%s,room_loc=%s, type=%s state=%d %lu%s",
-    DOOR_OPEN_MEASUREMENT, location, room, room_loc,  DOOR_OPEN_MEASUREMENT_TYPE, last_read_state(), last_read_epoch_ms(), "000000");
+    DOOR_OPEN_MEASUREMENT, location_, room_, room_loc_,  DOOR_OPEN_MEASUREMENT_TYPE, last_read_state(), last_read_epoch_ms(), "000000");
   }
   return std::string(mqtt_msg);
 }
+
+#ifdef PubSubClient_h
+bool DoorSensor::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic) 
+{
+  unsigned int len = strlen(mqtt_msg_lp().c_str());
+  if (mqtt_client.publish(mqtt_topic, (uint8_t*)mqtt_msg_lp().c_str(), len, false)) {
+    last_publish_ms_ = millis();
+#ifdef DEBUG
+    Serial.print("MQTT publish ok: ");
+    Serial.println(mqtt_msg_lp().c_str());
+#endif
+    return true;
+  } else {
+#ifdef DEBUG
+    Serial.print("MQTT publish failed: ");
+    Serial.println(mqtt_msg_lp().c_str());
+#endif
+    return false;
+  }
+}
+#endif 
