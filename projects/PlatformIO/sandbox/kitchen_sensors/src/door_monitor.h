@@ -5,14 +5,6 @@
 
 
 /**
- * @brief MQTT publish door state, in Influxdb line protocol
- * 
- * @param door DoorSensor object
- * @return boolean return from client.publish()
- */
-boolean mqtt_pub_door(DoorSensor door);
-
-/**
  * @brief MQTT publish WiFi info
  * 
  * @return boolean return from client.publish()

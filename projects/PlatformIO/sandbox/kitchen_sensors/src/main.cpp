@@ -192,16 +192,6 @@ void loop() {
   delay(event_publish_ms);
 } // loop()
 
-boolean mqtt_pub_door(DoorSensor door) {
-  int len = strlen(door.mqtt_msg_lp());
-  mqtt_reconnect();
-  return client.publish(
-    event_topic,
-    (uint8_t*)door.mqtt_msg_lp(),
-    len,
-    false);
-}
-
 boolean mqtt_pub_wifi() {
   char mqtt_msg [128];
   sprintf(mqtt_msg, "wifi,location=%s,room=%s,room_loc=%s,ssid=%s,host=%s rssi=%d %lu%s",
