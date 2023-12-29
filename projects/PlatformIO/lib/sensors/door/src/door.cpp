@@ -3,8 +3,6 @@
 #include "door.h"
 #include "owens_sensors.h"
 
-#define MQTT_STR "%s,location=%s,room=%s,room_loc=%s, type=%s state=%d %lu%s"
-
 
 int8_t DoorSensor::begin(void) {
   pinMode(door_pin_, INPUT_PULLUP);
@@ -22,13 +20,6 @@ int8_t DoorSensor::read(void) {
     Serial.print("Door closed: ");
   }
   return E_SENSOR_SUCCESS;
-}
-
-uint16_t DoorSensor::set_mqtt_msg_len() {
-  char msg[256];
-  sprintf(msg, MQTT_STR,
-    DOOR_OPEN_MEASUREMENT, location_, room_, room_loc_,  DOOR_OPEN_MEASUREMENT_TYPE, 1, 1703827402ul, "000000");
-  return strlen(msg) + 2;
 }
 
 void DoorSensor::mqtt_msg_lp(char * mqtt_msg) 

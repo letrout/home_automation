@@ -1,12 +1,6 @@
 #include "ambient_light.h"
 #include "owens_sensors.h"
 
-#define MQTT_STR "%s,sensor=BH1750,location=%s,room=%s,room_loc=%s lux=%f %lu%s"
-
-
-// Ambient light sensor
-//AmbientLight::AmbientLight(byte addr = 0x23) {
-//}
 
 int8_t AmbientLight::read(void) {
   if (millis() - last_read_ms() < AMBIENT_LIGHT_MIN_READ_MS) {
@@ -20,13 +14,6 @@ int8_t AmbientLight::read(void) {
     return E_SENSOR_SUCCESS;
   }
   return E_SENSOR_FAIL;
-}
-
-uint16_t AmbientLight::set_mqtt_msg_len() {
-  char msg[256];
-  sprintf(msg, MQTT_STR,
-    AMBIENT_LIGHT_MEASUREMENT, location_, room_, room_loc_, 123456.123456, 1703827402ul, "000000");
-  return strlen(msg) + 2;
 }
 
 void AmbientLight::mqtt_msg_lp(char * mqtt_msg) 

@@ -4,6 +4,8 @@
 #include <PubSubClient.h>
 #include "owens_sensors.h"
 
+#define DOOR_MQTT_STR "%s,location=%s,room=%s,room_loc=%s, type=%s state=%d %lu%s"
+
 const char * const DOOR_OPEN_MEASUREMENT = "sensor";
 const char * const DOOR_OPEN_MEASUREMENT_TYPE = "door";
 
@@ -18,7 +20,6 @@ class DoorSensor {
     unsigned int last_read_ms_ = 0;
     unsigned long last_read_epoch_ms_ = 0;
     unsigned int last_publish_ms_ = 0;
-    uint16_t set_mqtt_msg_len();
 
   public:
     DoorSensor(const uint8_t door_pin, const char * location, const char * room, const char * room_loc) {
@@ -26,7 +27,10 @@ class DoorSensor {
         location_ = location;
         room_ = room;
         room_loc_ = room_loc;
-        mqtt_msg_len_ = set_mqtt_msg_len();
+        char msg[256];
+        sprintf(msg, DOOR_MQTT_STR, DOOR_OPEN_MEASUREMENT, location_, room_, room_loc_,
+        DOOR_OPEN_MEASUREMENT_TYPE, 1, 1703827402ul, "000000");
+        mqtt_msg_len_ = strlen(msg) + 2;
     }
     /**
      * @brief initialize the sensor
@@ -71,12 +75,6 @@ class DoorSensor {
      * @return
      */
     void mqtt_msg_lp(char * mqtt_msg);
-    /**
-     * @brief Length needed for MQTT message string
-     * 
-     * @return uint16_t MQTT message length
-     */
-    uint16_t mqtt_msg_len() const { return mqtt_msg_len_; }
 #ifdef PubSubClient_h
     /**
      * @brief Publish MQTT message for the last read of the sensor

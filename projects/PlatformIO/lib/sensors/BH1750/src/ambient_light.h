@@ -6,6 +6,7 @@
 #include "owens_sensors.h"
 
 #define AMBIENT_LIGHT_MIN_READ_MS 1000 // minimum time between reads, in milliseconds
+#define AMBIENT_LIGHT_MQTT_STR "%s,sensor=BH1750,location=%s,room=%s,room_loc=%s lux=%f %lu%s"
 const char * const AMBIENT_LIGHT_MEASUREMENT = "environment";
 
 class AmbientLight : public BH1750 {
@@ -18,7 +19,6 @@ class AmbientLight : public BH1750 {
     unsigned long last_read_ms_ = 0;
     unsigned long last_read_epoch_ms_ = 0;
     unsigned int last_publish_ms_ = 0;
-    uint16_t set_mqtt_msg_len();
 
   public:
     /**
@@ -31,7 +31,10 @@ class AmbientLight : public BH1750 {
       location_ = location;
       room_ = room;
       room_loc_ = room_loc;
-      mqtt_msg_len_ = set_mqtt_msg_len();
+      char msg[256];
+      sprintf(msg, AMBIENT_LIGHT_MQTT_STR, AMBIENT_LIGHT_MEASUREMENT, location_, room_,
+      room_loc_, 123456.123456, 1703827402ul, "000000");
+      mqtt_msg_len_= strlen(msg) + 2;
     };
     float last_ambient_lux() const { return last_ambient_lux_; }
     /**
@@ -65,12 +68,6 @@ class AmbientLight : public BH1750 {
      * @return 
      */
     void mqtt_msg_lp(char * mqtt_msg);
-    /**
-     * @brief Length needed for MQTT message string
-     * 
-     * @return uint16_t MQTT message length
-     */
-    uint16_t mqtt_msg_len() const { return mqtt_msg_len_; }
 #ifdef PubSubClient_h
     /**
      * @brief Publish MQTT message for the last read of the sensor
