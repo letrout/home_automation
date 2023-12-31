@@ -13,6 +13,7 @@ int8_t DoorSensor::read(void) {
   if (digitalRead(door_pin_) == HIGH) {
     last_read_ms_ = millis();
     last_read_state_ = 1;
+    last_open_ms_ = last_read_ms_;
     Serial.print("Door open: ");
   } else {
     last_read_ms_ = millis();
