@@ -17,10 +17,10 @@ class DoorSensor {
     const char * room_loc_;
     uint16_t mqtt_msg_len_ = 0;
     int8_t last_read_state_ = -1; // 0 - closed, 1 - open
-    unsigned int last_read_ms_ = 0;
+    unsigned long last_read_ms_ = 0;
     unsigned long last_read_epoch_ms_ = 0;
-    unsigned int last_publish_ms_ = 0;
-    unsigned int last_open_ms_ = 0;
+    unsigned long last_publish_ms_ = 0;
+    unsigned long last_open_ms_ = 0;
 
   public:
     DoorSensor(const uint8_t door_pin, const char * location, const char * room, const char * room_loc) {
@@ -68,7 +68,7 @@ class DoorSensor {
      * 
      * @return unsigned long time in milliseconds
      */
-    unsigned int last_open_ms() const { return last_open_ms_; }
+    unsigned long last_open_ms() const { return last_open_ms_; }
     /**
      * @brief time of last publish of the sensor, in millis()
      * 
