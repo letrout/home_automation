@@ -10,6 +10,7 @@
 #include "kitchen.h"
 #include "ambient_light.h"
 #include "door.h"
+#include "pir.h"
 #include "owens_sensors.h"
 #include "secrets.h"
 
@@ -29,16 +30,19 @@ const char* mqtt_username = MQTT_USER;
 const char* mqtt_password = MQTT_PASSWORD;
 
 int door_last_state = -1; // initialize to invalid state
+int pir_last_state = -1; // initialize to invalid state
 const long utcOffsetInSeconds = 0;
 const unsigned long ntp_update_ms = 30 * 60 * 1000L; // NTP update interval ms
 unsigned long ntp_last_ms = 0L;
 char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
 #ifdef DEBUG
-const char* event_topic = "influx/Owens/test";
+const char* door_topic = "influx/Owens/test";
 const char* infra_topic = "influx/Owens/test";
 const char* env_topic = "influx/Owens/test";
+const char* motion_topic = "influx/Owens/test";
 #else
-const char* event_topic = "influx/Owens/events/doors";
+const char* door_topic = "influx/Owens/events/doors";
+const char* motion_topic = "influx/Owens/events/motion";
 const char* infra_topic = "influx/Owens/infra";
 const char* env_topic = "influx/Owens/sensors";
 #endif
@@ -59,10 +63,13 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntp_server, utcOffsetInSeconds);
 
 // sensors
+DoorSensor deckDoor(door_pin, location, room, room_loc);
+#ifdef PIR_MOTION_H
+PirSensor deckPir(pir_pin, location, room, room_loc);
+#endif
 #ifdef AMBIENT_LIGHT
 AmbientLight lightMeter(location, room, room_loc, 0x23);
 #endif
-DoorSensor deckDoor(door_pin, location, room, room_loc);
 
 void setup()
 {
@@ -71,6 +78,12 @@ void setup()
 
   Wire.begin();
 
+  deckDoor.begin();
+
+#ifdef PIR_MOTION_H
+  deckPir.begin();
+#endif
+
 #ifdef AMBIENT_LIGHT
   // begin returns a boolean that can be used to detect setup problems.
   if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) {
@@ -78,12 +91,6 @@ void setup()
   } else {
     Serial.println(F("Error initialising BH1750"));
   }
-#endif
-
-  deckDoor.begin();
-
-#ifdef PIR
-  pinMode(pir_pin, INPUT);
 #endif
 
   // WiFi
@@ -131,14 +138,33 @@ void loop() {
   }
   //print_time();
 
-#ifdef PIR
-  pir_state = digitalRead(pir_pin);
-  if (pir_state == HIGH) {
+#ifdef PIR_MOTION_H
+  if (deckPir.read() == HIGH) {
     Serial.print("PIR triggered: ");
   } else {
     Serial.print("PIR not triggered: ");
   }
   Serial.println(millis());
+   // MQTT publish all PIR states (even if unchanged)
+  // message in influxdb2 line protocol format
+  if (deckPir.last_read_state() != pir_last_state) {
+    Serial.println("PIR state changes, publishing...");
+    if (deckPir.mqtt_pub(client, motion_topic)) {
+      pir_last_state = deckPir.last_read_state();
+      pir_last_publish = now;
+      Serial.println("PIR state published");
+    } else {
+      Serial.println("FAIL to publish PIR state");
+    }
+  } else if ((now - pir_last_publish) > event_heartbeat_ms) {
+    Serial.println("PIR heartbeat expired, publishing...");
+    if (deckPir.mqtt_pub(client, motion_topic)) {
+      Serial.println("PIR state published");
+      pir_last_publish = now;
+    } else {
+      Serial.println("FAIL to publish PIR state");
+    }
+  }
 #endif
 
   deckDoor.read();
@@ -153,7 +179,7 @@ void loop() {
   // message in influxdb2 line protocol format
   if (deckDoor.last_read_state() != door_last_state) {
     Serial.println("Door state changes, publishing...");
-    if (deckDoor.mqtt_pub(client, event_topic)) {
+    if (deckDoor.mqtt_pub(client, door_topic)) {
       door_last_state = deckDoor.last_read_state();
       door_last_publish = now;
       Serial.println("Door state published");
@@ -162,7 +188,7 @@ void loop() {
     }
   } else if ((now - door_last_publish) > event_heartbeat_ms) {
     Serial.println("Door heartbeat expired, publishing...");
-    if (deckDoor.mqtt_pub(client, event_topic)) {
+    if (deckDoor.mqtt_pub(client, door_topic)) {
       Serial.println("Door state published");
       door_last_publish = now;
     } else {

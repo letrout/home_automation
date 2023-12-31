@@ -1,0 +1,17 @@
+{
+  "name": "PIR motion sensor",
+  "version": "1.0.0",
+  "description": "class for PIR motion sensor",
+  "keywords": "Luth, sensor, events, motion",
+  "frameworks": "*",
+  "platforms": "*",
+  "authors":
+  [
+    {
+      "name": "Joel Luth",
+      "email": "joelluth@gmail.com",
+      "url": "https://github.com/letrout"
+    }
+  ],
+  "license": "MIT"
+}

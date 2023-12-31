@@ -15,7 +15,6 @@ const char* type = "door";
 #define PIR 1
 #ifdef PIR
 const int pir_pin = D3;
-int pir_state = 0;
 #endif
 
 #endif // SENSOR_DEVICE_H
