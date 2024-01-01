@@ -14,11 +14,11 @@ int8_t PirSensor::read(void) {
     last_read_ms_ = millis();
     last_read_state_ = 1;
     last_motion_ms_ = last_read_ms_;
-    Serial.print("Motion detected: ");
+    // Serial.print("Motion detected: ");
   } else {
     last_read_ms_ = millis();
     last_read_state_ = 0;
-    Serial.print("No motion detected: ");
+    // Serial.print("No motion detected: ");
   }
   return E_SENSOR_SUCCESS;
 }
@@ -43,16 +43,12 @@ bool PirSensor::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic)
   unsigned int len = strlen(msg);
   if (mqtt_client.publish(mqtt_topic, (uint8_t*)msg, len, false)) {
     last_publish_ms_ = millis();
-#ifdef DOOR_OPEN_H
-    Serial.print("MQTT publish ok: ");
-    Serial.println(mqtt_msg_lp());
-#endif
+    // Serial.print("MQTT publish ok: ");
+    // Serial.println(mqtt_msg_lp());
     return true;
   } else {
-#ifdef DEBUG
-    Serial.print("MQTT publish failed: ");
-    Serial.println(mqtt_msg_lp());
-#endif
+    // Serial.print("MQTT publish failed: ");
+    // Serial.println(mqtt_msg_lp());
     return false;
   }
 }

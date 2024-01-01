@@ -36,16 +36,12 @@ bool AmbientLight::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic)
   unsigned int len = strlen(msg);
   if (mqtt_client.publish(mqtt_topic, (uint8_t*)msg, len, false)) {
     last_publish_ms_ = millis();
-#ifdef DEBUG
-    Serial.print("MQTT publish ok: ");
-    Serial.println(msg);
-#endif
+    // Serial.print("MQTT publish ok: ");
+    // Serial.println(msg);
     return true;
   } else {
-#ifdef DEBUG
-    Serial.print("MQTT publish failed: ");
-    Serial.println(msg);
-#endif
+    // Serial.print("MQTT publish failed: ");
+    // Serial.println(msg);
     return false;
   }
 }

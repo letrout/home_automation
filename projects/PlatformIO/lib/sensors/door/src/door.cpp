@@ -14,11 +14,11 @@ int8_t DoorSensor::read(void) {
     last_read_ms_ = millis();
     last_read_state_ = 1;
     last_open_ms_ = last_read_ms_;
-    Serial.print("Door open: ");
+    // Serial.print("Door open: ");
   } else {
     last_read_ms_ = millis();
     last_read_state_ = 0;
-    Serial.print("Door closed: ");
+    // Serial.print("Door closed: ");
   }
   return E_SENSOR_SUCCESS;
 }
@@ -32,8 +32,8 @@ void DoorSensor::mqtt_msg_lp(char * mqtt_msg)
     sprintf(mqtt_msg, "%s,location=%s,room=%s,room_loc=%s, type=%s state=%d %lu%s",
     DOOR_OPEN_MEASUREMENT, location_, room_, room_loc_,  DOOR_OPEN_MEASUREMENT_TYPE, last_read_state(), last_read_epoch_ms(), "000000");
   }
-  Serial.println("mqtt_msg: ");
-  Serial.println(mqtt_msg);
+  // Serial.println("mqtt_msg: ");
+  // Serial.println(mqtt_msg);
   return;
 }
 
@@ -45,16 +45,12 @@ bool DoorSensor::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic)
   unsigned int len = strlen(msg);
   if (mqtt_client.publish(mqtt_topic, (uint8_t*)msg, len, false)) {
     last_publish_ms_ = millis();
-#ifdef DOOR_OPEN_H
-    Serial.print("MQTT publish ok: ");
-    Serial.println(msg);
-#endif
+    // Serial.print("MQTT publish ok: ");
+    // Serial.println(msg);
     return true;
   } else {
-#ifdef DOOR_OPEN_H
-    Serial.print("MQTT publish failed: ");
-    Serial.println(msg);
-#endif
+    // Serial.print("MQTT publish failed: ");
+    // Serial.println(msg);
     return false;
   }
 }
