@@ -3,8 +3,6 @@
 #define KITCHEN 1
 #define AMBIENT_LIGHT 1
 
-#define DEBUG 1
-
 
 const uint8_t door_pin = D7;
 const char* location = "Owens";

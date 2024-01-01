@@ -14,6 +14,9 @@
 #include "owens_sensors.h"
 #include "secrets.h"
 
+#define SERIAL_DEBUG
+#define MQTT_TEST
+
 #ifdef AMBIENT_LIGHT
 #include <BH1750.h>
 #endif
@@ -35,11 +38,11 @@ const long utcOffsetInSeconds = 0;
 const unsigned long ntp_update_ms = 30 * 60 * 1000L; // NTP update interval ms
 unsigned long ntp_last_ms = 0L;
 char client_id[16] = "d1-"; // will be the MQTT client ID, after MAC appended
-#ifdef DEBUG
+#ifdef MQTT_TEST
 const char* door_topic = "influx/Owens/test";
+const char* motion_topic = "influx/Owens/test";
 const char* infra_topic = "influx/Owens/test";
 const char* env_topic = "influx/Owens/test";
-const char* motion_topic = "influx/Owens/test";
 #else
 const char* door_topic = "influx/Owens/events/doors";
 const char* motion_topic = "influx/Owens/events/motion";
@@ -130,7 +133,6 @@ void setup()
 
 void loop() {
   unsigned long now = millis();
-  bool new_env_read = false;
   // char mqtt_msg [128];
   if ((now - ntp_last_ms) > ntp_update_ms) {
     ntp_last_ms = now;
@@ -140,7 +142,9 @@ void loop() {
 
 #ifdef PIR_MOTION_H
   if (deckPir.read() == HIGH) {
+#ifdef SERIAL_DEBUG
     Serial.print("PIR triggered: ");
+#endif
   } else {
     Serial.print("PIR not triggered: ");
   }
@@ -148,18 +152,26 @@ void loop() {
    // MQTT publish all PIR states (even if unchanged)
   // message in influxdb2 line protocol format
   if (deckPir.last_read_state() != pir_last_state) {
+#ifdef SERIAL_DEBUG
     Serial.println("PIR state changes, publishing...");
+#endif
     if (deckPir.mqtt_pub(client, motion_topic)) {
       pir_last_state = deckPir.last_read_state();
       pir_last_publish = now;
+#ifdef SERIAL_DEBUG
       Serial.println("PIR state published");
+#endif
     } else {
       Serial.println("FAIL to publish PIR state");
     }
   } else if ((now - pir_last_publish) > event_heartbeat_ms) {
+#ifdef SERIAL_DEBUG
     Serial.println("PIR heartbeat expired, publishing...");
+#endif
     if (deckPir.mqtt_pub(client, motion_topic)) {
+#ifdef SERIAL_DEBUG
       Serial.println("PIR state published");
+#endif
       pir_last_publish = now;
     } else {
       Serial.println("FAIL to publish PIR state");
@@ -168,28 +180,38 @@ void loop() {
 #endif
 
   deckDoor.read();
+  #ifdef SERIAL_DEBUG
   if (deckDoor.last_read_state() == HIGH) {
     Serial.print("Door open: ");
   } else {
     Serial.print("Door closed: ");
   }
   Serial.println(millis());
+  #endif
 
   // MQTT publish all door states (even if unchanged)
   // message in influxdb2 line protocol format
   if (deckDoor.last_read_state() != door_last_state) {
+  #ifdef SERIAL_DEBUG
     Serial.println("Door state changes, publishing...");
+  #endif
     if (deckDoor.mqtt_pub(client, door_topic)) {
       door_last_state = deckDoor.last_read_state();
       door_last_publish = now;
+  #ifdef SERIAL_DEBUG
       Serial.println("Door state published");
+  #endif
     } else {
       Serial.println("FAIL to publish door state");
     }
   } else if ((now - door_last_publish) > event_heartbeat_ms) {
+  #ifdef SERIAL_DEBUG
     Serial.println("Door heartbeat expired, publishing...");
+  #endif
     if (deckDoor.mqtt_pub(client, door_topic)) {
+  #ifdef SERIAL_DEBUG
       Serial.println("Door state published");
+  #endif
       door_last_publish = now;
     } else {
       Serial.println("FAIL to publish door state");
@@ -199,10 +221,11 @@ void loop() {
   // Environment seonsors
 #ifdef AMBIENT_LIGHT
   if (lightMeter.read() == E_SENSOR_SUCCESS) {
-    new_env_read = true;
+#ifdef SERIAL_DEBUG
     Serial.print("Light: ");
     Serial.print(lightMeter.last_ambient_lux());
     Serial.println(" lx");
+#endif
     if (millis() - lightMeter.last_publish_ms() > env_publish_ms) {
       lightMeter.mqtt_pub(client, env_topic);
     }
