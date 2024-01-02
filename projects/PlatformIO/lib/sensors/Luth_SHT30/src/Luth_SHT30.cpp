@@ -8,8 +8,6 @@ int8_t LuthSht30::read(void) {
     return E_SENSOR_NOOP;
   }
   uint16_t status = readStatus();
-  Serial.print(status, HEX);
-  Serial.println();
   // if ((status == 0) & SHT31::read(true)) {
   if (SHT31::read(true)) {
     last_temp_f_ = getFahrenheit();

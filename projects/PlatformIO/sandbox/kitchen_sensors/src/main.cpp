@@ -71,7 +71,7 @@ PirSensor deckPir(pir_pin, location, room, room_loc);
 AmbientLight lightMeter(location, room, room_loc, 0x23);
 #endif
 #ifdef LUTH_SHT30_H
-LuthSht30 sht30(location, room, room_loc);
+LuthSht30 sht30(location, room, room_loc, 0x45);
 #endif
 
 
@@ -246,15 +246,27 @@ void loop() {
 #endif // AMBIENT_LIGHT
 
 #ifdef LUTH_SHT30_H
-  if (sht30.read() == E_SENSOR_SUCCESS) {
+  uint16_t sht30_status = sht30.read();
+  if (sht30_status == E_SENSOR_SUCCESS) {
     if (millis() - sht30.last_publish_ms() > env_publish_ms) {
       sht30.mqtt_pub(client, env_topic);
     }
-  } else {
-    Serial.println("Error reading SHT30");
-  }
-
+#ifdef SERIAL_DEBUG
+    Serial.print("Temp F: ");
+    Serial.print(sht30.last_temp_f());
+    Serial.print(", Humidity: ");
+    Serial.println(sht30.last_hum_rel());
 #endif
+  } else if (sht30_status == E_SENSOR_NOOP) {
+#ifdef SERIAL_DEBUG
+    Serial.println("SHT30: no new data");
+#endif
+  } else {
+    Serial.print("Error reading SHT30: ");
+    Serial.print(sht30_status, HEX);
+    Serial.println();
+  }
+#endif // LUTH_SHT30_H
 
   // publish infra?
   if ((now - env_last_publish) > env_publish_ms) {
