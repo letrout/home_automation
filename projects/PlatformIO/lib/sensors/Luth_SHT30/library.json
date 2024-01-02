@@ -1,0 +1,18 @@
+{
+    "name": "SHT30 sensor",
+    "version": "1.0.0",
+    "description": "Wrapper class for SHT30 temp/humidity sensor",
+    "keywords": "Luth, sensor, environment",
+    "frameworks": "*",
+    "platforms": "*",
+    "authors":
+    [
+      {
+        "name": "Joel Luth",
+        "email": "joelluth@gmail.com",
+        "url": "https://github.com/letrout"
+      }
+    ],
+    "license": "MIT"
+  }
+  

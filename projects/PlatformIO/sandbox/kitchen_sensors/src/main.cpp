@@ -9,6 +9,7 @@
 // Use appropriate header file for the location
 #include "kitchen.h"
 #include "ambient_light.h"
+#include "Luth_SHT30.h"
 #include "door.h"
 #include "pir.h"
 #include "owens_sensors.h"
@@ -16,10 +17,6 @@
 
 #define SERIAL_DEBUG
 #define MQTT_TEST
-
-#ifdef AMBIENT_LIGHT
-#include <BH1750.h>
-#endif
 
 #define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
 
@@ -70,9 +67,13 @@ DoorSensor deckDoor(door_pin, location, room, room_loc);
 #ifdef PIR_MOTION_H
 PirSensor deckPir(pir_pin, location, room, room_loc);
 #endif
-#ifdef AMBIENT_LIGHT
+#ifdef AMBIENT_LIGHT_H
 AmbientLight lightMeter(location, room, room_loc, 0x23);
 #endif
+#ifdef LUTH_SHT30_H
+LuthSht30 sht30(location, room, room_loc);
+#endif
+
 
 void setup()
 {
@@ -87,12 +88,24 @@ void setup()
   deckPir.begin();
 #endif
 
-#ifdef AMBIENT_LIGHT
+#ifdef AMBIENT_LIGHT_H
   // begin returns a boolean that can be used to detect setup problems.
   if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) {
+#ifdef SERIAL_DEBUG
     Serial.println(F("BH1750 Advanced begin"));
+#endif
   } else {
     Serial.println(F("Error initialising BH1750"));
+  }
+#endif
+
+#ifdef LUTH_SHT30_H
+  if (sht30.begin()) {
+#ifdef SERIAL_DEBUG
+    Serial.println(F("SHT30 Advanced begin"));
+#endif
+  } else {
+    Serial.println(F("Error initialising SHT30"));
   }
 #endif
 
@@ -231,6 +244,17 @@ void loop() {
     }
   }
 #endif // AMBIENT_LIGHT
+
+#ifdef LUTH_SHT30_H
+  if (sht30.read() == E_SENSOR_SUCCESS) {
+    if (millis() - sht30.last_publish_ms() > env_publish_ms) {
+      sht30.mqtt_pub(client, env_topic);
+    }
+  } else {
+    Serial.println("Error reading SHT30");
+  }
+
+#endif
 
   // publish infra?
   if ((now - env_last_publish) > env_publish_ms) {
