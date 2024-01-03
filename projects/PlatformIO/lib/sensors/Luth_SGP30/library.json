@@ -1,0 +1,17 @@
+{
+  "name": "SGP30 sensor",
+  "version": "1.0.0",
+  "description": "Wrapper class for SGP30 sensor",
+  "keywords": "Luth, sensor, environment",
+  "frameworks": "*",
+  "platforms": "*",
+  "authors":
+  [
+    {
+      "name": "Joel Luth",
+      "email": "joelluth@gmail.com",
+      "url": "https://github.com/letrout"
+    }
+  ],
+  "license": "MIT"
+}

@@ -10,6 +10,7 @@
 #include "kitchen.h"
 #include "ambient_light.h"
 #include "Luth_SHT30.h"
+#include "Luth_SGP30.h"
 #include "door.h"
 #include "pir.h"
 #include "owens_sensors.h"
@@ -73,6 +74,9 @@ AmbientLight lightMeter(location, room, room_loc, 0x23);
 #ifdef LUTH_SHT30_H
 LuthSht30 sht30(location, room, room_loc, 0x45);
 #endif
+#ifdef LUTH_SGP30_H
+LuthSgp30 sgp30(location, room, room_loc);
+#endif
 
 
 void setup()
@@ -106,6 +110,20 @@ void setup()
 #endif
   } else {
     Serial.println(F("Error initialising SHT30"));
+  }
+#endif
+#ifdef LUTH_SGP30_H
+  if (sgp30.begin()) {
+    Serial.print("TEST:\t");
+    Serial.println(sgp30.measureTest());
+    Serial.print("FSET:\t");
+    Serial.println(sgp30.getFeatureSet(), HEX);
+    sgp30.GenericReset();
+#ifdef SERIAL_DEBUG
+    Serial.println(F("SGP30 Advanced begin"));
+#endif
+  } else {
+    Serial.println(F("Error initialising SGP30"));
   }
 #endif
 
@@ -267,6 +285,27 @@ void loop() {
     Serial.println();
   }
 #endif // LUTH_SHT30_H
+
+#ifdef LUTH_SGP30_H
+  uint16_t sgp30_status = sgp30.read();
+  if (sgp30_status == E_SENSOR_SUCCESS) {
+    if (millis() - sgp30.last_publish_ms() > env_publish_ms) {
+      sgp30.mqtt_pub(client, env_topic);
+    }
+#ifdef SERIAL_DEBUG
+    Serial.print("eCO2: ");
+    Serial.print(sgp30.last_eco2());
+    Serial.print(", TVOC: ");
+    Serial.println(sgp30.last_tvoc());
+#endif
+  } else if (sgp30_status == E_SENSOR_NOOP) {
+#ifdef SERIAL_DEBUG
+    Serial.println("SGP30: no new data");
+#endif
+  } else {
+    Serial.println("Failed to read SGP30");
+  }
+#endif // LUTH_SGP30_H
 
   // publish infra?
   if ((now - env_last_publish) > env_publish_ms) {

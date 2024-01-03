@@ -31,6 +31,10 @@ void AmbientLight::mqtt_msg_lp(char * mqtt_msg)
 #ifdef PubSubClient_h
 bool AmbientLight::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic) 
 {
+  if (last_ambient_lux_ < 0.0) {
+    // No valid data to publish
+    return false;
+  }
   char msg[mqtt_msg_len_];
   mqtt_msg_lp(msg);
   unsigned int len = strlen(msg);
