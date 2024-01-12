@@ -7,7 +7,7 @@
 
 #define SGP30_MIN_READ_MS 10000 // minimum time between reads, in milliseconds
 #define SGP30_MQTT_STR "%s,sensor=SGP30,location=%s,room=%s,room_loc=%s tvoc=%u eco2=%u %lu%s"
-#define SGP30_MQTT_RAW_STR "%s,sensor=SGP30,location=%s,room=%s,room_loc=%s h2=%f ethanol=%f %lu%s"
+#define SGP30_MQTT_RAW_STR "%s,sensor=SGP30,location=%s,room=%s,room_loc=%s h2=%u ethanol=%u %lu%s"
 const char * const SGP30_MEASUREMENT = "environment";
 
 
@@ -20,8 +20,8 @@ class LuthSgp30 : public SGP30 {
     uint16_t mqtt_msg_raw_len_ = 0;
     uint16_t last_tvoc_ = 0;
     uint16_t last_eco2_ = 0;
-    float last_h2_ = -1.0;
-    float last_ethanol_ = -1.0;
+    uint16_t last_h2_ = 0;
+    uint16_t last_ethanol_ = 0;
     unsigned long last_read_ms_ = 0;
     unsigned long last_read_epoch_ms_ = 0;
     unsigned int last_publish_ms_ = 0;
@@ -43,13 +43,13 @@ class LuthSgp30 : public SGP30 {
       room_loc_, 60000, 60000, 1703827402ul, "000000");
       mqtt_msg_len_= strlen(msg) + 2;
       sprintf(msg_raw, SGP30_MQTT_RAW_STR, SGP30_MEASUREMENT, location_, room_,
-      room_loc_, 123456.123456, 123456.123456, 1703827402ul, "000000");
+      room_loc_, 64000, 64000, 1703827402ul, "000000");
       mqtt_msg_raw_len_= strlen(msg_raw) + 2;
     };
     uint16_t last_tvoc() const { return last_tvoc_; }
     uint16_t last_eco2() const { return last_eco2_; }
-    float last_h2() const { return last_h2_; }
-    float last_ethanol() const { return last_ethanol_; }
+    uint16_t last_h2() const { return last_h2_; }
+    uint16_t last_ethanol() const { return last_ethanol_; }
     /**
      * @brief time of last read of the sensor, in millis()
      * 

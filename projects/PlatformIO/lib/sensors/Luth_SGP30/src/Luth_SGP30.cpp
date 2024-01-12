@@ -17,8 +17,8 @@ int8_t LuthSgp30::read(bool all) {
     last_tvoc_ = getTVOC();
     last_eco2_ = getCO2();
     if (all) {
-      last_h2_ = getH2();
-      last_ethanol_ = getEthanol();
+      last_h2_ = getH2_raw();
+      last_ethanol_ = getEthanol_raw();
     }
     // TODO: set last_read_epoch_ms_ to the current time
     return E_SENSOR_SUCCESS;
@@ -41,7 +41,7 @@ void LuthSgp30::mqtt_msg_lp(char * mqtt_msg)
 void LuthSgp30::mqtt_msg_raw_lp(char * mqtt_msg) 
 {
   if (last_read_epoch_ms() == 0) {
-    sprintf(mqtt_msg, "%s,sensor=SGP30,location=%s,room=%s,room_loc=%s h2=%f ethanol=%f",
+    sprintf(mqtt_msg, "%s,sensor=SGP30,location=%s,room=%s,room_loc=%s h2=%u ethanol=%u",
     SGP30_MEASUREMENT, location_, room_, room_loc_, last_h2(), last_ethanol());
   } else {
     sprintf(mqtt_msg, SGP30_MQTT_RAW_STR,
