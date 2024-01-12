@@ -38,12 +38,13 @@ class LuthSgp30 : public SGP30 {
       room_ = room;
       room_loc_ = room_loc;
       char msg[256];
+      char msg_raw[256];
       sprintf(msg, SGP30_MQTT_STR, SGP30_MEASUREMENT, location_, room_,
       room_loc_, 60000, 60000, 1703827402ul, "000000");
       mqtt_msg_len_= strlen(msg) + 2;
-      sprintf(msg, SGP30_MQTT_RAW_STR, SGP30_MEASUREMENT, location_, room_,
+      sprintf(msg_raw, SGP30_MQTT_RAW_STR, SGP30_MEASUREMENT, location_, room_,
       room_loc_, 123456.123456, 123456.123456, 1703827402ul, "000000");
-      mqtt_msg_raw_len_= strlen(msg) + 2;
+      mqtt_msg_raw_len_= strlen(msg_raw) + 2;
     };
     uint16_t last_tvoc() const { return last_tvoc_; }
     uint16_t last_eco2() const { return last_eco2_; }
@@ -72,7 +73,7 @@ class LuthSgp30 : public SGP30 {
      * 
      * @return int8_t E_SENSOR_SUCCESS or E_SENSOR_FAIL
      */
-    int8_t read();
+    int8_t read(bool all = true);
     /**
      * @brief MQTT message for the last read of the sensor
      * 
@@ -94,7 +95,7 @@ class LuthSgp30 : public SGP30 {
      * @param mqtt_client PubSubClient object
      * @return bool true if message was successfully published
      */
-    bool mqtt_pub(PubSubClient & mqtt_client, const char * mqtt_topic);
+    bool mqtt_pub(PubSubClient & mqtt_client, const char * mqtt_topic, bool all = true);
 #endif // PUBSUBCLIENT_H
 };
 

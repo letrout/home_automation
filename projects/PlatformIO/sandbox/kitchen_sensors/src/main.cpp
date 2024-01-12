@@ -287,10 +287,10 @@ void loop() {
 #endif // LUTH_SHT30_H
 
 #ifdef LUTH_SGP30_H
-  uint16_t sgp30_status = sgp30.read();
+  uint16_t sgp30_status = sgp30.read(true);
   if (sgp30_status == E_SENSOR_SUCCESS) {
     if (millis() - sgp30.last_publish_ms() > env_publish_ms) {
-      sgp30.mqtt_pub(client, env_topic);
+      sgp30.mqtt_pub(client, env_topic, true);
     }
 #ifdef SERIAL_DEBUG
     Serial.print("eCO2: ");

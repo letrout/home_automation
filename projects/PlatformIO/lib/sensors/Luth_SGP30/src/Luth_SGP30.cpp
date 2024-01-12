@@ -2,12 +2,12 @@
 #include "owens_sensors.h"
 
 
-int8_t LuthSgp30::read(void) {
+int8_t LuthSgp30::read(bool all) {
   if (millis() - last_read_ms() < SGP30_MIN_READ_MS) {
     // Too soon since last read
     return E_SENSOR_NOOP;
   }
-  if (measure(true)) {
+  if (measure(all)) {
     last_read_ms_ = millis();
     //if (getTVOC() == 60000) {
       // Sometime sensor gets stuck at max value
@@ -16,8 +16,10 @@ int8_t LuthSgp30::read(void) {
     //}
     last_tvoc_ = getTVOC();
     last_eco2_ = getCO2();
-    last_h2_ = getH2();
-    last_ethanol_ = getEthanol();
+    if (all) {
+      last_h2_ = getH2();
+      last_ethanol_ = getEthanol();
+    }
     // TODO: set last_read_epoch_ms_ to the current time
     return E_SENSOR_SUCCESS;
   }
@@ -49,17 +51,28 @@ void LuthSgp30::mqtt_msg_raw_lp(char * mqtt_msg)
 }
 
 #ifdef PubSubClient_h
-bool LuthSgp30::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic) 
+bool LuthSgp30::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic, bool all) 
 {
+  bool retval = false;
   char msg[mqtt_msg_len_];
   mqtt_msg_lp(msg);
   unsigned int len = strlen(msg);
   if (mqtt_client.publish(mqtt_topic, (uint8_t*)msg, len, false)) {
     last_publish_ms_ = millis();
-    return true;
-  } else {
-    return false;
+    retval = true;
   }
+  if (all) {
+    char msg_raw[mqtt_msg_raw_len_];
+    mqtt_msg_raw_lp(msg_raw);
+    len = strlen(msg_raw);
+    if (mqtt_client.publish(mqtt_topic, (uint8_t*)msg_raw, len, false)) {
+      if (!retval) {
+        last_publish_ms_ = millis();
+      }
+      retval = true;
+    }
+  }
+  return retval;
 }
 #endif // PubSubClient_h
 
