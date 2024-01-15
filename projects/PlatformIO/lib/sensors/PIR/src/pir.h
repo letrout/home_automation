@@ -76,6 +76,12 @@ class PirSensor {
      */
     unsigned long last_publish_ms() const { return last_publish_ms_; }
     /**
+     * @brief Check if we have data suitable to publish
+     * 
+     * @return E_SENSOR_SUCCES if ready to publish, something else if not
+    */
+    uint8_t unable_to_pub();
+    /**
      * @brief MQTT message for the last read of the sensor
      * 
      * @param mqtt_msg char array to store the MQTT message

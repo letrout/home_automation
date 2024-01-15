@@ -275,7 +275,7 @@ void loop() {
     Serial.print(", Humidity: ");
     Serial.println(sht30.last_hum_rel());
 #endif
-  } else if (sht30_status == E_SENSOR_NOOP) {
+  } else if (sht30_status == E_SENSOR_NOT_READY) {
 #ifdef SERIAL_DEBUG
     Serial.println("SHT30: no new data");
 #endif
@@ -298,7 +298,7 @@ void loop() {
     Serial.print(", TVOC: ");
     Serial.println(sgp30.last_tvoc());
 #endif
-  } else if (sgp30_status == E_SENSOR_NOOP) {
+  } else if (sgp30_status == E_SENSOR_NOT_READY) {
 #ifdef SERIAL_DEBUG
     Serial.println("SGP30: no new data");
 #endif

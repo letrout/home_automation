@@ -37,9 +37,22 @@ void DoorSensor::mqtt_msg_lp(char * mqtt_msg)
   return;
 }
 
+uint8_t DoorSensor::unable_to_pub() {
+  if (last_read_ms_ < last_publish_ms_) {
+    // Don't publish old data
+    return E_SENSOR_NOT_READY;
+  } else {
+    // Ok to publish data
+    return E_SENSOR_SUCCESS;
+  }
+}
+
 #ifdef PubSubClient_h
 bool DoorSensor::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic) 
 {
+  if (unable_to_pub() != E_SENSOR_SUCCESS) {
+    return false;
+  }
   char msg[mqtt_msg_len_];
   mqtt_msg_lp(msg);
   unsigned int len = strlen(msg);

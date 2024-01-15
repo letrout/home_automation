@@ -88,6 +88,12 @@ class LuthSgp30 : public SGP30 {
      * @return 
      */
     void mqtt_msg_raw_lp(char * mqtt_msg);
+    /**
+     * @brief Check if we have data suitable to publish
+     * 
+     * @return E_SENSOR_SUCCES if ready to publish, something else if not
+    */
+    uint8_t unable_to_pub();
 #ifdef PubSubClient_h
     /**
      * @brief Publish MQTT message for the last read of the sensor

@@ -5,7 +5,7 @@
 int8_t LuthSgp30::read(bool all) {
   if (millis() - last_read_ms() < SGP30_MIN_READ_MS) {
     // Too soon since last read
-    return E_SENSOR_NOOP;
+    return E_SENSOR_NOT_READY;
   }
   if (measure(all)) {
     last_read_ms_ = millis();
@@ -50,9 +50,25 @@ void LuthSgp30::mqtt_msg_raw_lp(char * mqtt_msg)
   return;
 }
 
+uint8_t LuthSgp30::unable_to_pub() {
+  if (last_read_ms_ < last_publish_ms_) {
+    // Don't publish old data
+    return E_SENSOR_NOT_READY;
+  } else if ((last_eco2_ == 0) | (last_tvoc_ >= 60000)) {
+    // Don't publish erroneous data
+    return E_SENSOR_FAIL;
+  } else {
+    // Ok to publish data
+    return E_SENSOR_SUCCESS;
+  }
+}
+
 #ifdef PubSubClient_h
 bool LuthSgp30::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic, bool all) 
 {
+  if (unable_to_pub() != E_SENSOR_SUCCESS) {
+    return false;
+  }
   bool retval = false;
   char msg[mqtt_msg_len_];
   mqtt_msg_lp(msg);

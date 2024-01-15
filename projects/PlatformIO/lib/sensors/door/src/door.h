@@ -70,6 +70,12 @@ class DoorSensor {
      */
     unsigned long last_open_ms() const { return last_open_ms_; }
     /**
+     * @brief Check if we have data suitable to publish
+     * 
+     * @return E_SENSOR_SUCCES if ready to publish, something else if not
+    */
+    uint8_t unable_to_pub();
+    /**
      * @brief time of last publish of the sensor, in millis()
      * 
      * @return unsigned long time in milliseconds

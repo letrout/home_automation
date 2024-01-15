@@ -5,7 +5,7 @@
 int8_t LuthSht30::read(void) {
   if (millis() - last_read_ms() < SHT30_MIN_READ_MS) {
     // Too soon since last read
-    return E_SENSOR_NOOP;
+    return E_SENSOR_NOT_READY;
   }
   uint16_t status = readStatus();
   // if ((status == 0) & SHT31::read(true)) {
@@ -17,6 +17,16 @@ int8_t LuthSht30::read(void) {
     return E_SENSOR_SUCCESS;
   }
   return status;
+}
+
+uint8_t LuthSht30::unable_to_pub() {
+  if (last_read_ms_ < last_publish_ms_) {
+    // Don't publish old data
+    return E_SENSOR_NOT_READY;
+  } else {
+    // Ok to publish data
+    return E_SENSOR_SUCCESS;
+  }
 }
 
 void LuthSht30::mqtt_msg_lp(char * mqtt_msg) 
@@ -34,6 +44,9 @@ void LuthSht30::mqtt_msg_lp(char * mqtt_msg)
 #ifdef PubSubClient_h
 bool LuthSht30::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic) 
 {
+  if (unable_to_pub() != E_SENSOR_SUCCESS) {
+    return false;
+  }
   char msg[mqtt_msg_len_];
   mqtt_msg_lp(msg);
   unsigned int len = strlen(msg);

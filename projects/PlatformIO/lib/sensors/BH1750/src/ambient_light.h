@@ -62,6 +62,12 @@ class AmbientLight : public BH1750 {
      */
     int8_t read();
     /**
+     * @brief Check if we have data suitable to publish
+     * 
+     * @return E_SENSOR_SUCCES if ready to publish, something else if not
+    */
+    uint8_t unable_to_pub();
+    /**
      * @brief MQTT message for the last read of the sensor
      * 
      * @param mqtt_msg char array to store the MQTT message

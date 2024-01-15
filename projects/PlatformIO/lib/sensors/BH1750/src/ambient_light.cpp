@@ -28,11 +28,24 @@ void AmbientLight::mqtt_msg_lp(char * mqtt_msg)
   return;
 }
 
+uint8_t AmbientLight::unable_to_pub() {
+  if (last_read_ms_ < last_publish_ms_) {
+    // Don't publish old data
+    return E_SENSOR_NOT_READY;
+  } else if (last_ambient_lux_ < 0) {
+    // Don't publish erroneous data
+    return E_SENSOR_FAIL;
+  } else {
+    // Ok to publish data
+    return E_SENSOR_SUCCESS;
+  }
+}
+
+
 #ifdef PubSubClient_h
 bool AmbientLight::mqtt_pub(PubSubClient &mqtt_client, const char * mqtt_topic) 
 {
-  if (last_ambient_lux_ < 0.0) {
-    // No valid data to publish
+  if (unable_to_pub() != E_SENSOR_SUCCESS) {
     return false;
   }
   char msg[mqtt_msg_len_];
